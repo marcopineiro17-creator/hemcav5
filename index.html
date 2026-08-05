@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HEMCA | Estructuras, aluminio y obra civil en el sureste</title>
+  <meta name="description" content="HEMCA desarrolla estructuras metálicas, aluminio, herrería, obra civil y mantenimiento en Tulum, Mérida y el sureste de México.">
+  <meta name="theme-color" content="#07131f">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://www.hemca.com.mx/">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_MX">
+  <meta property="og:site_name" content="HEMCA Multi Servicios">
+  <meta property="og:title" content="HEMCA | Construimos lo que debe permanecer">
+  <meta property="og:description" content="Estructuras metálicas, aluminio, herrería, obra civil y mantenimiento en Tulum, Mérida y el sureste de México.">
+  <meta property="og:url" content="https://www.hemca.com.mx/">
+  <meta property="og:image" content="https://www.hemca.com.mx/assets/hero-obra.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/hero-obra.jpg" fetchpriority="high">
+
+  <!-- Marca el documento como "con JavaScript" antes del primer pintado.
+       Así las animaciones de entrada sólo se activan si el JS realmente corre:
+       si el script se bloquea o se elimina, el contenido se ve completo. -->
+  <script>document.documentElement.classList.add('js');</script>
+
+  <style>
+    /* ============================================================
+       1. TOKENS
+       ============================================================ */
+    :root {
+      --ink: #07131f;
+      --ink-2: #0d2031;
+      --orange: #f26422;
+      --orange-2: #ff7a36;
+      --paper: #f3f1ec;
+      --steel: #aeb9c0;
+      --line: rgba(255, 255, 255, .16);
+      --dark-line: rgba(7, 19, 31, .15);
+      --max: 1240px;
+      --pad: clamp(20px, 4vw, 64px);
+      --nav-h: 58px;
+    }
+
+    /* ============================================================
+       2. BASE
+       ============================================================ */
+    * { box-sizing: border-box; }
+
+    /* El recorte horizontal vive sólo en <html>: si se pone en <body>
+       o en un contenedor intermedio, se rompe el position:sticky
+       del menú y de la sección de etapas. */
+    html {
+      overflow-x: clip;
+      scroll-behavior: smooth;
+      background: var(--ink);
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Manrope", system-ui, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    a, button { -webkit-tap-highlight-color: transparent; }
+    button, input, select, textarea { font: inherit; }
+    section { scroll-margin-top: calc(var(--nav-h) + 8px); }
+    ::selection { background: var(--orange); color: #fff; }
+
+    :focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+
+    /* ============================================================
+       3. UTILIDADES
+       ============================================================ */
+    .shell { width: min(var(--max), calc(100% - (var(--pad) * 2))); margin-inline: auto; }
+    .eyebrow { margin: 0 0 18px; color: var(--orange); font-size: .76rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+    .display { margin: 0; font-family: "Archivo", sans-serif; font-size: clamp(3rem, 7vw, 7.5rem); font-weight: 700; letter-spacing: -.065em; line-height: .9; }
+    .section-title { margin: 0; max-width: 920px; font-family: "Archivo", sans-serif; font-size: clamp(2.45rem, 5.7vw, 6.2rem); font-weight: 700; letter-spacing: -.06em; line-height: .93; }
+    .section-intro { margin: 26px 0 0; max-width: 680px; color: #4c5c67; font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.75; }
+    .accent { color: var(--orange); }
+    .index { color: var(--orange); font-family: "Archivo", sans-serif; font-size: .76rem; font-weight: 700; letter-spacing: .13em; }
+
+    .btn { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 14px; padding: 0 22px; border: 1px solid transparent; cursor: pointer; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; transition: transform .2s ease, background .2s ease, color .2s ease, border-color .2s ease; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--orange); color: #fff; }
+    .btn-primary:hover { background: var(--orange-2); }
+    .btn-ghost { border-color: rgba(255, 255, 255, .38); color: #fff; }
+    .btn-ghost:hover { border-color: #fff; background: #fff; color: var(--ink); }
+
+    /* Animación de entrada: sólo se oculta si hay JS (.js) que la revierta. */
+    .js [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+    .js [data-reveal].visible { opacity: 1; transform: none; }
+
+    /* ============================================================
+       4. BARRA DE PROGRESO + MENÚ
+       ============================================================ */
+    .progress { position: fixed; z-index: 90; top: 0; left: 0; width: 100%; height: 3px; transform: scaleX(0); transform-origin: left; background: var(--orange); pointer-events: none; }
+
+    .section-nav { position: sticky; z-index: 70; top: 0; height: var(--nav-h); border-bottom: 1px solid rgba(255, 255, 255, .12); background: rgba(7, 19, 31, .94); color: #fff; backdrop-filter: blur(14px); }
+    .section-nav .shell { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    /* El "gap" separa el logotipo del bajada, nunca las letras de HEMCA:
+       por eso "HE" y "MCA" van juntos dentro de .mini-brand-word. */
+    .mini-brand { display: flex; align-items: baseline; gap: 7px; font-family: "Archivo", sans-serif; font-weight: 800; letter-spacing: -.04em; }
+    .mini-brand-word { white-space: nowrap; }
+    .mini-brand b { color: var(--orange); }
+    .mini-brand small { color: var(--steel); font: 600 .56rem/1 "Manrope", sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+    .section-links { display: flex; align-items: center; gap: clamp(18px, 3vw, 38px); font-size: .72rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .section-links a { color: #c5cdd2; transition: color .2s ease; }
+    .section-links a:hover { color: var(--orange); }
+    .nav-cta { padding: 10px 15px; border: 1px solid var(--orange); color: #fff; }
+
+    /* ============================================================
+       5. HERO
+       ============================================================ */
+    .hero { position: relative; min-height: min(900px, calc(100svh - var(--nav-h))); display: grid; align-items: end; isolation: isolate; background: var(--ink); color: #fff; }
+    .hero-image { position: absolute; z-index: -3; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 58%; filter: saturate(.72) contrast(1.05); }
+    .hero::before { content: ""; position: absolute; z-index: -2; inset: 0; background: linear-gradient(90deg, rgba(7, 19, 31, .98) 0%, rgba(7, 19, 31, .91) 40%, rgba(7, 19, 31, .24) 75%, rgba(7, 19, 31, .44) 100%); }
+    .hero::after { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .22; background-image: linear-gradient(rgba(255, 255, 255, .16) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .16) 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(to right, #000, transparent 78%); }
+    .hero-content { padding-block: clamp(80px, 12vh, 150px) clamp(52px, 8vh, 90px); }
+    .hero-mark { display: flex; align-items: center; gap: 14px; margin-bottom: clamp(42px, 9vh, 96px); }
+    .hero-mark strong { font-family: "Archivo", sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: -.04em; }
+    .hero-mark strong span { color: var(--orange); }
+    .hero-mark i { width: 42px; height: 1px; background: var(--orange); }
+    .hero-mark small { color: #c7cfd4; font-size: .62rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+    .hero h1 { max-width: 980px; text-wrap: balance; }
+    .hero h1 span { display: block; color: var(--orange); }
+    .hero-bottom { margin-top: clamp(32px, 6vh, 64px); display: grid; grid-template-columns: minmax(260px, 570px) 1fr; align-items: end; gap: 48px; }
+    .hero-copy { margin: 0; color: #d5dce0; font-size: clamp(1rem, 1.35vw, 1.16rem); line-height: 1.75; }
+    .hero-actions { display: flex; justify-content: flex-end; gap: 12px; }
+    .hero-spec { position: absolute; right: var(--pad); bottom: 22px; color: rgba(255, 255, 255, .55); font-size: .59rem; font-weight: 700; letter-spacing: .14em; writing-mode: vertical-rl; text-transform: uppercase; }
+
+    /* ============================================================
+       6. CIFRAS
+       ============================================================ */
+    .metrics { background: #fff; border-bottom: 1px solid var(--dark-line); }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .metric { min-height: 170px; padding: 35px 28px; border-left: 1px solid var(--dark-line); }
+    .metric:last-child { border-right: 1px solid var(--dark-line); }
+    .metric strong { display: block; font-family: "Archivo", sans-serif; font-size: clamp(2.35rem, 4.2vw, 4.8rem); font-weight: 700; letter-spacing: -.06em; line-height: 1; }
+    .metric span { display: block; margin-top: 15px; color: #586770; font-size: .69rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+
+    /* ============================================================
+       7. ETAPAS (scroll con imagen fija)
+       ============================================================ */
+    .story { position: relative; background: var(--ink); color: #fff; }
+    .story-head { padding-block: clamp(90px, 13vw, 180px) 50px; }
+    .story-head .section-title { max-width: 1050px; }
+
+    /* La altura total define el recorrido; el escenario mide una pantalla. */
+    .story-layout { position: relative; min-height: 400vh; min-height: 400svh; }
+    .story-stage { position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); height: calc(100svh - var(--nav-h)); overflow: hidden; }
+
+    .story-media { position: absolute; inset: 0; }
+    .story-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 19, 31, .95) 0%, rgba(7, 19, 31, .69) 44%, rgba(7, 19, 31, .12) 76%), linear-gradient(0deg, rgba(7, 19, 31, .65), transparent 40%); }
+    .story-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; filter: saturate(.7) contrast(1.05); transition: opacity .55s ease; }
+    .story-image.active { opacity: 1; }
+    .story-image.stage-analizar { object-position: 55% center; }
+    .story-grid { position: absolute; inset: 0; opacity: .25; background-image: linear-gradient(rgba(255, 255, 255, .17) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .17) 1px, transparent 1px); background-size: 80px 80px; }
+
+    .story-panel { position: absolute; inset: 0; display: grid; align-items: center; pointer-events: none; }
+    .story-panel .shell { position: relative; height: 410px; }
+    .story-card { position: absolute; top: 50%; left: 0; width: min(580px, 52vw); opacity: 0; transform: translateY(calc(-50% + 34px)); transition: opacity .5s ease, transform .5s ease; }
+    .story-card.active { opacity: 1; transform: translateY(-50%); }
+    .story-number { color: var(--orange); font: 700 .75rem/1 "Archivo", sans-serif; letter-spacing: .2em; }
+    .story-card h3 { margin: 20px 0 18px; font-family: "Archivo", sans-serif; font-size: clamp(3rem, 6vw, 7rem); font-weight: 700; letter-spacing: -.065em; line-height: .9; }
+    .story-card p { margin: 0; max-width: 520px; color: #d1d9dd; font-size: clamp(1rem, 1.45vw, 1.2rem); line-height: 1.75; }
+
+    /* 108px de separación inferior para no quedar debajo del botón flotante
+       de WhatsApp (60px de alto + 18px de margen). */
+    .story-chapters { position: absolute; z-index: 3; right: var(--pad); bottom: 108px; display: grid; gap: 10px; }
+    .chapter-dot { width: 48px; height: 3px; background: rgba(255, 255, 255, .25); transition: width .3s ease, background .3s ease; }
+    .chapter-dot.active { width: 78px; background: var(--orange); }
+
+    /* ============================================================
+       8. SERVICIOS
+       ============================================================ */
+    .services { padding-block: clamp(90px, 13vw, 180px); background: var(--paper); }
+    .services-head { display: grid; grid-template-columns: 1.4fr .6fr; align-items: end; gap: 50px; margin-bottom: 70px; }
+    .services-head .section-intro { margin: 0; }
+    .services-grid { border-top: 1px solid var(--dark-line); }
+    .service { min-height: 150px; display: grid; grid-template-columns: 80px minmax(220px, .7fr) 1.3fr 42px; align-items: center; gap: 28px; padding: 30px 8px; border-bottom: 1px solid var(--dark-line); transition: background .25s ease, padding .25s ease; }
+    .service:hover { padding-inline: 22px; background: #fff; }
+    .service h3 { margin: 0; font-family: "Archivo", sans-serif; font-size: clamp(1.4rem, 2.4vw, 2.5rem); font-weight: 600; letter-spacing: -.045em; }
+    .service p { margin: 0; color: #586770; line-height: 1.7; }
+    .service-arrow { color: var(--orange); font-size: 1.4rem; }
+
+    /* ============================================================
+       9. PROYECTOS
+       ============================================================ */
+    .projects { padding-block: clamp(90px, 12vw, 160px); background: #fff; }
+    .projects-head { margin-bottom: 55px; }
+    .project-grid { display: grid; grid-template-columns: 1.25fr .75fr; grid-template-rows: 340px 340px; gap: 8px; }
+    .project { position: relative; overflow: hidden; background: var(--ink-2); color: #fff; }
+    .project:first-child { grid-row: 1 / 3; }
+    .project img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.2, .7, .2, 1), filter .5s ease; }
+    .project:hover img { transform: scale(1.035); filter: saturate(.75); }
+    .project-caption { position: absolute; inset: auto 0 0; display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 38px; background: linear-gradient(transparent, rgba(7, 19, 31, .92)); }
+    .project-caption span { color: var(--orange); font-size: .66rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .project-caption h3 { margin: 8px 0 0; font-family: "Archivo", sans-serif; font-size: clamp(1.5rem, 2.8vw, 3.1rem); line-height: 1; letter-spacing: -.05em; }
+
+    /* ============================================================
+       10. EXPERIENCIA
+       ============================================================ */
+    .trust { padding-block: clamp(90px, 12vw, 160px); background: var(--ink-2); color: #fff; }
+    .trust-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(50px, 9vw, 130px); }
+    .trust-copy { position: sticky; top: calc(var(--nav-h) + 62px); align-self: start; }
+    .trust-copy .section-intro { color: #b9c4ca; }
+    .credentials { border-top: 1px solid var(--line); }
+    .credential { display: grid; grid-template-columns: 48px 1fr; gap: 22px; padding: 28px 0; border-bottom: 1px solid var(--line); }
+    .credential h3 { margin: 0 0 8px; font-family: "Archivo", sans-serif; font-size: clamp(1.3rem, 2vw, 2rem); letter-spacing: -.04em; }
+    .credential p { margin: 0; color: #aebbc2; line-height: 1.7; }
+    .firm-list { margin-top: 42px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .firm-list span { padding: 10px 13px; border: 1px solid rgba(255, 255, 255, .18); color: #d9e0e4; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+    /* ============================================================
+       11. PROCESO
+       ============================================================ */
+    .process { padding-block: clamp(90px, 12vw, 160px); background: var(--paper); }
+    .process-grid { margin-top: 64px; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--dark-line); border-bottom: 1px solid var(--dark-line); }
+    .step { min-height: 310px; padding: 34px 25px; border-left: 1px solid var(--dark-line); }
+    .step:last-child { border-right: 1px solid var(--dark-line); }
+    .step h3 { margin: 70px 0 14px; font-family: "Archivo", sans-serif; font-size: 1.45rem; letter-spacing: -.04em; }
+    .step p { margin: 0; color: #586770; font-size: .9rem; line-height: 1.72; }
+
+    /* ============================================================
+       12. ALIADOS
+       ============================================================ */
+    .partners { padding-block: clamp(90px, 12vw, 150px); background: #fff; }
+    .partners-heading { display: flex; justify-content: space-between; align-items: end; gap: 40px; margin-bottom: 58px; }
+    .partners-heading .section-title { max-width: 760px; }
+    .partners-heading > p { max-width: 420px; margin: 0; color: #586770; line-height: 1.7; }
+    .logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--dark-line); border-left: 1px solid var(--dark-line); }
+    .logo-card { min-height: 210px; display: grid; grid-template-rows: 1fr auto; align-items: center; justify-items: center; gap: 20px; padding: 34px; border-right: 1px solid var(--dark-line); border-bottom: 1px solid var(--dark-line); background: #fff; transition: background .25s ease; }
+    .logo-card:hover { background: #f7f6f2; }
+    /* Ancho fijo + contain: normaliza logotipos de proporciones muy distintas
+       (algunos son SVG diminutos, otros JPG grandes). */
+    .logo-card img { width: min(210px, 76%); height: auto; max-height: 82px; object-fit: contain; filter: grayscale(1); opacity: .8; transition: filter .25s ease, opacity .25s ease, transform .25s ease; }
+    .logo-card img[alt="Cuprum"] { width: min(190px, 70%); }
+    .logo-card:hover img { filter: grayscale(0); opacity: 1; transform: scale(1.03); }
+    .logo-card small { color: #697780; font-size: .65rem; font-weight: 700; letter-spacing: .09em; text-align: center; text-transform: uppercase; }
+
+    /* ============================================================
+       13. COBERTURA
+       ============================================================ */
+    .coverage { position: relative; padding-block: clamp(90px, 12vw, 160px); overflow: hidden; background: var(--orange); color: #fff; }
+    .coverage::after { content: "SE"; position: absolute; right: -2vw; bottom: -14vw; color: rgba(7, 19, 31, .09); font-family: "Archivo", sans-serif; font-size: 45vw; font-weight: 800; letter-spacing: -.12em; line-height: 1; pointer-events: none; }
+    .coverage-layout { position: relative; z-index: 1; display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; }
+    .coverage .eyebrow, .coverage .section-title .accent { color: var(--ink); }
+    .coverage .section-title { max-width: 820px; }
+    .coverage-copy { align-self: end; }
+    .coverage-copy p { margin: 0 0 28px; max-width: 530px; font-size: 1.05rem; line-height: 1.75; }
+    .place-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .place-list span { padding: 10px 13px; border: 1px solid rgba(255, 255, 255, .55); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+
+    /* ============================================================
+       14. CONTACTO
+       ============================================================ */
+    .contact { background: var(--ink); color: #fff; }
+    .contact-layout { display: grid; grid-template-columns: .82fr 1.18fr; }
+    .contact-copy { padding: clamp(72px, 9vw, 130px) clamp(24px, 6vw, 78px) clamp(72px, 9vw, 130px) max(var(--pad), calc((100vw - var(--max)) / 2)); }
+    .contact-copy .section-title { font-size: clamp(2.8rem, 5vw, 5.5rem); }
+    .contact-copy > p { margin: 26px 0 38px; max-width: 510px; color: #b9c4ca; line-height: 1.75; }
+    .contact-lines { display: grid; gap: 13px; }
+    .contact-lines a { width: fit-content; border-bottom: 1px solid rgba(255, 255, 255, .25); font-size: .88rem; padding-bottom: 3px; }
+    .contact-lines a:hover { border-color: var(--orange); color: var(--orange); }
+
+    .quote { padding: clamp(72px, 9vw, 130px) max(var(--pad), calc((100vw - var(--max)) / 2)) clamp(72px, 9vw, 130px) clamp(24px, 6vw, 78px); background: #fff; color: var(--ink); }
+    .quote h3 { margin: 0 0 30px; font-family: "Archivo", sans-serif; font-size: clamp(1.8rem, 3vw, 3rem); letter-spacing: -.05em; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+    .field { display: grid; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: .66rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .field input, .field select, .field textarea { width: 100%; border: 0; border-bottom: 1px solid rgba(7, 19, 31, .32); border-radius: 0; outline: 0; background: transparent; color: var(--ink); padding: 12px 2px; }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--orange); outline: 0; }
+    .quote .btn { margin-top: 26px; border: 0; }
+    .form-note { margin: 13px 0 0; color: #697780; font-size: .7rem; line-height: 1.5; }
+
+    /* ============================================================
+       15. FOOTER + WHATSAPP
+       ============================================================ */
+    footer { padding: 34px 0; background: #040b11; color: #aeb9c0; }
+    .footer-layout { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .footer-layout strong { color: #fff; font-family: "Archivo", sans-serif; letter-spacing: -.03em; }
+    .footer-layout strong span { color: var(--orange); }
+    .footer-layout p { margin: 0; font-size: .68rem; line-height: 1.6; text-align: right; }
+
+    .wa-float { position: fixed; z-index: 9999; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 12px)); width: 60px; height: 60px; display: grid; place-items: center; border: 5px solid rgba(255, 255, 255, .85); border-radius: 50%; background: #25d366; color: #fff; box-shadow: 0 14px 36px rgba(0, 0, 0, .28); font-size: .68rem; font-weight: 900; letter-spacing: -.03em; transition: transform .2s ease; }
+    .wa-float:hover { transform: translateY(-3px) scale(1.03); }
+
+    /* ============================================================
+       16. RESPONSIVO
+       ============================================================ */
+    @media (max-width: 900px) {
+      .section-links a:not(.nav-cta) { display: none; }
+      .hero { min-height: 780px; }
+      .hero::before { background: linear-gradient(0deg, rgba(7, 19, 31, .98) 0%, rgba(7, 19, 31, .78) 64%, rgba(7, 19, 31, .42) 100%); }
+      .hero-bottom, .services-head, .trust-layout, .coverage-layout, .contact-layout { grid-template-columns: 1fr; }
+      .hero-actions { justify-content: flex-start; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .metric:nth-child(2) { border-right: 1px solid var(--dark-line); }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--dark-line); }
+      .story-card { width: min(620px, calc(100vw - (var(--pad) * 2) - 70px)); }
+      .service { grid-template-columns: 60px 1fr 34px; }
+      .service p { grid-column: 2 / 3; }
+      .project-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 500px 300px; }
+      .project:first-child { grid-column: 1 / -1; grid-row: auto; }
+      .process-grid { grid-template-columns: 1fr 1fr; }
+      .step:nth-child(2) { border-right: 1px solid var(--dark-line); }
+      .step:nth-child(-n+2) { border-bottom: 1px solid var(--dark-line); }
+      .logo-grid { grid-template-columns: 1fr 1fr; }
+      .trust-copy { position: static; }
+      .contact-copy, .quote { padding-inline: var(--pad); }
+    }
+
+    @media (max-width: 620px) {
+      :root { --pad: 20px; --nav-h: 54px; }
+      .mini-brand small { display: none; }
+      .nav-cta { padding: 9px 12px; }
+
+      .hero { min-height: calc(100svh - var(--nav-h)); }
+      .hero-content { padding-block: 66px 62px; }
+      .hero-mark { margin-bottom: 62px; }
+      .hero h1 { font-size: clamp(3.35rem, 16vw, 5.5rem); letter-spacing: -.075em; }
+      .hero-bottom { gap: 28px; }
+      .hero-actions { display: grid; grid-template-columns: 1fr; }
+      .hero-spec { display: none; }
+      .btn { width: 100%; }
+
+      .metric { min-height: 132px; padding: 25px 18px; }
+      .metric strong { font-size: 2.5rem; }
+      .metric span { font-size: .57rem; }
+
+      .story-head { padding-bottom: 70px; }
+      .story-media::after { background: linear-gradient(0deg, rgba(7, 19, 31, .98) 0%, rgba(7, 19, 31, .72) 47%, rgba(7, 19, 31, .12) 78%); }
+      .story-image.stage-resolver { object-position: 27% center; }
+      .story-image.stage-fabricar { object-position: 63% center; }
+      .story-panel { align-items: end; }
+      .story-panel .shell { width: calc(100% - (var(--pad) * 2)); height: 47%; }
+      .story-card { width: 100%; padding-right: 48px; transform: translateY(calc(-50% + 25px)); }
+      .story-card h3 { margin-block: 12px; font-size: clamp(3rem, 15vw, 4.5rem); }
+      .story-card p { font-size: .94rem; line-height: 1.6; }
+      .story-chapters { top: 22px; bottom: auto; }
+      .chapter-dot { width: 34px; }
+      .chapter-dot.active { width: 54px; }
+
+      .services-head { margin-bottom: 44px; }
+      .service { min-height: 0; grid-template-columns: 44px 1fr 24px; gap: 14px; padding: 24px 2px; }
+      .service:hover { padding-inline: 2px; background: transparent; }
+      .service p { font-size: .88rem; }
+
+      .project-grid { display: block; }
+      .project { height: 82vw; min-height: 315px; margin-bottom: 6px; }
+      .project-caption { padding: 24px; }
+
+      .process-grid { display: block; border: 0; }
+      .step { min-height: 0; padding: 28px 4px; border: 0; border-bottom: 1px solid var(--dark-line); }
+      .step:first-child { border-top: 1px solid var(--dark-line); }
+      .step h3 { margin-top: 35px; }
+
+      .partners-heading { display: block; }
+      .partners-heading > p { margin-top: 25px; }
+      .logo-card { min-height: 155px; padding: 24px 14px; }
+      .logo-card img { width: min(180px, 82%); max-height: 60px; }
+      .logo-card img[alt="Cuprum"] { width: min(155px, 76%); }
+      .logo-card small { font-size: .55rem; }
+
+      .coverage::after { font-size: 72vw; bottom: -15vw; }
+
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+
+      .footer-layout { display: grid; }
+      .footer-layout p { text-align: left; }
+      .wa-float { width: 56px; height: 56px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+      .js [data-reveal] { opacity: 1; transform: none; }
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "GeneralContractor",
+    "name": "HEMCA Multi Servicios",
+    "url": "https://www.hemca.com.mx/",
+    "email": "ventas@hemca.com.mx",
+    "telephone": "+52-999-569-0047",
+    "image": "https://www.hemca.com.mx/assets/hero-obra.jpg",
+    "areaServed": ["Tulum", "Quintana Roo", "Mérida", "Yucatán", "Sureste de México"],
+    "sameAs": ["https://www.facebook.com/hemcatulum/"],
+    "description": "Estructuras metálicas, aluminio, herrería, obra civil y mantenimiento en el sureste de México."
+  }
+  </script>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<nav class="section-nav" aria-label="Navegación principal">
+  <div class="shell">
+    <a class="mini-brand" href="#inicio" aria-label="Volver al inicio de HEMCA"><span class="mini-brand-word">HE<b>MCA</b></span><small>Multi Servicios</small></a>
+    <div class="section-links">
+      <a href="#servicios">Servicios</a>
+      <a href="#proyectos">Proyectos</a>
+      <a href="#proceso">Proceso</a>
+      <a href="#aliados">Aliados</a>
+      <a class="nav-cta" href="#contacto">Cotizar</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <section class="hero" id="inicio" aria-labelledby="hero-title">
+    <img class="hero-image" src="assets/hero-obra.jpg" alt="Obra de construcción en proceso con andamios y materiales" width="1575" height="1050" fetchpriority="high">
+    <div class="shell hero-content">
+      <div class="hero-mark" data-reveal>
+        <strong>HE<span>MCA</span></strong><i></i><small>Construcción · Ingeniería · Ejecución</small>
+      </div>
+      <h1 class="display" id="hero-title" data-reveal>Construimos lo que <span>debe permanecer.</span></h1>
+      <div class="hero-bottom">
+        <p class="hero-copy" data-reveal>Diseñamos, fabricamos e instalamos soluciones estructurales, aluminio, herrería y obra civil con control técnico de principio a fin.</p>
+        <div class="hero-actions" data-reveal>
+          <a class="btn btn-primary" href="#contacto">Cotizar proyecto <span aria-hidden="true">↗</span></a>
+          <a class="btn btn-ghost" href="#servicios">Explorar servicios</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-spec" aria-hidden="true">Tulum · Mérida · Sureste mexicano</div>
+  </section>
+
+  <section class="metrics" aria-label="Cifras de HEMCA">
+    <div class="shell metrics-grid">
+      <div class="metric" data-reveal><strong>12+</strong><span>Años de experiencia</span></div>
+      <div class="metric" data-reveal><strong>500+</strong><span>Proyectos ejecutados</span></div>
+      <div class="metric" data-reveal><strong>02</strong><span>Estados con presencia</span></div>
+      <div class="metric" data-reveal><strong>360°</strong><span>Gestión de proyecto</span></div>
+    </div>
+  </section>
+
+  <section class="story" id="ingenieria" aria-labelledby="story-title">
+    <div class="shell story-head">
+      <p class="eyebrow" data-reveal>01 · Método estructural</p>
+      <h2 class="section-title" id="story-title" data-reveal>La precisión no se ve al final. <span class="accent">Se construye en cada etapa.</span></h2>
+    </div>
+
+    <div class="story-layout" id="story-layout">
+      <div class="story-stage" id="story-stage">
+        <div class="story-media">
+          <img class="story-image stage-analizar active" data-story-image="0" src="assets/etapa-analizar.jpg" alt="Detalle técnico de una unión de acero" width="1536" height="1024" loading="lazy" decoding="async">
+          <img class="story-image stage-resolver" data-story-image="1" src="assets/etapa-resolver.webp" alt="Plano técnico estructural" width="1000" height="751" loading="lazy" decoding="async">
+          <img class="story-image stage-fabricar" data-story-image="2" src="assets/etapa-fabricar.jpg" alt="Especialista fabricando una estructura mediante soldadura" width="800" height="533" loading="lazy" decoding="async">
+          <img class="story-image stage-ejecutar" data-story-image="3" src="assets/etapa-ejecutar.webp" alt="Montaje de estructura metálica en obra" width="364" height="450" loading="lazy" decoding="async">
+          <div class="story-grid" aria-hidden="true"></div>
+        </div>
+
+        <div class="story-panel">
+          <div class="shell">
+            <article class="story-card active" data-story="0">
+              <div class="story-number">ETAPA 01</div>
+              <h3>Analizar.</h3>
+              <p>Levantamos requerimientos, condiciones del sitio, cargas y alcances antes de fabricar una sola pieza.</p>
+            </article>
+            <article class="story-card" data-story="1">
+              <div class="story-number">ETAPA 02</div>
+              <h3>Resolver.</h3>
+              <p>Integramos cálculo, diseño estructural, materiales y constructibilidad en una solución clara y viable.</p>
+            </article>
+            <article class="story-card" data-story="2">
+              <div class="story-number">ETAPA 03</div>
+              <h3>Fabricar.</h3>
+              <p>Controlamos cortes, uniones, soldadura y acabados desde taller para reducir incertidumbre en obra.</p>
+            </article>
+            <article class="story-card" data-story="3">
+              <div class="story-number">ETAPA 04</div>
+              <h3>Ejecutar.</h3>
+              <p>Coordinamos montaje, obra civil, permisos y entrega con supervisión técnica y seguimiento postproyecto.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="story-chapters" aria-hidden="true">
+          <span class="chapter-dot active"></span>
+          <span class="chapter-dot"></span>
+          <span class="chapter-dot"></span>
+          <span class="chapter-dot"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="services" id="servicios" aria-labelledby="services-title">
+    <div class="shell">
+      <div class="services-head">
+        <div>
+          <p class="eyebrow" data-reveal>02 · Capacidades</p>
+          <h2 class="section-title" id="services-title" data-reveal>Una ejecución. <span class="accent">Múltiples especialidades.</span></h2>
+        </div>
+        <p class="section-intro" data-reveal>Centralizamos fabricación, instalación y coordinación para que cada sistema trabaje como parte de una misma obra.</p>
+      </div>
+      <div class="services-grid">
+        <article class="service" data-reveal><span class="index">01</span><h3>Estructuras metálicas</h3><p>Diseño, fabricación e instalación de acero para edificios, hoteles, naves, cubiertas y proyectos especiales.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+        <article class="service" data-reveal><span class="index">02</span><h3>Aluminio arquitectónico</h3><p>Fachadas, ventanería, cancelería, techos y divisiones con precisión de detalle y montaje.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+        <article class="service" data-reveal><span class="index">03</span><h3>Herrería especializada</h3><p>Puertas, portones, escaleras, barandales y piezas a medida para arquitectura residencial y hotelera.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+        <article class="service" data-reveal><span class="index">04</span><h3>Tablaroca y Durock</h3><p>Sistemas ligeros interiores y exteriores: muros, plafones, particiones y recubrimientos.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+        <article class="service" data-reveal><span class="index">05</span><h3>Obra civil</h3><p>Cimentaciones, losas, andadores, bardas y acabados coordinados con los sistemas estructurales.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+        <article class="service" data-reveal><span class="index">06</span><h3>Mantenimiento</h3><p>Atención preventiva y correctiva para estructuras, instalaciones y acabados de operación continua.</p><span class="service-arrow" aria-hidden="true">↗</span></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="projects" id="proyectos" aria-labelledby="projects-title">
+    <div class="shell">
+      <div class="projects-head">
+        <p class="eyebrow" data-reveal>03 · Obra ejecutada</p>
+        <h2 class="section-title" id="projects-title" data-reveal>Del detalle técnico <span class="accent">al sitio.</span></h2>
+        <p class="section-intro" data-reveal>Experiencia en obra hotelera, residencial, comercial y de infraestructura en el sureste mexicano.</p>
+      </div>
+      <div class="project-grid">
+        <article class="project" data-reveal>
+          <img src="assets/proyecto-montaje.jpg" alt="Montaje de vigas de acero en obra" width="556" height="578" loading="lazy" decoding="async">
+          <div class="project-caption"><div><span>Estructura</span><h3>Montaje y obra civil</h3></div><span>Sureste MX</span></div>
+        </article>
+        <article class="project" data-reveal>
+          <img src="assets/proyecto-soldadura.jpg" alt="Especialista de HEMCA realizando trabajo de soldadura" width="322" height="443" loading="lazy" decoding="async">
+          <div class="project-caption"><div><span>Fabricación</span><h3>Precisión en campo</h3></div></div>
+        </article>
+        <article class="project" data-reveal>
+          <img src="assets/proyecto-fachada.jpg" alt="Fachada residencial con aluminio y herrería" width="551" height="429" loading="lazy" decoding="async">
+          <div class="project-caption"><div><span>Aluminio</span><h3>Integración arquitectónica</h3></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust" id="experiencia" aria-labelledby="trust-title">
+    <div class="shell trust-layout">
+      <div class="trust-copy">
+        <p class="eyebrow" data-reveal>04 · Experiencia colaborativa</p>
+        <h2 class="section-title" id="trust-title" data-reveal>Obra que exige <span class="accent">coordinación real.</span></h2>
+        <p class="section-intro" data-reveal>Trabajamos junto a desarrolladores, despachos y operadores que requieren respuesta técnica, continuidad y ejecución responsable.</p>
+      </div>
+      <div>
+        <div class="credentials">
+          <article class="credential" data-reveal><span class="index">01</span><div><h3>Hospitalidad</h3><p>Hotel Miraluna, Hotel Copal Tulum, Hotel Amelia y Hotel Mare.</p></div></article>
+          <article class="credential" data-reveal><span class="index">02</span><div><h3>Desarrollo residencial</h3><p>Sistemas estructurales, aluminio, cancelería, herrería y acabados para proyectos de distinta escala.</p></div></article>
+          <article class="credential" data-reveal><span class="index">03</span><div><h3>Operación comercial</h3><p>Mantenimiento y adecuaciones pensadas para reducir interrupciones y extender la vida útil del activo.</p></div></article>
+        </div>
+        <div class="firm-list" data-reveal><span>CO-TA Arquitectura</span><span>StudioArq Architecture</span><span>Grupo Emerita</span><span>ArchDaily</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="process" id="proceso" aria-labelledby="process-title">
+    <div class="shell">
+      <p class="eyebrow" data-reveal>05 · Ruta de trabajo</p>
+      <h2 class="section-title" id="process-title" data-reveal>Un proceso claro reduce <span class="accent">riesgo y fricción.</span></h2>
+      <div class="process-grid">
+        <article class="step" data-reveal><span class="index">01 / CONSULTA</span><h3>Entendemos el proyecto</h3><p>Revisamos ubicación, necesidades, dimensiones, tiempos y condiciones de operación.</p></article>
+        <article class="step" data-reveal><span class="index">02 / PROPUESTA</span><h3>Definimos alcance</h3><p>Presentamos especificaciones, materiales, plazos y costos de forma transparente.</p></article>
+        <article class="step" data-reveal><span class="index">03 / EJECUCIÓN</span><h3>Coordinamos la obra</h3><p>Fabricación, permisos, logística, montaje y supervisión bajo una misma dirección.</p></article>
+        <article class="step" data-reveal><span class="index">04 / ENTREGA</span><h3>Cerramos con respaldo</h3><p>Verificación final, garantía por escrito y seguimiento después de la entrega.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="partners" id="aliados" aria-labelledby="partners-title">
+    <div class="shell">
+      <div class="partners-heading">
+        <div>
+          <p class="eyebrow" data-reveal>06 · Materiales y equipo</p>
+          <h2 class="section-title" id="partners-title" data-reveal>Aliados para construir <span class="accent">con respaldo.</span></h2>
+        </div>
+        <p data-reveal>Marcas y proveedores presentes en nuestras cadenas de suministro, seleccionados según la necesidad técnica de cada proyecto.</p>
+      </div>
+      <div class="logo-grid">
+        <a class="logo-card" href="https://www.ferrecepsa.com.mx/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-ferrecepsa.jpg" alt="Ferrecepsa" width="256" height="59" loading="lazy"><small>Materiales de construcción</small></a>
+        <a class="logo-card" href="https://cuprum.com/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-cuprum-cropped.jpg" alt="Cuprum" width="380" height="160" loading="lazy"><small>Aluminio arquitectónico</small></a>
+        <a class="logo-card" href="https://www.millerwelds.com/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-miller.svg" alt="Miller Electric" width="49" height="20" loading="lazy"><small>Equipo de soldadura</small></a>
+        <a class="logo-card" href="https://glasscaribe.com/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-glass-caribe.svg" alt="Glass Caribe" width="112" height="64" loading="lazy"><small>Vidrio arquitectónico</small></a>
+        <a class="logo-card" href="https://aceroform.com/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-aceroform.jpg" alt="Aceroform" width="720" height="393" loading="lazy"><small>Productos de acero</small></a>
+        <a class="logo-card" href="https://casadelherrero.mx/" target="_blank" rel="noopener" data-reveal><img src="assets/logo-casa-herrero.svg" alt="La Casa del Herrero" width="85" height="44" loading="lazy"><small>Insumos de herrería</small></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="coverage" id="cobertura" aria-labelledby="coverage-title">
+    <div class="shell coverage-layout">
+      <div>
+        <p class="eyebrow" data-reveal>07 · Cobertura y gestión</p>
+        <h2 class="section-title" id="coverage-title" data-reveal>La obra avanza cuando todo está <span class="accent">coordinado.</span></h2>
+      </div>
+      <div class="coverage-copy" data-reveal>
+        <p>Gestionamos licencias, permisos municipales, dictámenes estructurales y coordinación de obra para acompañar la ejecución en Tulum, Mérida y el sureste.</p>
+        <div class="place-list"><span>Tulum</span><span>Mérida</span><span>Quintana Roo</span><span>Yucatán</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contacto" aria-labelledby="contact-title">
+    <div class="contact-layout">
+      <div class="contact-copy">
+        <p class="eyebrow" data-reveal>08 · Iniciar proyecto</p>
+        <h2 class="section-title" id="contact-title" data-reveal>Hablemos de lo que necesitas <span class="accent">construir.</span></h2>
+        <p data-reveal>Cuéntanos el tipo de obra, ubicación y tiempo estimado. Prepararemos el siguiente paso contigo.</p>
+        <div class="contact-lines" data-reveal>
+          <a href="https://wa.me/529995690047?text=Hola%20Edgar%2C%20me%20interesa%20cotizar%20con%20HEMCA." target="_blank" rel="noopener">Edgar · 999 569 0047</a>
+          <a href="https://wa.me/529999490874?text=Hola%20Marco%2C%20me%20interesa%20cotizar%20con%20HEMCA." target="_blank" rel="noopener">Marco · 999 949 0874</a>
+          <a href="mailto:ventas@hemca.com.mx">ventas@hemca.com.mx</a>
+          <a href="https://www.facebook.com/hemcatulum/" target="_blank" rel="noopener">Facebook · @hemcatulum</a>
+        </div>
+      </div>
+
+      <div class="quote">
+        <h3 data-reveal>Cotización por WhatsApp</h3>
+        <form id="quote-form" action="https://wa.me/529995690047" method="get" target="_blank" data-reveal>
+          <div class="form-grid">
+            <div class="field"><label for="q-name">Nombre</label><input id="q-name" name="name" autocomplete="name" required></div>
+            <div class="field"><label for="q-phone">Teléfono</label><input id="q-phone" name="phone" type="tel" autocomplete="tel" required></div>
+            <div class="field"><label for="q-type">Tipo de proyecto</label><select id="q-type" name="type" required><option value="">Selecciona</option><option>Estructura metálica</option><option>Aluminio / cancelería</option><option>Herrería</option><option>Obra civil</option><option>Mantenimiento</option><option>Proyecto integral</option></select></div>
+            <div class="field"><label for="q-place">Ubicación</label><input id="q-place" name="place" placeholder="Ciudad o zona" required></div>
+            <div class="field full"><label for="q-detail">Detalles</label><textarea id="q-detail" name="detail" placeholder="Dimensiones, tiempos o necesidades principales"></textarea></div>
+          </div>
+          <button class="btn btn-primary" type="submit">Enviar a WhatsApp <span aria-hidden="true">↗</span></button>
+          <p class="form-note">El botón abre una conversación con Edgar y prepara el mensaje con tus datos. No almacenamos información en esta página.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="shell footer-layout">
+    <strong>HE<span>MCA</span> · Multi Servicios</strong>
+    <p>Una división de Corporativo Piñeiro Medina.<br>© <span id="year">2026</span> Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<a class="wa-float" href="https://wa.me/529995690047?text=Hola%20Edgar%2C%20me%20interesa%20cotizar%20con%20HEMCA." target="_blank" rel="noopener" aria-label="Cotizar por WhatsApp con Edgar">WA</a>
+
+<script>
+(function () {
+  "use strict";
+
+  var WA_NUMBER = "529995690047";
+
+  /* Cada bloque va aislado: si uno falla (por ejemplo porque un elemento
+     no existe), los demás siguen funcionando. */
+  function safe(fn) { try { fn(); } catch (e) { /* silencioso en producción */ } }
+
+  /* ---------- 1. Barra de progreso + etapas por scroll ---------- */
+  safe(function () {
+    var progress = document.getElementById("progress");
+    var layout = document.getElementById("story-layout");
+    var stage = document.getElementById("story-stage");
+    var cards = [].slice.call(document.querySelectorAll("[data-story]"));
+    var images = [].slice.call(document.querySelectorAll("[data-story-image]"));
+    var dots = [].slice.call(document.querySelectorAll(".chapter-dot"));
+    var ticking = false;
+
+    function setActive(list, i) {
+      for (var n = 0; n < list.length; n++) {
+        list[n].classList.toggle("active", n === i);
+      }
+    }
+
+    function update() {
+      ticking = false;
+
+      if (progress) {
+        var max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        var done = Math.min(1, Math.max(0, window.scrollY / max));
+        progress.style.transform = "scaleX(" + done + ")";
+      }
+
+      if (layout && cards.length) {
+        /* El recorrido útil es la altura del bloque menos la del escenario
+           pegado (sticky). Así cada etapa ocupa exactamente un tramo igual. */
+        var stageHeight = stage ? stage.offsetHeight : window.innerHeight;
+        var travel = Math.max(1, layout.offsetHeight - stageHeight);
+        var local = Math.min(1, Math.max(0, -layout.getBoundingClientRect().top / travel));
+        var i = Math.min(cards.length - 1, Math.floor(local * cards.length));
+        setActive(cards, i);
+        setActive(images, i);
+        setActive(dots, i);
+      }
+    }
+
+    function onScroll() {
+      if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+  });
+
+  /* ---------- 2. Aparición de bloques al entrar en pantalla ---------- */
+  safe(function () {
+    var reveals = [].slice.call(document.querySelectorAll("[data-reveal]"));
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce || !("IntersectionObserver" in window)) {
+      reveals.forEach(function (el) { el.classList.add("visible"); });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+
+    reveals.forEach(function (el) { observer.observe(el); });
+  });
+
+  /* ---------- 3. Formulario -> WhatsApp ---------- */
+  safe(function () {
+    var form = document.getElementById("quote-form");
+    if (!form) return;
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      var data = new FormData(form);
+      var detail = (data.get("detail") || "").toString().trim();
+
+      /* Se filtran sólo las líneas opcionales vacías; el salto de línea en
+         blanco tras el saludo se añade después, para que no se pierda. */
+      var lines = [
+        "Nombre: " + data.get("name"),
+        "Teléfono: " + data.get("phone"),
+        "Proyecto: " + data.get("type"),
+        "Ubicación: " + data.get("place"),
+        detail ? "Detalles: " + detail : null
+      ].filter(function (line) { return line; });
+
+      var message = "Hola Edgar, me interesa cotizar un proyecto con HEMCA.\n\n" + lines.join("\n");
+
+      var url = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(message);
+
+      /* Si el navegador bloquea la ventana emergente, navegamos en la misma
+         pestaña en lugar de dejar al usuario sin respuesta. */
+      var win = window.open(url, "_blank", "noopener");
+      if (!win) window.location.href = url;
+    });
+  });
+
+  /* ---------- 4. Año del pie de página ---------- */
+  safe(function () {
+    var year = document.getElementById("year");
+    if (year) year.textContent = String(new Date().getFullYear());
+  });
+})();
+</script>
+</body>
+</html>

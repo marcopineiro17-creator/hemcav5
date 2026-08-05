@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="HEMCA">
+  <rect width="64" height="64" fill="#07131f"/>
+  <rect x="0" y="55" width="64" height="9" fill="#f26422"/>
+  <g fill="#fff" font-family="Archivo, Arial, Helvetica, sans-serif" font-weight="800" font-size="30" letter-spacing="-2">
+    <text x="32" y="40" text-anchor="middle">HE</text>
+  </g>
+</svg>
