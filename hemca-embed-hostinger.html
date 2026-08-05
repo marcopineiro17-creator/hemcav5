@@ -107,10 +107,13 @@
     .hemca .story { position: relative; background: var(--ink); color: #fff; }
     .hemca .story-head { padding-block: clamp(90px, 13vw, 180px) 50px; }
     .hemca .story-head .section-title { max-width: 1050px; }
-    /* La altura total define el recorrido; el escenario mide una pantalla. *//* Sin sticky: el bloque mide lo suyo y las etapas se turnan por tiempo/clic.
-       Dentro de un constructor no hay scroll de ventana en el que apoyarse. */
-    .hemca .story-layout { position: relative; }
-    .hemca .story-stage { position: relative; height: clamp(560px, 74vh, 820px); overflow: hidden; }
+    /* Anclaje por JS en lugar de position:sticky.
+       Los contenedores del constructor (transform, overflow) anulan el sticky.
+       Aqui el escenario se mueve con translateY calculado desde
+       getBoundingClientRect, que si es fiable en cualquier contenedor.
+       La altura del bloque ES el recorrido: 4 pantallas, una por etapa. */
+    .hemca .story-layout { position: relative; height: 400vh; height: 400svh; }
+    .hemca .story-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; height: 100svh; overflow: hidden; will-change: transform; }
     .hemca .story-media { position: absolute; inset: 0; }
     .hemca .story-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 19, 31, .95) 0%, rgba(7, 19, 31, .69) 44%, rgba(7, 19, 31, .12) 76%), linear-gradient(0deg, rgba(7, 19, 31, .65), transparent 40%); }
     .hemca .story-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; filter: saturate(.7) contrast(1.05); transition: opacity .55s ease; }
@@ -278,7 +281,6 @@
     .hemca .metric strong { font-size: 2.5rem; }
     .hemca .metric span { font-size: .57rem; }
     .hemca .story-head { padding-bottom: 70px; }
-    .hemca .story-stage { height: clamp(520px, 82vh, 700px); }
     .hemca .story-media::after { background: linear-gradient(0deg, rgba(7, 19, 31, .98) 0%, rgba(7, 19, 31, .72) 47%, rgba(7, 19, 31, .12) 78%); }
     .hemca .story-image.stage-resolver { object-position: 27% center; }
     .hemca .story-image.stage-fabricar { object-position: 63% center; }
@@ -408,10 +410,10 @@
         </div>
 
         <div class="story-chapters" role="tablist" aria-label="Etapas del método">
-          <button class="chapter-dot active" type="button" role="tab" aria-selected="true" aria-controls="etapa-0" aria-label="Ver etapa 01"></button>
-          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-1" aria-label="Ver etapa 02"></button>
-          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-2" aria-label="Ver etapa 03"></button>
-          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-3" aria-label="Ver etapa 04"></button>
+          <button class="chapter-dot active" type="button" role="tab" aria-selected="true" aria-controls="etapa-0" aria-label="Ir a la etapa 01"></button>
+          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-1" aria-label="Ir a la etapa 02"></button>
+          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-2" aria-label="Ir a la etapa 03"></button>
+          <button class="chapter-dot" type="button" role="tab" aria-selected="false" aria-controls="etapa-3" aria-label="Ir a la etapa 04"></button>
         </div>
       </div>
     </div>
@@ -589,59 +591,87 @@
   if (!raiz) return;
 
   var WA = "529995690047";
-  var PAUSA = 5200;
   var lento = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Cada bloque va aislado: si uno falla, los demas siguen funcionando. */
   function safe(fn) { try { fn(); } catch (e) {} }
 
-  /* ---------- 1. Etapas: por tiempo y por clic ----------
-     Antes dependian del scroll de la ventana con position:sticky. Dentro del
-     constructor eso no funciona (sus contenedores anulan el sticky) y dejaba
-     un hueco vacio de varias pantallas. Ahora el bloque mide lo suyo. */
+  /* ---------- 1. Etapas ancladas y avanzando con el scroll ----------
+     El original usaba position:sticky, que los contenedores del constructor
+     anulan (crean bloque contenedor con transform u overflow) y dejaban un
+     hueco vacio de varias pantallas.
+
+     Aqui el anclaje se calcula: getBoundingClientRect devuelve coordenadas
+     de ventana correctas dentro de cualquier contenedor, y el escenario se
+     mueve con translateY. El resultado es identico al sticky, pero no
+     depende de que el navegador pueda aplicarlo. */
   safe(function () {
-    var escenario = raiz.querySelector(".story-stage");
+    var bloque    = raiz.querySelector("#story-layout");
+    var escenario = raiz.querySelector("#story-stage");
     var fichas  = [].slice.call(raiz.querySelectorAll("[data-story]"));
     var fotos   = [].slice.call(raiz.querySelectorAll("[data-story-image]"));
     var botones = [].slice.call(raiz.querySelectorAll(".chapter-dot"));
-    if (!escenario || !fichas.length) return;
+    if (!bloque || !escenario || !fichas.length) return;
 
-    var i = 0, reloj = null;
+    var actual = -1, pendiente = false;
 
     function marcar(lista, n) {
       for (var k = 0; k < lista.length; k++) lista[k].classList.toggle("active", k === n);
     }
-    function mostrar(n) {
-      i = (n + fichas.length) % fichas.length;
+
+    function pintar() {
+      pendiente = false;
+
+      var caja = bloque.getBoundingClientRect();
+      var altoEscenario = escenario.offsetHeight;
+      /* Recorrido util: lo que el bloque sobresale por debajo del escenario. */
+      var recorrido = Math.max(1, bloque.offsetHeight - altoEscenario);
+
+      /* Mientras el bloque no llega arriba, el escenario descansa en su sitio;
+         cuando lo pasa, se desplaza para quedarse pegado al borde superior. */
+      var desfase = Math.min(Math.max(-caja.top, 0), recorrido);
+      escenario.style.transform = "translateY(" + desfase + "px)";
+
+      var avance = desfase / recorrido;
+      var i = Math.min(fichas.length - 1, Math.floor(avance * fichas.length));
+      if (i === actual) return;
+      actual = i;
+
       marcar(fichas, i); marcar(fotos, i); marcar(botones, i);
       for (var k = 0; k < botones.length; k++) {
         botones[k].setAttribute("aria-selected", k === i ? "true" : "false");
       }
     }
-    function parar() { if (reloj) { clearInterval(reloj); reloj = null; } }
-    function andar() { if (lento) return; parar(); reloj = setInterval(function () { mostrar(i + 1); }, PAUSA); }
 
+    function alScroll() {
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(pintar); }
+    }
+
+    window.addEventListener("scroll", alScroll, { passive: true });
+    window.addEventListener("resize", alScroll, { passive: true });
+
+    /* Los indicadores llevan el scroll al tramo de su etapa. */
     botones.forEach(function (b, k) {
-      b.addEventListener("click", function () { mostrar(k); andar(); });
+      b.addEventListener("click", function () {
+        var recorrido = Math.max(1, bloque.offsetHeight - escenario.offsetHeight);
+        var arriba = bloque.getBoundingClientRect().top + window.pageYOffset;
+        var destino = arriba + ((k + 0.5) / fichas.length) * recorrido;
+        window.scrollTo({ top: destino, behavior: lento ? "auto" : "smooth" });
+      });
       b.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); mostrar(i + 1); botones[i].focus(); andar(); }
-        if (e.key === "ArrowLeft"  || e.key === "ArrowUp")   { e.preventDefault(); mostrar(i - 1); botones[i].focus(); andar(); }
+        var salto = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1
+                  : (e.key === "ArrowLeft"  || e.key === "ArrowUp")   ? -1 : 0;
+        if (!salto) return;
+        e.preventDefault();
+        var n = Math.min(fichas.length - 1, Math.max(0, k + salto));
+        botones[n].focus(); botones[n].click();
       });
     });
 
-    escenario.addEventListener("mouseenter", parar);
-    escenario.addEventListener("mouseleave", andar);
-    escenario.addEventListener("focusin", parar);
-    escenario.addEventListener("focusout", andar);
-
-    /* Solo avanza mientras el bloque esta a la vista. */
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(function (e) {
-        if (e[0].isIntersecting) { andar(); } else { parar(); }
-      }, { threshold: 0.25 }).observe(escenario);
-    } else {
-      andar();
-    }
+    pintar();
+    /* Las fuentes y las fotos cambian las alturas: recalcular al terminar. */
+    window.addEventListener("load", pintar);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(pintar);
   });
 
   /* ---------- 2. Aparicion de bloques al entrar en pantalla ---------- */
@@ -660,7 +690,7 @@
   });
 
   /* ---------- 3. Enlaces internos con desplazamiento suave ----------
-     Sustituye a scroll-behavior en la raiz del documento, que aqui no se debe tocar. */
+     Sustituye a scroll-behavior en la raiz del documento, que aqui no se toca. */
   safe(function () {
     raiz.addEventListener("click", function (ev) {
       var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
