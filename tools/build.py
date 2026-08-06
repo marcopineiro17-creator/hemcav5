@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Construye los dos bloques para el contenedor de codigo de Hostinger."""
-import re, sys
+import re, sys, subprocess, tempfile, os
 
 MOTOR = open('/tmp/hb-engine.js', encoding='utf-8').read().strip()
+TEMPRANO = open('/tmp/temprano.js', encoding='utf-8').read().strip()
+CABECERA = open('/tmp/cabecera.js', encoding='utf-8').read().strip()
 
 def inserta_motor(js):
     ind = '\n'.join(('    ' + l) if l.strip() else l for l in MOTOR.split('\n'))
@@ -13,6 +15,14 @@ def inserta_motor(js):
 def revisa(nombre, s):
     bajo = s.lower()
     problemas = []
+    # Sintaxis de cada bloque de script. Un error aqui no da error visible en
+    # la pagina: el motor simplemente no arranca y las animaciones no existen.
+    for i, js in enumerate(re.findall(r'<script>(.*?)</script>', s, re.S)):
+        f = os.path.join(tempfile.gettempdir(), 'chk_%s_%d.js' % (nombre.split('.')[0], i))
+        open(f, 'w', encoding='utf-8').write(js)
+        r = subprocess.run(['node', '--check', f], capture_output=True, text=True)
+        if r.returncode:
+            problemas.append('JS invalido en el bloque %d: %s' % (i, r.stderr.split(chr(10))[2].strip()[:70]))
     if s.count('<style>') != s.count('</style>'): problemas.append('etiquetas <style> desparejadas')
     if s.count('<script') != s.count('</script>'): problemas.append('etiquetas <script> desparejadas')
     for t in ['<!doctype', '<html', '<head', '<body']:
@@ -57,11 +67,12 @@ def hemca():
     jsonld = re.search(r'<script type="application/ld\+json">.*?</script>', src, re.S).group(0)
     js = inserta_motor(open('/tmp/embed_js.txt', encoding='utf-8').read().strip())
 
-    out = ('<!-- HEMCA | bloque para el contenedor de codigo de Hostinger.\n'
+    out = (CABECERA + '\n'
+           '<!-- HEMCA | bloque para el contenedor de codigo de Hostinger.\n'
            '     Todo el CSS esta acotado bajo .hemca para no afectar al resto de la pagina.\n'
            '     No lleva etiquetas de documento: se pega tal cual en el bloque de codigo. -->\n'
            '<style>\n' + fuente + '\n' + css + '\n</style>\n\n<div class="hemca">\n'
-           '<script>document.currentScript.parentNode.classList.add("js-on");</script>\n'
+           + TEMPRANO.replace('if (!r) return;', 'if (!r) return;\n  r.classList.add("js-on");') + '\n'
            + cuerpo.strip() + '\n' + jsonld + '\n</div>\n' + js + '\n')
     open('/home/user/hemcav5/hemca-embed-hostinger.html', 'w', encoding='utf-8').write(out)
     return revisa('hemca-embed-hostinger.html', out)
@@ -136,6 +147,11 @@ def portafolio():
   #hbp .story-step{grid-template-columns:28px 1fr;gap:10px;padding-inline:2px}
 }
 </style>""", 1)
+
+    # El guion temprano va justo despues de abrir el contenedor.
+    src = src.replace('<div id="hbp">', '<div id="hbp">\n' + TEMPRANO, 1)
+    src = CABECERA + '\n' + src
+    assert '--vh-real' in src.split('<style>')[0], 'el guion temprano no quedo antes del CSS'
 
     js = inserta_motor(open('/tmp/portfolio_js.txt', encoding='utf-8').read().strip())
     src = re.sub(r"<script>\n\(function\(\)\{\n  'use strict';.*?</script>", js, src, flags=re.S)

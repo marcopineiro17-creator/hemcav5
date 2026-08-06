@@ -67,11 +67,7 @@ function hbEngine(root, opts) {
     try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
   }
 
-  /* ---------- altura del iframe = altura del contenido ----------
-     Con dos frenos. Si alguna medida en el CSS depende de la altura del
-     viewport (vh/svh), crecer el iframe agranda su propio viewport y se
-     entra en bucle: mas alto -> mas contenido -> mas alto. Por eso hay
-     un techo duro y un detector de crecimiento sostenido. */
+  /* ---------- aviso de altura al anfitrion ---------- */
   var TECHO = 60000;
   var ultimaAltura = 0, subidas = 0, congelado = false;
   function ajustarMarco() {
@@ -92,14 +88,16 @@ function hbEngine(root, opts) {
       return;
     }
     ultimaAltura = alto;
-    /* Mismo origen: lo arreglamos nosotros y se acaba el scroll interno. */
-    if (marco) {
-      try {
-        marco.style.height = alto + "px";
-        marco.style.minHeight = alto + "px";
-        marco.setAttribute("scrolling", "no");
-      } catch (e) {}
-    }
+    /* NO se escribe la altura del iframe.
+       El constructor tambien la gestiona; si los dos escribimos el mismo
+       valor entramos en una pugna: el iframe oscila entre dos alturas (eso
+       se ve como vibracion) y puede quedarse en un valor mayor que el
+       contenido (eso se ve como una franja blanca interminable al final).
+       Aqui solo se AVISA de la altura; quien decide es el anfitrion.
+       Para que el contenido no quede recortado, lo que si es nuestro es
+       --vh-real: se fija antes del primer pintado (ver el guion que
+       acompana al bloque), asi ninguna medida en svh se evalua nunca
+       contra el viewport del iframe. */
     /* Y avisamos, por si el anfitrion prefiere gestionarlo el. */
     try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
   }
@@ -195,6 +193,7 @@ function hbEngine(root, opts) {
       continuos.length = 0;
       if (opts.alRendirse) { try { opts.alRendirse(); } catch (e) {} }
       seguirAltura();
+      diagnostico();
       return;
     }
 
@@ -224,6 +223,7 @@ function hbEngine(root, opts) {
 
     /* Red de seguridad final: nada se queda invisible. */
     setTimeout(mostrarTodo, opts.limite || 9000);
+    diagnostico();
   }
 
   /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
@@ -239,7 +239,40 @@ function hbEngine(root, opts) {
     });
   }
 
+  /* Diagnostico. Anadir ?hbdebug=1 a la URL publicada muestra un recuadro
+     con lo que el motor esta midiendo de verdad. Es la forma rapida de
+     saber que hace el bloque dentro del Hostinger real. */
+  /* Diagnostico. Anadir ?hbdebug=1 a la URL publicada muestra un recuadro
+     con lo que el motor esta midiendo de verdad. Es la forma rapida de saber
+     que hace el bloque dentro del Hostinger real. */
+  function diagnostico() {
+    var on = false;
+    try { on = /[?&]hbdebug=1/.test(location.search); } catch (e) {}
+    if (!on) { try { on = /[?&]hbdebug=1/.test(padre.location.search); } catch (e) {} }
+    if (!on || !document.body) return;
+    var caja = document.createElement('div');
+    caja.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:340px;' +
+      'padding:10px 12px;background:#0b0b14;color:#9ecfff;border:1px solid #4466ff;' +
+      'border-radius:9px;font:11px/1.5 monospace;white-space:pre-wrap;pointer-events:none';
+    document.body.appendChild(caja);
+    setInterval(function () {
+      var am = 0, ac = Math.round(root.getBoundingClientRect().height);
+      try { am = marco ? Math.round(marco.getBoundingClientRect().height) : 0; } catch (e) {}
+      var lineas = [
+        'motor hb',
+        'en iframe: ' + enMarco + (enMarco ? (marco ? ' (padre legible)' : ' (padre NO legible)') : ''),
+        'viewport real: ' + Math.round(altoVista()) + 'px',
+        'desfase del iframe: ' + Math.round(desfaseMarco()) + 'px',
+        'alto del contenido: ' + ac + 'px',
+        'alto del iframe: ' + am + 'px' + (am && Math.abs(am - ac) > 40 ? '  << DESAJUSTE' : ''),
+        'pendientes: ' + entradas.length + '   continuos: ' + continuos.length
+      ];
+      caja.textContent = lineas.join(String.fromCharCode(10));
+    }, 500);
+  }
+
   return {
+    diagnostico: diagnostico,
     alEntrar: alEntrar,
     continuo: continuo,
     pedir: pedir,
