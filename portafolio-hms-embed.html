@@ -557,34 +557,59 @@
 #hbp.sin-scroll .phone-stage{transform:none!important}
 
 /* --------------------------------------------------------------------
-   MOVIL: el telefono anclado y CENTRADO, a buen tamano, por encima del
-   texto. Pequeno y a un lado casi no se notaba; en el flujo te lo pasabas
-   y no veias el cambio. El texto corre por detras: el telefono manda en el
-   z-index, asi que siempre se ve cambiar.
+   MOVIL: filas alternadas, sin anclaje.
+   El teléfono anclado obligaba a que el texto pasara por detrás y no se
+   leyera, y el anclaje por JS siempre va un fotograma por detrás del scroll
+   del navegador: eso es el temblor. Aquí cada caso es una fila normal con su
+   teléfono al lado, alternando el lado. No hay recorrido reservado, ni nada
+   que anclar, ni nada que pueda temblar.
    -------------------------------------------------------------------- */
 @media(max-width:760px){
   #hbp .story-layout{display:block;position:relative}
-  #hbp .phone-rail{position:absolute!important;inset:0;min-height:0;
-    pointer-events:none;z-index:6;display:block}
+  /* El carril deja de cubrir la seccion: pasa a ser la primera fila. */
+  #hbp .phone-rail{position:relative!important;inset:auto;min-height:0;
+    pointer-events:auto;z-index:1;display:flex;justify-content:center;margin-bottom:8px}
   #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
-    padding:0;display:flex;justify-content:center;align-items:flex-start}
-  #hbp .phone{width:min(230px,62vw)}
-  #hbp .phone-aura{width:300px;height:300px;opacity:.42}
-  #hbp .phone-caption{position:absolute;left:50%;right:auto;top:auto;bottom:-14px;
-    transform:translateX(-50%);min-width:0;white-space:nowrap;padding:9px 14px}
-  /* Los capitulos empiezan bajo el telefono y su fondo solo se vuelve opaco
-     en la parte baja, para no borrarlo cuando pasan por detras. */
-  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .6)!important;position:relative;z-index:2}
-  #hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .66);align-content:end;
-    padding:44px 6px 40px;
-    background:linear-gradient(transparent,rgba(7,7,12,.5) 32%,rgba(7,7,12,.9) 60%,rgba(7,7,12,.99))}
-  #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
+    padding:0;display:flex;justify-content:center;align-items:flex-start;transform:none!important}
+  #hbp .phone{width:min(196px,54vw)}
+  #hbp .phone-aura{width:250px;height:250px;opacity:.36}
+  #hbp .phone-caption{position:relative;left:auto;right:auto;top:auto;bottom:auto;
+    transform:none;margin-top:14px;min-width:0;align-self:center}
+  /* Los capitulos: filas normales, sin fondo que tape nada. */
+  #hbp .story-steps{padding-top:0!important;position:relative;z-index:2;gap:6px}
+  #hbp .story-step{min-height:0;background:none;padding:30px 4px;align-content:start}
+  #hbp .story-step h3{font-size:clamp(1.9rem,8.5vw,2.8rem);max-width:none}
   #hbp .story-step p{font-size:.95rem}
+  /* Miniatura por fila: cada capitulo lleva su propia imagen al lado, y va
+     alternando de lado. Asi se ve el caso sin depender del scroll. */
+  #hbp .story-step{grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:start}
+  #hbp .story-step .step-no{grid-column:1;grid-row:1;padding-top:0;text-align:center}
+  #hbp .story-step>div{grid-column:2}
+  #hbp .story-step::before{content:'';grid-column:1;grid-row:2;width:96px;height:170px;
+    border-radius:14px;border:1px solid rgba(255,255,255,.16);background-size:cover;
+    background-position:center;box-shadow:0 12px 26px rgba(0,0,0,.45)}
+  #hbp .story-step:nth-child(1)::before{background-image:var(--miniatura-1)}
+  #hbp .story-step:nth-child(2)::before{background-image:var(--miniatura-2)}
+  #hbp .story-step:nth-child(3)::before{background-image:var(--miniatura-3)}
+  #hbp .story-step:nth-child(4)::before{background-image:var(--miniatura-4)}
+  /* Alterna el lado en las pares. */
+  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 96px}
+  #hbp .story-step:nth-child(even) .step-no{grid-column:2}
+  #hbp .story-step:nth-child(even)>div{grid-column:1;grid-row:1/3}
+  #hbp .story-step:nth-child(even)::before{grid-column:2;grid-row:2}
 }
 @media(max-width:480px){
-  #hbp .phone{width:min(206px,60vw)}
-  #hbp .story-step{grid-template-columns:30px 1fr;gap:11px;padding-inline:2px}
+  #hbp .phone{width:min(178px,52vw)}
+  #hbp .story-step{grid-template-columns:82px minmax(0,1fr);gap:12px;padding-inline:2px}
+  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 82px}
+  #hbp .story-step::before{width:82px;height:146px}
 }
+@media(max-width:760px){#hbp{
+  --miniatura-1:url(https://assets.zyrosite.com/5MikVliRfr5rWuzU/disea--o-sin-tatulo-53-vN1KE07wACxspxiO.png);
+  --miniatura-2:url(https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.17.59-n2VsxuQs9ZbQeKl6.jpeg);
+  --miniatura-3:url(https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.18.43-1yqS8jB9sO4B6kHn.jpeg);
+  --miniatura-4:url(https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.19.16-rgYl3JeK7cmFn8HB.jpeg);
+}}
 
 /* --------------------------------------------------------------------
    COSTE DE PINTADO
@@ -599,10 +624,14 @@
 #hbp .phone-aura{filter:blur(46px)}
 #hbp .liquid{backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
 #hbp .nav{backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%)}
-/* El teléfono y su pantalla viven en su propia capa: al desplazarse no
-   obligan a repintar el fondo de la seccion. */
-#hbp .phone-stage{contain:paint}
+/* Solo la pantalla del telefono se aisla. En .phone-stage NO se puede:
+   contain:paint recorta lo que sobresale, y la tarjeta con el nombre del
+   proyecto sobresale a proposito -- se veia cortada. */
 #hbp .story-slides{contain:paint}
+/* Dentro del iframe el boton propio no puede ser flotante (el iframe mide lo
+   que su contenido, asi que position:fixed queda anclado al documento). El
+   runtime global crea el real fuera; aqui se oculta para no duplicarlo. */
+#hbp.hb-en-marco .wa-float{display:none!important}
 /* Las entradas duran menos y recorren menos distancia. Animar opacidad sobre
    un panel con backdrop-filter obliga a recomponer el desenfoque en cada
    fotograma de la transicion: menos fotogramas, menos picos. Y mientras el
@@ -691,6 +720,12 @@
       /* Legible = podemos medir de verdad. Es la condicion para animar. */
       var legible = !enMarco || !!marco;
 
+      /* Marca el contenedor cuando vive dentro de un iframe. El CSS la usa para
+         ocultar el boton propio de WhatsApp: dentro del iframe no puede flotar
+         (el iframe mide lo que su contenido), y el runtime global crea el real
+         fuera. Se aplica aqui, que es donde se conoce el contexto. */
+      if (enMarco) { try { root.classList.add("hb-en-marco"); } catch (e) {} }
+
       /* ---------- alto del viewport REAL como variable CSS ----------
          Al fijar la altura del iframe a la de su contenido, el viewport del
          iframe PASA A SER esa altura: 100svh dejaria de valer una pantalla y
@@ -742,8 +777,16 @@
            --vh-real: se fija antes del primer pintado (ver el guion que
            acompana al bloque), asi ninguna medida en svh se evalua nunca
            contra el viewport del iframe. */
-        /* Y avisamos, por si el anfitrion prefiere gestionarlo el. */
-        try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
+        /* Se avisa con el tipo que el codigo global de CPM SI escucha.
+           Su runtime reconoce "hummingbird:height" y al recibirlo llama a
+           resizeFrame, que ademas colapsa la altura reservada del bloque de
+           Hostinger (cleanContainer sobre grid-embed, layout-element,
+           block-layout y section). Eso es lo que elimina la franja blanca.
+           Antes se emitia "hb:height", un tipo que nadie atendia. */
+        try {
+          window.parent.postMessage({ type: "hummingbird:height", height: alto,
+                                      whatsappUrl: opts.whatsapp || "" }, "*");
+        } catch (e) {}
       }
 
       /* El documento del iframe es blanco por omision. Si el iframe queda un
@@ -864,6 +907,26 @@
         pintarFondo();
         ajustarMarco();
 
+        /* Saludo al runtime global: al recibir "hummingbird:ready" crea el boton
+           flotante de WhatsApp FUERA del iframe (dentro no puede ser flotante de
+           verdad) y pide la altura. */
+        if (enMarco) {
+          try {
+            window.parent.postMessage({ type: "hummingbird:ready",
+                                        whatsappUrl: opts.whatsapp || "" }, "*");
+          } catch (e) {}
+          window.addEventListener("message", function (ev) {
+            var d = ev && ev.data;
+            if (d && (d.type === "hummingbird:request-height" || d.type === "cpm-divisiones:request-height")) {
+              ultimaAltura = 0;      /* fuerza el reenvio */
+              programarAjuste();
+            }
+          });
+          [300, 900, 2000].forEach(function (ms) {
+            setTimeout(function () { ultimaAltura = 0; programarAjuste(); }, ms);
+          });
+        }
+
         /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
         if (!legible || lento) {
           mostrarTodo();
@@ -972,6 +1035,9 @@
     var M = hbEngine(root, {
       claseVisible: 'is-visible',
       limite: 9000,
+      /* El runtime global crea con esto el boton flotante REAL, fuera del
+         iframe. Dentro no puede flotar: el iframe mide lo que su contenido. */
+      whatsapp: 'https://wa.me/529999490874?text=Hola%20Hummingbird%2C%20vi%20su%20portafolio%20y%20quiero%20platicar%20sobre%20mi%20proyecto.',
       /* Sin medida fiable (iframe de otro origen): nada de scroll, todo
          visible, y el carrusel del teléfono pasa a tiempo y clic. */
       alRendirse: function () { root.classList.add('sin-scroll'); porTiempo(); }
@@ -1145,7 +1211,9 @@
         /* En móvil el teléfono va en el flujo (ver el CSS): nada que anclar.
            Anclarlo obligaba a superponer el texto, y el fondo sólido que el
            texto necesita para ser legible acababa tapándolo por completo. */
-        var movil = window.innerWidth <= 760;
+        /* En movil la seccion es de filas alternadas: no hay anclaje. */
+        if (window.innerWidth <= 760) { M.escribe(stage, 'transform', ''); return; }
+        var movil = false;
         /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
            la rejilla completa: con la rejilla el recorrido no coincidía y el
            teléfono se iba quedando abajo. */

@@ -125,6 +125,10 @@ acotado += """
     .hemca.etapas-tiempo .story-layout { height: auto; }
     .hemca.etapas-tiempo .story-stage { position: relative; height: clamp(560px, 74vh, 820px); transform: none !important; }
 
+    /* Dentro del iframe el boton propio no puede flotar de verdad: el runtime
+       global de CPM crea el real fuera. Aqui se oculta para no duplicarlo. */
+    .hemca.hb-en-marco .wa-float { display: none !important; }
+
     /* Respaldo para navegadores sin overflow:clip (Safari anterior a 16). */
     @supports not (overflow: clip) {
       .hemca { overflow-x: hidden; }

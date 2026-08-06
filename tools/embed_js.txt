@@ -23,6 +23,9 @@
     var M = hbEngine(raiz, {
       claseVisible: "visible",
       limite: 9000,
+      /* El runtime global crea con esto el boton flotante REAL, fuera del
+         iframe. Dentro no puede flotar: el iframe mide lo que su contenido. */
+      whatsapp: "https://wa.me/" + WA + "?text=Hola%20Edgar%2C%20me%20interesa%20cotizar%20con%20HEMCA.",
       /* Sin medida fiable (iframe de otro origen) se renuncia al scroll:
          las etapas pasan a turnarse por tiempo y clic. */
       alRendirse: function () { etapasPorTiempo(); }
@@ -163,6 +166,7 @@
       if (y) y.textContent = String(new Date().getFullYear());
     });
 
+    if (M.enMarco) raiz.classList.add("en-marco");
     M.arrancar();
   }
 })();

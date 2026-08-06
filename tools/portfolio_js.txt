@@ -29,6 +29,9 @@
     var M = hbEngine(root, {
       claseVisible: 'is-visible',
       limite: 9000,
+      /* El runtime global crea con esto el boton flotante REAL, fuera del
+         iframe. Dentro no puede flotar: el iframe mide lo que su contenido. */
+      whatsapp: 'https://wa.me/529999490874?text=Hola%20Hummingbird%2C%20vi%20su%20portafolio%20y%20quiero%20platicar%20sobre%20mi%20proyecto.',
       /* Sin medida fiable (iframe de otro origen): nada de scroll, todo
          visible, y el carrusel del teléfono pasa a tiempo y clic. */
       alRendirse: function () { root.classList.add('sin-scroll'); porTiempo(); }
@@ -202,7 +205,9 @@
         /* En móvil el teléfono va en el flujo (ver el CSS): nada que anclar.
            Anclarlo obligaba a superponer el texto, y el fondo sólido que el
            texto necesita para ser legible acababa tapándolo por completo. */
-        var movil = window.innerWidth <= 760;
+        /* En movil la seccion es de filas alternadas: no hay anclaje. */
+        if (window.innerWidth <= 760) { M.escribe(stage, 'transform', ''); return; }
+        var movil = false;
         /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
            la rejilla completa: con la rejilla el recorrido no coincidía y el
            teléfono se iba quedando abajo. */

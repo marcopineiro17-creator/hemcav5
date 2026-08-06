@@ -52,6 +52,12 @@ function hbEngine(root, opts) {
   /* Legible = podemos medir de verdad. Es la condicion para animar. */
   var legible = !enMarco || !!marco;
 
+  /* Marca el contenedor cuando vive dentro de un iframe. El CSS la usa para
+     ocultar el boton propio de WhatsApp: dentro del iframe no puede flotar
+     (el iframe mide lo que su contenido), y el runtime global crea el real
+     fuera. Se aplica aqui, que es donde se conoce el contexto. */
+  if (enMarco) { try { root.classList.add("hb-en-marco"); } catch (e) {} }
+
   /* ---------- alto del viewport REAL como variable CSS ----------
      Al fijar la altura del iframe a la de su contenido, el viewport del
      iframe PASA A SER esa altura: 100svh dejaria de valer una pantalla y
@@ -103,8 +109,16 @@ function hbEngine(root, opts) {
        --vh-real: se fija antes del primer pintado (ver el guion que
        acompana al bloque), asi ninguna medida en svh se evalua nunca
        contra el viewport del iframe. */
-    /* Y avisamos, por si el anfitrion prefiere gestionarlo el. */
-    try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
+    /* Se avisa con el tipo que el codigo global de CPM SI escucha.
+       Su runtime reconoce "hummingbird:height" y al recibirlo llama a
+       resizeFrame, que ademas colapsa la altura reservada del bloque de
+       Hostinger (cleanContainer sobre grid-embed, layout-element,
+       block-layout y section). Eso es lo que elimina la franja blanca.
+       Antes se emitia "hb:height", un tipo que nadie atendia. */
+    try {
+      window.parent.postMessage({ type: "hummingbird:height", height: alto,
+                                  whatsappUrl: opts.whatsapp || "" }, "*");
+    } catch (e) {}
   }
 
   /* El documento del iframe es blanco por omision. Si el iframe queda un
@@ -224,6 +238,26 @@ function hbEngine(root, opts) {
     sincronizarVista();
     pintarFondo();
     ajustarMarco();
+
+    /* Saludo al runtime global: al recibir "hummingbird:ready" crea el boton
+       flotante de WhatsApp FUERA del iframe (dentro no puede ser flotante de
+       verdad) y pide la altura. */
+    if (enMarco) {
+      try {
+        window.parent.postMessage({ type: "hummingbird:ready",
+                                    whatsappUrl: opts.whatsapp || "" }, "*");
+      } catch (e) {}
+      window.addEventListener("message", function (ev) {
+        var d = ev && ev.data;
+        if (d && (d.type === "hummingbird:request-height" || d.type === "cpm-divisiones:request-height")) {
+          ultimaAltura = 0;      /* fuerza el reenvio */
+          programarAjuste();
+        }
+      });
+      [300, 900, 2000].forEach(function (ms) {
+        setTimeout(function () { ultimaAltura = 0; programarAjuste(); }, ms);
+      });
+    }
 
     /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
     if (!legible || lento) {
