@@ -501,6 +501,29 @@
 #hbp.sin-scroll .story-step{min-height:0!important}
 #hbp.sin-scroll .story-steps{padding-top:0!important}
 #hbp.sin-scroll .phone-stage{transform:none!important}
+
+/* --------------------------------------------------------------------
+   MOVIL: el telefono se ancla en una banda superior y el texto pasa por
+   DEBAJO, no por encima. Antes ambos ocupaban la misma zona y se pisaban:
+   el rotulo del telefono caia sobre el titular y nada era legible.
+   -------------------------------------------------------------------- */
+@media(max-width:760px){
+  #hbp .phone-stage{align-items:flex-start;min-height:0;padding-top:10px}
+  #hbp .phone{width:196px}
+  #hbp .phone-caption{display:none}
+  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .5)}
+  #hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .62);
+    background:linear-gradient(transparent,rgba(7,7,12,.96) 22%,rgba(7,7,12,1) 46%);
+    padding:40px 6px 46px;align-content:end}
+  #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
+  #hbp .story-step p{font-size:.95rem}
+  #hbp .phone-aura{width:300px;height:300px}
+}
+@media(max-width:480px){
+  #hbp .phone{width:176px}
+  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .46)}
+  #hbp .story-step{grid-template-columns:28px 1fr;gap:10px;padding-inline:2px}
+}
 </style>
 <script>
 (function () {
@@ -607,7 +630,8 @@
       function ajustarMarco() {
         if (!enMarco || congelado) return;
         var alto = Math.ceil(root.getBoundingClientRect().height);
-        if (!alto || Math.abs(alto - ultimaAltura) < 2) return;
+        /* Holgura de 6px: evita reajustes por diferencias de redondeo. */
+        if (!alto || Math.abs(alto - ultimaAltura) < 6) return;
 
         if (alto > ultimaAltura + 8) { subidas++; } else { subidas = 0; }
         if (alto > TECHO || subidas > 12) {
@@ -633,6 +657,28 @@
         try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
       }
 
+      /* El documento del iframe es blanco por omision. Si el iframe queda un
+         poco mas alto que el contenido, ese blanco asoma como una franja (o un
+         fondo interminable al final). Se le pinta el mismo color del bloque. */
+      function pintarFondo() {
+        if (!enMarco) return;
+        var color = "";
+        try { color = getComputedStyle(root).backgroundColor; } catch (e) {}
+        if (!color || color === "transparent" || color === "rgba(0, 0, 0, 0)") return;
+        try {
+          document.documentElement.style.background = color;
+          if (document.body) document.body.style.background = color;
+        } catch (e) {}
+      }
+
+      /* Agrupa las peticiones de ajuste: nunca mas de una por fotograma. */
+      var ajustePedido = false;
+      function programarAjuste() {
+        if (ajustePedido) return;
+        ajustePedido = true;
+        requestAnimationFrame(function () { ajustePedido = false; ajustarMarco(); });
+      }
+
       /* ---------- geometria real ---------- */
       function altoVista() {
         if (padre) { try { return padre.innerHeight || window.innerHeight || 800; } catch (e) {} }
@@ -656,8 +702,12 @@
 
       function ciclo() {
         encolado = false;
+        /* Aqui NO se toca la altura del iframe. Hacerlo en cada fotograma
+           obligaba al padre a recalcular, lo que movia el iframe, lo que
+           cambiaba todas las medidas, lo que generaba un transform distinto...
+           Ese bucle era la vibracion y el arrastre de los elementos anclados.
+           La altura se ajusta aparte, solo cuando el contenido cambia. */
         sincronizarVista();
-        ajustarMarco();
         var H = altoVista(), S = desfaseMarco();
 
         for (var i = entradas.length - 1; i >= 0; i--) {
@@ -689,6 +739,7 @@
       /* ---------- arranque ---------- */
       function arrancar() {
         sincronizarVista();
+        pintarFondo();
         ajustarMarco();
 
         /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
@@ -731,13 +782,13 @@
       /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
       function seguirAltura() {
         if (!enMarco) return;
-        try { new ResizeObserver(ajustarMarco).observe(root); } catch (e) {}
-        window.addEventListener("load", ajustarMarco);
-        window.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); });
-        if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); }, { passive: true }); } catch (e) {} }
-        [400, 1200, 2500].forEach(function (ms) { setTimeout(ajustarMarco, ms); });
+        try { new ResizeObserver(programarAjuste).observe(root); } catch (e) {}
+        window.addEventListener("load", function () { programarAjuste(); pintarFondo(); });
+        window.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); });
+        if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); }, { passive: true }); } catch (e) {} }
+        [400, 1200, 2500].forEach(function (ms) { setTimeout(programarAjuste, ms); });
         Array.prototype.slice.call(root.querySelectorAll("img")).forEach(function (im) {
-          if (!im.complete) im.addEventListener("load", function () { ajustarMarco(); pedir(); }, { once: true });
+          if (!im.complete) im.addEventListener("load", function () { programarAjuste(); pedir(); }, { once: true });
         });
       }
 
@@ -749,6 +800,7 @@
         mostrarTodo: mostrarTodo,
         altoVista: altoVista,
         sincronizarVista: sincronizarVista,
+        programarAjuste: programarAjuste,
         desfase: desfaseMarco,
         techo: techo,
         limita: limita,
@@ -911,23 +963,42 @@
        calcula con translateY sobre coordenadas del viewport real. */
     (function () {
       var layout = one('#hbpStoryLayout'), stage = one('#hbpPhoneStage');
+      var rail = one('#hbpPhoneRail') || layout;
       if (!layout || !stage) return;
       root.classList.add('telefono-js');
+      var ultimaY = null;
       M.continuo(function (H, S) {
-        var r = layout.getBoundingClientRect();
-        var arriba = r.top + S;
-        var rec = Math.max(0, layout.offsetHeight - stage.offsetHeight);
-        var y = Math.min(Math.max(-arriba + H * 0.08, 0), rec);
-        stage.style.transform = 'translateY(' + y.toFixed(1) + 'px)';
-        /* El caso activo es el paso más cercano al centro de la pantalla. */
+        /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
+           la rejilla completa: con la rejilla el recorrido no coincidía y el
+           teléfono se iba quedando abajo. */
+        var arriba = rail.getBoundingClientRect().top + S;
+        var altoEsc = stage.offsetHeight;
+        var rec = Math.max(0, rail.offsetHeight - altoEsc);
+        /* Centrado vertical en pantalla mientras está anclado. */
+        /* En movil el telefono va en la banda superior; en escritorio,
+           centrado en pantalla. */
+        var hueco = (window.innerWidth <= 760) ? 12 : Math.max(16, (H - altoEsc) / 2);
+        var y = Math.min(Math.max(hueco - arriba, 0), rec);
+        /* Redondeo a medio píxel: los valores fraccionarios hacían temblar
+           el render en algunos navegadores. */
+        y = Math.round(y * 2) / 2;
+        if (y !== ultimaY) {
+          ultimaY = y;
+          stage.style.transform = 'translate3d(0,' + y + 'px,0)';
+        }
+        /* El caso activo es el paso más cercano al centro de la pantalla.
+           Con zona muerta: sólo cambia si el nuevo candidato está
+           claramente más cerca. Sin esto, dos pasos a distancia parecida
+           se alternaban en cada fotograma y la imagen parpadeaba. */
         if (steps.length) {
-          var mejor = 0, dist = Infinity;
+          var mejor = 0, dist = Infinity, distActual = Infinity;
           for (var i = 0; i < steps.length; i++) {
             var sr = steps[i].getBoundingClientRect();
-            var d = Math.abs((sr.top + sr.bottom) / 2 + S - H * 0.52);
+            var d = Math.abs((sr.top + sr.bottom) / 2 + S - H * 0.5);
+            if (i === activeSlide) distActual = d;
             if (d < dist) { dist = d; mejor = i; }
           }
-          selectSlide(mejor);
+          if (mejor !== activeSlide && dist < distActual - H * 0.08) selectSlide(mejor);
         }
       });
     })();

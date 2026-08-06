@@ -111,6 +111,32 @@ def portafolio():
 #hbp.sin-scroll .phone-stage{transform:none!important}
 </style>""", 1)
 
+
+    src = src.replace('</style>', """
+/* --------------------------------------------------------------------
+   MOVIL: el telefono se ancla en una banda superior y el texto pasa por
+   DEBAJO, no por encima. Antes ambos ocupaban la misma zona y se pisaban:
+   el rotulo del telefono caia sobre el titular y nada era legible.
+   -------------------------------------------------------------------- */
+@media(max-width:760px){
+  #hbp .phone-stage{align-items:flex-start;min-height:0;padding-top:10px}
+  #hbp .phone{width:196px}
+  #hbp .phone-caption{display:none}
+  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .5)}
+  #hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .62);
+    background:linear-gradient(transparent,rgba(7,7,12,.96) 22%,rgba(7,7,12,1) 46%);
+    padding:40px 6px 46px;align-content:end}
+  #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
+  #hbp .story-step p{font-size:.95rem}
+  #hbp .phone-aura{width:300px;height:300px}
+}
+@media(max-width:480px){
+  #hbp .phone{width:176px}
+  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .46)}
+  #hbp .story-step{grid-template-columns:28px 1fr;gap:10px;padding-inline:2px}
+}
+</style>""", 1)
+
     js = inserta_motor(open('/tmp/portfolio_js.txt', encoding='utf-8').read().strip())
     src = re.sub(r"<script>\n\(function\(\)\{\n  'use strict';.*?</script>", js, src, flags=re.S)
 

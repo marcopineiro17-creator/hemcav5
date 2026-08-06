@@ -77,7 +77,8 @@ function hbEngine(root, opts) {
   function ajustarMarco() {
     if (!enMarco || congelado) return;
     var alto = Math.ceil(root.getBoundingClientRect().height);
-    if (!alto || Math.abs(alto - ultimaAltura) < 2) return;
+    /* Holgura de 6px: evita reajustes por diferencias de redondeo. */
+    if (!alto || Math.abs(alto - ultimaAltura) < 6) return;
 
     if (alto > ultimaAltura + 8) { subidas++; } else { subidas = 0; }
     if (alto > TECHO || subidas > 12) {
@@ -103,6 +104,28 @@ function hbEngine(root, opts) {
     try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
   }
 
+  /* El documento del iframe es blanco por omision. Si el iframe queda un
+     poco mas alto que el contenido, ese blanco asoma como una franja (o un
+     fondo interminable al final). Se le pinta el mismo color del bloque. */
+  function pintarFondo() {
+    if (!enMarco) return;
+    var color = "";
+    try { color = getComputedStyle(root).backgroundColor; } catch (e) {}
+    if (!color || color === "transparent" || color === "rgba(0, 0, 0, 0)") return;
+    try {
+      document.documentElement.style.background = color;
+      if (document.body) document.body.style.background = color;
+    } catch (e) {}
+  }
+
+  /* Agrupa las peticiones de ajuste: nunca mas de una por fotograma. */
+  var ajustePedido = false;
+  function programarAjuste() {
+    if (ajustePedido) return;
+    ajustePedido = true;
+    requestAnimationFrame(function () { ajustePedido = false; ajustarMarco(); });
+  }
+
   /* ---------- geometria real ---------- */
   function altoVista() {
     if (padre) { try { return padre.innerHeight || window.innerHeight || 800; } catch (e) {} }
@@ -126,8 +149,12 @@ function hbEngine(root, opts) {
 
   function ciclo() {
     encolado = false;
+    /* Aqui NO se toca la altura del iframe. Hacerlo en cada fotograma
+       obligaba al padre a recalcular, lo que movia el iframe, lo que
+       cambiaba todas las medidas, lo que generaba un transform distinto...
+       Ese bucle era la vibracion y el arrastre de los elementos anclados.
+       La altura se ajusta aparte, solo cuando el contenido cambia. */
     sincronizarVista();
-    ajustarMarco();
     var H = altoVista(), S = desfaseMarco();
 
     for (var i = entradas.length - 1; i >= 0; i--) {
@@ -159,6 +186,7 @@ function hbEngine(root, opts) {
   /* ---------- arranque ---------- */
   function arrancar() {
     sincronizarVista();
+    pintarFondo();
     ajustarMarco();
 
     /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
@@ -201,13 +229,13 @@ function hbEngine(root, opts) {
   /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
   function seguirAltura() {
     if (!enMarco) return;
-    try { new ResizeObserver(ajustarMarco).observe(root); } catch (e) {}
-    window.addEventListener("load", ajustarMarco);
-    window.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); });
-    if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); }, { passive: true }); } catch (e) {} }
-    [400, 1200, 2500].forEach(function (ms) { setTimeout(ajustarMarco, ms); });
+    try { new ResizeObserver(programarAjuste).observe(root); } catch (e) {}
+    window.addEventListener("load", function () { programarAjuste(); pintarFondo(); });
+    window.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); });
+    if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); }, { passive: true }); } catch (e) {} }
+    [400, 1200, 2500].forEach(function (ms) { setTimeout(programarAjuste, ms); });
     Array.prototype.slice.call(root.querySelectorAll("img")).forEach(function (im) {
-      if (!im.complete) im.addEventListener("load", function () { ajustarMarco(); pedir(); }, { once: true });
+      if (!im.complete) im.addEventListener("load", function () { programarAjuste(); pedir(); }, { once: true });
     });
   }
 
@@ -219,6 +247,7 @@ function hbEngine(root, opts) {
     mostrarTodo: mostrarTodo,
     altoVista: altoVista,
     sincronizarVista: sincronizarVista,
+    programarAjuste: programarAjuste,
     desfase: desfaseMarco,
     techo: techo,
     limita: limita,
