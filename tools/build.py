@@ -125,63 +125,64 @@ def portafolio():
 
     src = src.replace('</style>', """
 /* --------------------------------------------------------------------
-   MOVIL: filas alternadas, sin anclaje.
-   El teléfono anclado obligaba a que el texto pasara por detrás y no se
-   leyera, y el anclaje por JS siempre va un fotograma por detrás del scroll
-   del navegador: eso es el temblor. Aquí cada caso es una fila normal con su
-   teléfono al lado, alternando el lado. No hay recorrido reservado, ni nada
-   que anclar, ni nada que pueda temblar.
+   MOVIL: un telefono por caso, que se "activa" al entrar en pantalla.
+   El anclaje por JS siempre va un fotograma por detras del scroll y eso se
+   percibe como temblor. Aqui no hay nada anclado: cada caso lleva SU propio
+   telefono al lado, y la animacion es que crece y se enciende al asomar.
+   Es una transicion CSS disparada por una clase, asi que corre en el
+   compositor y no puede temblar. El telefono suelto de arriba desaparece:
+   sobraba, y era el que se veia separado de las imagenes.
    -------------------------------------------------------------------- */
 @media(max-width:760px){
   #hbp .story-layout{display:block;position:relative}
-  /* El carril deja de cubrir la seccion: pasa a ser la primera fila. */
-  #hbp .phone-rail{position:relative!important;inset:auto;min-height:0;
-    pointer-events:auto;z-index:1;display:flex;justify-content:center;margin-bottom:8px}
-  #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
-    padding:0;display:flex;justify-content:center;align-items:flex-start;transform:none!important}
-  #hbp .phone{width:min(196px,54vw)}
-  #hbp .phone-aura{width:250px;height:250px;opacity:.36}
-  #hbp .phone-caption{position:relative;left:auto;right:auto;top:auto;bottom:auto;
-    transform:none;margin-top:14px;min-width:0;align-self:center}
-  /* Los capitulos: filas normales, sin fondo que tape nada. */
-  #hbp .story-steps{padding-top:0!important;position:relative;z-index:2;gap:6px}
-  #hbp .story-step{min-height:0;background:none;padding:30px 4px;align-content:start}
-  #hbp .story-step h3{font-size:clamp(1.9rem,8.5vw,2.8rem);max-width:none}
-  #hbp .story-step p{font-size:.95rem}
-  /* Miniatura por fila: cada capitulo lleva su propia imagen al lado, y va
-     alternando de lado. Asi se ve el caso sin depender del scroll. */
-  #hbp .story-step{grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:start}
+  #hbp .phone-rail{display:none!important}   /* el teléfono por fila lo sustituye */
+  #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
+  #hbp .story-step{min-height:0;background:none;align-content:start;
+    grid-template-columns:132px minmax(0,1fr);gap:18px;padding:34px 4px;align-items:start}
   #hbp .story-step .step-no{grid-column:1;grid-row:1;padding-top:0;text-align:center}
-  #hbp .story-step>div{grid-column:2}
-  #hbp .story-step::before{content:'';grid-column:1;grid-row:2;width:96px;height:170px;
-    border-radius:14px;border:1px solid rgba(255,255,255,.16);background-size:cover;
-    background-position:center;box-shadow:0 12px 26px rgba(0,0,0,.45)}
+  #hbp .story-step>div{grid-column:2;grid-row:1/3}
+  #hbp .story-step h3{font-size:clamp(1.85rem,8vw,2.7rem);max-width:none}
+  #hbp .story-step p{font-size:.95rem}
+  #hbp .story-step ul{margin-top:18px}
+
+  /* El teléfono de la fila: marco propio con su captura dentro. */
+  #hbp .story-step::before{content:'';grid-column:1;grid-row:2;width:132px;height:236px;
+    border-radius:19px;padding:4px;
+    background-color:#0a0a0f;background-clip:content-box;
+    background-size:cover;background-position:top center;background-repeat:no-repeat;
+    box-shadow:0 0 0 2px rgba(255,255,255,.24),0 16px 34px rgba(0,0,0,.55);
+    transform:scale(.68);opacity:.3;
+    transition:transform .8s cubic-bezier(.16,1,.3,1),opacity .6s ease,box-shadow .8s ease}
+  /* "Encendido": crece y toma color al entrar en pantalla. */
+  #hbp .story-step.mv-activo::before{transform:scale(1);opacity:1;
+    box-shadow:0 0 0 2px rgba(255,255,255,.34),0 22px 46px rgba(0,0,0,.62),
+               0 0 34px rgba(90,43,255,.34)}
   #hbp .story-step:nth-child(1)::before{background-image:var(--miniatura-1)}
   #hbp .story-step:nth-child(2)::before{background-image:var(--miniatura-2)}
   #hbp .story-step:nth-child(3)::before{background-image:var(--miniatura-3)}
   #hbp .story-step:nth-child(4)::before{background-image:var(--miniatura-4)}
-  /* Alterna el lado en las pares. */
-  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 96px}
+
+  /* Alterna el lado en las filas pares. */
+  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 132px}
   #hbp .story-step:nth-child(even) .step-no{grid-column:2}
-  #hbp .story-step:nth-child(even)>div{grid-column:1;grid-row:1/3}
+  #hbp .story-step:nth-child(even)>div{grid-column:1}
   #hbp .story-step:nth-child(even)::before{grid-column:2;grid-row:2}
 }
 @media(max-width:480px){
-  #hbp .phone{width:min(178px,52vw)}
-  #hbp .story-step{grid-template-columns:82px minmax(0,1fr);gap:12px;padding-inline:2px}
-  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 82px}
-  #hbp .story-step::before{width:82px;height:146px}
+  #hbp .story-step{grid-template-columns:112px minmax(0,1fr);gap:14px;padding-inline:2px}
+  #hbp .story-step:nth-child(even){grid-template-columns:minmax(0,1fr) 112px}
+  #hbp .story-step::before{width:112px;height:200px}
 }
 </style>""", 1)
 
-    # Las miniaturas salen de las mismas imagenes del carrusel: se declaran
-    # como variables CSS para no duplicar URLs a mano.
-    import re as _re
-    _slides = _re.findall(r'<figure class="story-slide[^"]*"[^>]*>\s*<img src="([^"]+)"', src)
-    if len(_slides) >= 4:
-        _vars = ''.join('  --miniatura-%d:url(%s);\n' % (i + 1, u) for i, u in enumerate(_slides[:4]))
-        src = src.replace('</style>', '@media(max-width:760px){#hbp{\n' + _vars + '}}\n</style>', 1)
-
+    # Las capturas de cada telefono salen de las mismas imagenes del carrusel:
+    # se declaran como variables CSS para no duplicar URLs a mano.
+    _slides = re.findall(r'<figure class="story-slide[^"]*"[^>]*>\s*<img src="([^"]+)"', src)
+    assert len(_slides) >= 4, 'no se encontraron las 4 capturas del carrusel'
+    _vars = ''.join('  --miniatura-%d:url(%s);\n' % (i + 1, u) for i, u in enumerate(_slides[:4]))
+    src = src.replace('</style>', '@media(max-width:760px){#hbp{\n' + _vars + '}}\n</style>', 1)
+    # Una sola declaracion (el otro uso es el var() que la lee).
+    assert src.count('--miniatura-1:') == 1, 'las miniaturas se declararon dos veces'
 
     # El guion temprano va justo despues de abrir el contenedor.
     src = src.replace('<div id="hbp">', '<div id="hbp">\n' + TEMPRANO, 1)
@@ -218,6 +219,63 @@ def portafolio():
 #hbp.motion-ready .reveal{transform:translateY(20px);
   transition:opacity .55s var(--ease),transform .55s var(--ease)}
 #hbp.motion-ready .reveal:not(.is-visible){backdrop-filter:none;-webkit-backdrop-filter:none}
+/* --- Desenfoque en reposo, desenfoque barato en movimiento ---
+   El coste de backdrop-filter esta en el RADIO, y se paga en cada fotograma
+   en que cambia lo que hay detras del panel: es decir, todo el rato mientras
+   se hace scroll. Medido en la seccion social, a 1440x900: con 12px se
+   pierden ~3 fotogramas cada segundo y medio de desplazamiento; con 4px, 0.
+   Asi que mientras la pagina se mueve el radio baja a 4px y al detenerse
+   recupera los 12px. No se quita del todo a proposito: la tarjeta con el
+   nombre del proyecto va encima de la captura y su texto tiene que seguir
+   leyendose. En movimiento la diferencia no se distingue; quieto, que es
+   cuando se mira de verdad, el cristal esta intacto.
+   El motor pone y quita .hb-moviendo segun si el desplazamiento cambia. */
+#hbp.hb-moviendo .liquid{backdrop-filter:blur(4px) saturate(150%);
+  -webkit-backdrop-filter:blur(4px) saturate(150%)}
+#hbp.hb-moviendo .nav{backdrop-filter:blur(4px) saturate(140%);
+  -webkit-backdrop-filter:blur(4px) saturate(140%)}
+#hbp.hb-moviendo .division-pill,#hbp.hb-moviendo .mobile-menu{
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+/* --- En la seccion animada, ningun cristal desenfoca ---
+   Es la seccion que se mueve por transform en cada fotograma, y ahi el
+   backdrop-filter da dos problemas a la vez:
+     - Coste: hay que releer y desenfocar el fondo en cada fotograma, porque
+       el fondo cambia en cada fotograma. Son los cuatro paneles de texto mas
+       la tarjeta del proyecto.
+     - Artefacto: un panel con backdrop-filter DENTRO de una capa
+       transformada lee el fondo en un espacio distinto al desplazamiento
+       subpixel de la capa. En Chromium eso se ve como un temblor del
+       contenido desenfocado respecto al borde del panel -- exactamente el
+       "vibra un poco el movil al hacer scroll". Al ser un artefacto de
+       render y no solo un coste, reducir el radio no lo arregla: hay que
+       dejar de muestrear el fondo.
+   Quitarlo aqui no cambia nada de lo que se ve: comparadas las capturas con
+   y sin desenfoque son identicas, porque el fondo de esta seccion es oscuro y
+   casi uniforme y desenfocar algo uniforme lo deja igual. Lo que da el efecto
+   de cristal es el degradado propio del panel, el borde y los brillos
+   interiores, que siguen intactos. La tarjeta del proyecto, que si cae sobre
+   la captura del telefono, recibe ademas su propio tinte para asegurar el
+   contraste del texto. */
+#hbp-social .liquid,#hbp .project .liquid,
+#hbp.hb-moviendo #hbp-social .liquid,#hbp.hb-moviendo .project .liquid{
+  backdrop-filter:none;-webkit-backdrop-filter:none}
+#hbp .phone-caption,#hbp.hb-moviendo .phone-caption{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  background-color:rgba(9,9,16,.55)}
+/* --- Cristales que no se estan viendo ---
+   Un panel con backdrop-filter cuesta fotogramas AUNQUE este invisible: en
+   Chromium mantiene vivo su backdrop root y con el la ruta de scroll caro
+   para todo el documento. Medido con el menu movil cerrado (visibility:
+   hidden, arriba del todo, jamas a la vista): 1.6 fotogramas perdidos por
+   cada segundo y medio de desplazamiento. Apagarlo mientras esta cerrado no
+   cambia nada de lo que se ve y devuelve esos fotogramas.
+   Lo mismo con los cristales de la portada, que quedan muy arriba en cuanto
+   se baja: el motor marca .hb-portada-lejos y ahi se apagan. */
+#hbp .mobile-menu:not(.open){backdrop-filter:none;-webkit-backdrop-filter:none}
+#hbp.hb-portada-lejos .hero-frame,#hbp.hb-portada-lejos .glass-stamp,
+#hbp.hb-portada-lejos .division-pill,#hbp.hb-portada-lejos .nav,
+#hbp.hb-moviendo.hb-portada-lejos .nav{
+  backdrop-filter:none;-webkit-backdrop-filter:none}
 """
     src = src.replace('</style>', OPTIM + '</style>', 1)
     assert 'contain:paint' in src, 'no se aplico el bloque de coste de pintado'

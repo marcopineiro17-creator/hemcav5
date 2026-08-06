@@ -105,6 +105,7 @@
     /* ---------- 3. Estado del nav y barra de progreso ---------- */
     var navLinks = q('.nav-links a');
     var anclas = ['hbp-work', 'hbp-social', 'hbp-method'].map(function (id) { return document.getElementById(id); });
+    var portada = one('.hero');
     M.continuo(function (H, S) {
       var r = root.getBoundingClientRect();
       var top = r.top + S, total = Math.max(1, r.height - H);
@@ -114,6 +115,17 @@
       var act = '';
       anclas.forEach(function (s) { if (s && M.techo(s, S) < H * 0.36) act = s.id; });
       navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + act); });
+      /* Medido: un panel con backdrop-filter sigue costando fotogramas aunque
+         este fuera de pantalla -- Chromium mantiene vivo su "backdrop root" y
+         con ello la ruta de scroll caro para todo el documento. Los cristales
+         de la portada quedan muy por encima en cuanto se baja, asi que en
+         cuanto la portada se aleja una pantalla se apaga su desenfoque; al
+         volver arriba reaparece. Se aprovecha esta misma pasada, que ya tiene
+         las medidas leidas: no anade ni una lectura de geometria. */
+      if (portada) {
+        var fuera = (portada.getBoundingClientRect().bottom + S) < -H;
+        root.classList.toggle('hb-portada-lejos', fuera);
+      }
     });
 
     /* ---------- 4. Modo sin movimiento ---------- */
@@ -126,6 +138,15 @@
 
     /* ---------- 5. Entradas ---------- */
     q('.reveal').forEach(function (el) { M.alEntrar(el); });
+
+    /* En móvil cada caso lleva su propio teléfono, que se "enciende" al
+       asomar. Se marca una sola vez con una clase y la animación la hace el
+       CSS: no se recalcula nada por fotograma, así que no puede temblar.
+       La clase is-visible que añade el motor no afecta a .story-step, que no
+       es .reveal; el estilo cuelga de mv-activo. */
+    steps.forEach(function (step) {
+      M.alEntrar(step, function (el) { el.classList.add('mv-activo'); });
+    });
 
     /* ---------- 6. Marcos que se abren con clip-path ---------- */
     q('.media').forEach(function (el) {

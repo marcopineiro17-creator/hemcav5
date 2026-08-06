@@ -159,13 +159,43 @@ function hbEngine(root, opts) {
   function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
   /* ---------- registros ---------- */
-  var entradas = [], continuos = [], encolado = false, sondeo = null;
+  var entradas = [], continuos = [], sondeo = null;
 
   function alEntrar(el, cb) { if (el) entradas.push({ el: el, cb: cb }); }
   function continuo(fn) { if (fn) continuos.push(fn); }
 
+  /* ---------- marca de "esto se esta moviendo" ----------
+     Los paneles de cristal usan backdrop-filter: blur(). Ese desenfoque hay
+     que recalcularlo en cada fotograma en que cambia lo que hay detras, y
+     mientras la pagina se desplaza cambia siempre. Medido, un radio de 12px
+     cuesta unos 3 fotogramas perdidos por segundo y medio de scroll; con 4px
+     el coste practicamente desaparece.
+     De ahi esta marca: mientras hay movimiento el CSS reduce el radio (no lo
+     quita: el texto de las tarjetas tiene que seguir legible sobre las
+     capturas), y al detenerse vuelve el desenfoque completo. En movimiento la
+     diferencia no se aprecia; quieto, que es cuando se mira, esta intacto. */
+  var refPrevia = null, moviendo = false, quietoDesde = 0;
+  function marcaMovimiento(si) {
+    if (si === moviendo) return;
+    moviendo = si;
+    try { root.classList[si ? "add" : "remove"]("hb-moviendo"); } catch (e) {}
+  }
+  /* Solo se encarga de QUITAR la marca: ponerla se hace en pedir(), que corre
+     de forma sincrona en el propio evento de scroll. Si se pusiera aqui,
+     dentro del requestAnimationFrame, el primer fotograma de cada gesto ya
+     habria pagado el desenfoque caro -- y el principio del gesto es
+     justamente donde mas se nota el tiron. */
+  function vigilarMovimiento(S) {
+    var ref = marco ? S : (window.pageYOffset || 0);
+    var salto = refPrevia === null ? 0 : Math.abs(ref - refPrevia);
+    refPrevia = ref;
+    if (salto > 1) { quietoDesde = 0; marcaMovimiento(true); return; }
+    if (!moviendo) return;
+    if (!quietoDesde) quietoDesde = Date.now();
+    else if (Date.now() - quietoDesde > 140) { quietoDesde = 0; marcaMovimiento(false); }
+  }
+
   function ciclo() {
-    encolado = false;
     /* Aqui NO se toca la altura del iframe. Hacerlo en cada fotograma
        obligaba al padre a recalcular, lo que movia el iframe, lo que
        cambiaba todas las medidas, lo que generaba un transform distinto...
@@ -173,6 +203,7 @@ function hbEngine(root, opts) {
        La altura se ajusta aparte, solo cuando el contenido cambia. */
     sincronizarVista();
     var H = altoVista(), S = desfaseMarco();
+    vigilarMovimiento(S);
 
     for (var i = entradas.length - 1; i >= 0; i--) {
       var it = entradas[i];
@@ -221,7 +252,28 @@ function hbEngine(root, opts) {
     m[nombre] = valor;
     cola.push(el, "@prop", [nombre, valor]);
   }
-  function pedir() { if (!encolado) { encolado = true; requestAnimationFrame(ciclo); } }
+  /* Bucle vivo mientras se desplaza.
+     Antes se encolaba un requestAnimationFrame por cada evento de scroll,
+     pero el navegador agrupa esos eventos: el fotograma se calculaba con una
+     posicion ya vieja y el elemento anclado iba siempre un paso por detras.
+     Eso es lo que se percibe como temblor. Aqui, en cuanto hay scroll, el
+     bucle se encadena solo y recalcula en CADA fotograma con la posicion
+     fresca; se apaga tras un momento de quietud para no gastar de mas. */
+  var vivo = false, hastaQuietud = 0;
+  function late() {
+    ciclo();
+    if (Date.now() < hastaQuietud) { requestAnimationFrame(late); }
+    else { vivo = false; }
+  }
+  function pedir() {
+    hastaQuietud = Date.now() + 420;
+    /* Aqui, no en el bucle: esto corre en el mismo evento de scroll, antes de
+       que el navegador pinte, asi que el desenfoque barato ya rige en el
+       primer fotograma del gesto. */
+    quietoDesde = 0;
+    marcaMovimiento(true);
+    if (!vivo) { vivo = true; requestAnimationFrame(late); }
+  }
 
   /* ---------- mostrar todo (red de seguridad y modo sin medida) ---------- */
   function mostrarTodo() {

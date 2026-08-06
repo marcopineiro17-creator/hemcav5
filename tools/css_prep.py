@@ -111,6 +111,14 @@ acotado += """
     /* Desenfoque del menu mas barato: se recalcula al desplazarse. */
     .hemca .section-nav { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 
+    /* Y mas barato aun MIENTRAS se desplaza. El coste de backdrop-filter esta
+       en el radio, y se paga en cada fotograma en que cambia lo que hay detras
+       del panel: o sea, durante todo el scroll. Con el radio reducido a 4px el
+       coste practicamente desaparece; al detenerse vuelve el desenfoque
+       completo. En movimiento no se distingue, y quieto -- que es cuando se
+       mira -- queda igual. El motor pone y quita .hb-moviendo. */
+    .hemca.hb-moviendo .section-nav { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
     /* Las etapas inactivas seguian pintandose y componiendose: cuatro
        imagenes a pantalla completa con filtros, en cada fotograma del
        escenario en movimiento. Con visibility se saltan por completo y solo
