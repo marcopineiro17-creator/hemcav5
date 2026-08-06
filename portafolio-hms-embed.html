@@ -557,28 +557,42 @@
 #hbp.sin-scroll .phone-stage{transform:none!important}
 
 /* --------------------------------------------------------------------
-   MOVIL: el telefono NO se ancla ni se superpone.
-   Superponerlo era la causa de que el texto lo tapara por completo: el panel
-   de texto necesita fondo solido para ser legible, y ese fondo cubria el
-   telefono. Aqui el telefono va en el flujo, arriba de los capitulos, y la
-   imagen sigue cambiando conforme cada capitulo entra en pantalla.
+   MOVIL: el telefono queda anclado arriba a la derecha, pequeno, como
+   vista previa. En el flujo no servia (te lo pasabas y no veias el cambio)
+   y superpuesto a lo ancho tapaba el texto. Asi se ve cambiar siempre y el
+   texto corre a ancho completo por debajo.
    -------------------------------------------------------------------- */
+/* contain:paint aisla cada marco: al cambiar su clip-path no obliga al
+   navegador a re-desenfocar los orbes del fondo (130px de blur) ni los
+   paneles con backdrop-filter. Es lo que hace barata la animacion. */
+#hbp .media{contain:paint}
+#hbp .ambient,#hbp .ambient .orb{will-change:auto;contain:paint}
+
 @media(max-width:760px){
   #hbp .story-layout{display:block;position:relative}
-  #hbp .phone-rail{position:relative!important;inset:auto;min-height:0;pointer-events:auto;
-    z-index:1;display:flex;justify-content:center;margin-bottom:34px}
+  #hbp .phone-rail{position:absolute!important;inset:0;min-height:0;
+    pointer-events:none;z-index:6;display:block}
   #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
-    padding:0;align-items:center;transform:none!important}
-  #hbp .phone{width:250px}
-  #hbp .phone-caption{position:relative;right:auto;left:auto;top:auto;bottom:auto;
-    margin-top:18px;min-width:0;align-self:center}
+    padding:0;display:flex;justify-content:flex-end;align-items:flex-start}
+  #hbp .phone{width:132px;border-radius:22px;padding:4px;
+    box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.28)}
+  #hbp .phone::before{inset:3px;border-radius:19px}
+  #hbp .phone-screen{border-radius:18px}
+  #hbp .phone-edge,#hbp .phone-ui,#hbp .story-brand,#hbp .phone-bottom,
+  #hbp .dynamic-island,#hbp .phone-aura,#hbp .phone-caption{display:none}
+  #hbp .story-bars{top:6px;left:6px;right:6px}
   #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
+  /* Solo el primer capitulo cede espacio a la vista previa. */
   #hbp .story-step{min-height:0;background:none;padding:34px 4px;align-content:start}
+  #hbp .story-step:first-child{padding-top:20px}
+  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
+  #hbp .story-step:first-child ul{max-width:calc(100% - 148px)}
   #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
-  #hbp .phone-aura{width:300px;height:300px}
 }
 @media(max-width:480px){
-  #hbp .phone{width:225px}
+  #hbp .phone{width:118px}
+  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
+  #hbp .story-step:first-child ul{max-width:calc(100% - 132px)}
   #hbp .story-step{grid-template-columns:30px 1fr;gap:11px;padding-inline:2px}
 }
 </style>
@@ -780,9 +794,42 @@
         }
         if (!entradas.length && sondeo) { clearInterval(sondeo); sondeo = null; }
 
+        /* Primero se LEE todo, luego se ESCRIBE todo.
+           Si cada funcion lee getBoundingClientRect y escribe estilos acto
+           seguido, el navegador se ve obligado a recalcular la maquetacion en
+           cada paso: con veinte funciones son veinte recalculos por fotograma.
+           Eso es lo que se ve como temblor. Aqui las escrituras se acumulan y
+           se aplican juntas al final, con una sola maquetacion. */
         for (var j = 0; j < continuos.length; j++) {
           try { continuos[j](H, S); } catch (e) {}
         }
+        for (var w = 0; w < cola.length; w += 3) {
+          try {
+            if (cola[w + 1] === "@prop") cola[w].style.setProperty(cola[w + 2][0], cola[w + 2][1]);
+            else cola[w].style[cola[w + 1]] = cola[w + 2];
+          } catch (e) {}
+        }
+        cola.length = 0;
+      }
+
+      /* Encola una escritura de estilo. Salta las que no cambian nada: evita
+         invalidaciones inutiles, que tambien encarecen cada fotograma. */
+      var cola = [], previo = new WeakMap();
+      function escribe(el, prop, valor) {
+        if (!el) return;
+        var m = previo.get(el);
+        if (!m) { m = {}; previo.set(el, m); }
+        if (m[prop] === valor) return;
+        m[prop] = valor;
+        cola.push(el, prop, valor);
+      }
+      function escribeProp(el, nombre, valor) {
+        if (!el) return;
+        var m = previo.get(el);
+        if (!m) { m = {}; previo.set(el, m); }
+        if (m[nombre] === valor) return;
+        m[nombre] = valor;
+        cola.push(el, "@prop", [nombre, valor]);
       }
       function pedir() { if (!encolado) { encolado = true; requestAnimationFrame(ciclo); } }
 
@@ -888,6 +935,8 @@
 
       return {
         diagnostico: diagnostico,
+        escribe: escribe,
+        escribeProp: escribeProp,
         alEntrar: alEntrar,
         continuo: continuo,
         pedir: pedir,
@@ -985,7 +1034,7 @@
       var r = root.getBoundingClientRect();
       var top = r.top + S, total = Math.max(1, r.height - H);
       var p = M.limita(-top / total);
-      if (progress) progress.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      if (progress) M.escribe(progress, 'transform', 'scaleX(' + p.toFixed(3) + ')');
       if (nav) nav.classList.toggle('scrolled', top < -35);
       var act = '';
       anclas.forEach(function (s) { if (s && M.techo(s, S) < H * 0.36) act = s.id; });
@@ -1005,17 +1054,35 @@
 
     /* ---------- 6. Marcos que se abren con clip-path ---------- */
     q('.media').forEach(function (el) {
+      var amount = numAttr(el, 'data-parallax', 0);
       M.continuo(function (H, S) {
         var r;
         try { r = el.getBoundingClientRect(); } catch (e) { return; }
-        var p = M.limita((H - (r.top + S)) / (H + r.height));
-        var e = 1 - M.limita((H * 0.95 - (r.top + S)) / (H * 0.57));
-        var y = (7 * e).toFixed(2), x = (8 * e).toFixed(2), rad = (30 * e).toFixed(1);
-        var cp = 'inset(' + y + '% ' + x + '% ' + y + '% ' + x + '% round ' + rad + 'px)';
-        el.style.clipPath = cp; el.style.webkitClipPath = cp;
-        /* El parallax va por variable CSS: la regla de .media img ya la usa. */
-        var amount = numAttr(el, 'data-parallax', 0);
-        if (amount) el.style.setProperty('--parallax-y', (-7 + amount * (p - 0.5)).toFixed(2) + '%');
+        var arriba = r.top + S;
+        /* Lo que esta lejos de la pantalla no se toca. Con veinte marcos, la
+           mayoria esta fuera en cada fotograma: saltarlos es lo que hace que
+           el resto vaya fluido. */
+        if (arriba > H + 300 || arriba + r.height < -300) return;
+        var p = M.limita((H - arriba) / (H + r.height));
+        var e = 1 - M.limita((H * 0.95 - arriba) / (H * 0.57));
+        /* Se cuantiza en pasos. clip-path sobre imagenes grandes obliga a
+           rasterizar de nuevo, y hacerlo en cada fotograma era lo que
+           disparaba el coste (mediana de 50ms por fotograma en escritorio).
+           Con veinte pasos el efecto se ve igual y la mayoria de fotogramas
+           no escribe nada, porque el valor no cambia. */
+        var q = Math.round(e * 20) / 20;
+        if (q <= 0) {
+          M.escribe(el, 'clipPath', 'none');
+          M.escribe(el, 'webkitClipPath', 'none');
+        } else {
+          var y = (7 * q).toFixed(2), x = (8 * q).toFixed(2), rad = (30 * q).toFixed(0);
+          var cp = 'inset(' + y + '% ' + x + '% ' + y + '% ' + x + '% round ' + rad + 'px)';
+          M.escribe(el, 'clipPath', cp);
+          M.escribe(el, 'webkitClipPath', cp);
+        }
+        /* El parallax va por transform de la imagen: es barato, pero tambien
+           se cuantiza para no invalidar estilos sin necesidad. */
+        if (amount) M.escribeProp(el, '--parallax-y', (-7 + amount * (Math.round(p * 50) / 50 - 0.5)).toFixed(2) + '%');
       });
     });
 
@@ -1028,9 +1095,10 @@
           var r = stage.getBoundingClientRect();
           var p = M.limita((H - (r.top + S)) / (H + r.height));
           frames.forEach(function (el, i) {
-            var y = ((i + 1) * -9) * (p - 0.5) * 2;
-            var rot = (i === 1 ? -9 : i === 2 ? 10 : 0) * (p - 0.5) * 2;
-            el.style.transform = 'translateY(' + y.toFixed(2) + '%) rotate(' + rot.toFixed(2) + 'deg)';
+            var pq = Math.round(p * 60) / 60;
+            var y = ((i + 1) * -9) * (pq - 0.5) * 2;
+            var rot = (i === 1 ? -9 : i === 2 ? 10 : 0) * (pq - 0.5) * 2;
+            M.escribe(el, 'transform', 'translateY(' + y.toFixed(1) + '%) rotate(' + rot.toFixed(1) + 'deg)');
           });
         });
       }
@@ -1039,7 +1107,7 @@
         M.continuo(function (H, S) {
           var r = tBox.getBoundingClientRect();
           var p = M.limita((H - (r.top + S)) / (H + r.height));
-          ticker.style.transform = 'translateX(' + (-p * 22).toFixed(2) + '%)';
+          M.escribe(ticker, 'transform', 'translateX(' + (-(Math.round(p * 60) / 60) * 22).toFixed(2) + '%)');
         });
       }
       var aura = one('.phone-aura'), social = document.getElementById('hbp-social');
@@ -1047,7 +1115,7 @@
         M.continuo(function (H, S) {
           var r = social.getBoundingClientRect();
           var p = M.limita((H - (r.top + S)) / (H + r.height));
-          aura.style.transform = 'rotate(' + (p * 190).toFixed(1) + 'deg)';
+          M.escribe(aura, 'transform', 'rotate(' + ((Math.round(p * 40) / 40) * 190).toFixed(0) + 'deg)');
         });
       }
     })();
@@ -1066,7 +1134,7 @@
         /* En móvil el teléfono va en el flujo (ver el CSS): nada que anclar.
            Anclarlo obligaba a superponer el texto, y el fondo sólido que el
            texto necesita para ser legible acababa tapándolo por completo. */
-        if (window.innerWidth <= 760) { stage.style.transform = ''; return; }
+        var movil = window.innerWidth <= 760;
         /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
            la rejilla completa: con la rejilla el recorrido no coincidía y el
            teléfono se iba quedando abajo. */
@@ -1076,15 +1144,13 @@
         /* Centrado vertical en pantalla mientras está anclado. */
         /* En movil el telefono va en la banda superior; en escritorio,
            centrado en pantalla. */
-        var hueco = (window.innerWidth <= 760) ? 12 : Math.max(16, (H - altoEsc) / 2);
+        /* En movil la vista previa va pegada arriba; en escritorio, centrada. */
+        var hueco = movil ? 14 : Math.max(16, (H - altoEsc) / 2);
         var y = Math.min(Math.max(hueco - arriba, 0), rec);
         /* Redondeo a medio píxel: los valores fraccionarios hacían temblar
            el render en algunos navegadores. */
         y = Math.round(y * 2) / 2;
-        if (y !== ultimaY) {
-          ultimaY = y;
-          stage.style.transform = 'translate3d(0,' + y + 'px,0)';
-        }
+        M.escribe(stage, 'transform', 'translate3d(0,' + y + 'px,0)');
         /* El caso activo es el paso más cercano al centro de la pantalla.
            Con zona muerta: sólo cambia si el nuevo candidato está
            claramente más cerca. Sin esto, dos pasos a distancia parecida

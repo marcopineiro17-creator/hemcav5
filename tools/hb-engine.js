@@ -170,9 +170,42 @@ function hbEngine(root, opts) {
     }
     if (!entradas.length && sondeo) { clearInterval(sondeo); sondeo = null; }
 
+    /* Primero se LEE todo, luego se ESCRIBE todo.
+       Si cada funcion lee getBoundingClientRect y escribe estilos acto
+       seguido, el navegador se ve obligado a recalcular la maquetacion en
+       cada paso: con veinte funciones son veinte recalculos por fotograma.
+       Eso es lo que se ve como temblor. Aqui las escrituras se acumulan y
+       se aplican juntas al final, con una sola maquetacion. */
     for (var j = 0; j < continuos.length; j++) {
       try { continuos[j](H, S); } catch (e) {}
     }
+    for (var w = 0; w < cola.length; w += 3) {
+      try {
+        if (cola[w + 1] === "@prop") cola[w].style.setProperty(cola[w + 2][0], cola[w + 2][1]);
+        else cola[w].style[cola[w + 1]] = cola[w + 2];
+      } catch (e) {}
+    }
+    cola.length = 0;
+  }
+
+  /* Encola una escritura de estilo. Salta las que no cambian nada: evita
+     invalidaciones inutiles, que tambien encarecen cada fotograma. */
+  var cola = [], previo = new WeakMap();
+  function escribe(el, prop, valor) {
+    if (!el) return;
+    var m = previo.get(el);
+    if (!m) { m = {}; previo.set(el, m); }
+    if (m[prop] === valor) return;
+    m[prop] = valor;
+    cola.push(el, prop, valor);
+  }
+  function escribeProp(el, nombre, valor) {
+    if (!el) return;
+    var m = previo.get(el);
+    if (!m) { m = {}; previo.set(el, m); }
+    if (m[nombre] === valor) return;
+    m[nombre] = valor;
+    cola.push(el, "@prop", [nombre, valor]);
   }
   function pedir() { if (!encolado) { encolado = true; requestAnimationFrame(ciclo); } }
 
@@ -278,6 +311,8 @@ function hbEngine(root, opts) {
 
   return {
     diagnostico: diagnostico,
+    escribe: escribe,
+    escribeProp: escribeProp,
     alEntrar: alEntrar,
     continuo: continuo,
     pedir: pedir,

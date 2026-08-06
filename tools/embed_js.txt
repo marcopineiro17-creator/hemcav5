@@ -65,8 +65,8 @@
         var rec = recorrido();
         /* Mientras el bloque no llega al borde superior el escenario
            descansa; cuando lo pasa, se desplaza para quedarse pegado. */
-        var desfase = Math.min(Math.max(-arriba, 0), rec);
-        escenario.style.transform = "translateY(" + desfase + "px)";
+        var desfase = Math.round(Math.min(Math.max(-arriba, 0), rec) * 2) / 2;
+        M.escribe(escenario, "transform", "translate3d(0," + desfase + "px,0)");
         mostrarEtapa(Math.min(fichas.length - 1, Math.floor((desfase / rec) * fichas.length)));
       });
 

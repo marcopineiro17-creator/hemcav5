@@ -125,28 +125,42 @@ def portafolio():
 
     src = src.replace('</style>', """
 /* --------------------------------------------------------------------
-   MOVIL: el telefono NO se ancla ni se superpone.
-   Superponerlo era la causa de que el texto lo tapara por completo: el panel
-   de texto necesita fondo solido para ser legible, y ese fondo cubria el
-   telefono. Aqui el telefono va en el flujo, arriba de los capitulos, y la
-   imagen sigue cambiando conforme cada capitulo entra en pantalla.
+   MOVIL: el telefono queda anclado arriba a la derecha, pequeno, como
+   vista previa. En el flujo no servia (te lo pasabas y no veias el cambio)
+   y superpuesto a lo ancho tapaba el texto. Asi se ve cambiar siempre y el
+   texto corre a ancho completo por debajo.
    -------------------------------------------------------------------- */
+/* contain:paint aisla cada marco: al cambiar su clip-path no obliga al
+   navegador a re-desenfocar los orbes del fondo (130px de blur) ni los
+   paneles con backdrop-filter. Es lo que hace barata la animacion. */
+#hbp .media{contain:paint}
+#hbp .ambient,#hbp .ambient .orb{will-change:auto;contain:paint}
+
 @media(max-width:760px){
   #hbp .story-layout{display:block;position:relative}
-  #hbp .phone-rail{position:relative!important;inset:auto;min-height:0;pointer-events:auto;
-    z-index:1;display:flex;justify-content:center;margin-bottom:34px}
+  #hbp .phone-rail{position:absolute!important;inset:0;min-height:0;
+    pointer-events:none;z-index:6;display:block}
   #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
-    padding:0;align-items:center;transform:none!important}
-  #hbp .phone{width:250px}
-  #hbp .phone-caption{position:relative;right:auto;left:auto;top:auto;bottom:auto;
-    margin-top:18px;min-width:0;align-self:center}
+    padding:0;display:flex;justify-content:flex-end;align-items:flex-start}
+  #hbp .phone{width:132px;border-radius:22px;padding:4px;
+    box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.28)}
+  #hbp .phone::before{inset:3px;border-radius:19px}
+  #hbp .phone-screen{border-radius:18px}
+  #hbp .phone-edge,#hbp .phone-ui,#hbp .story-brand,#hbp .phone-bottom,
+  #hbp .dynamic-island,#hbp .phone-aura,#hbp .phone-caption{display:none}
+  #hbp .story-bars{top:6px;left:6px;right:6px}
   #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
+  /* Solo el primer capitulo cede espacio a la vista previa. */
   #hbp .story-step{min-height:0;background:none;padding:34px 4px;align-content:start}
+  #hbp .story-step:first-child{padding-top:20px}
+  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
+  #hbp .story-step:first-child ul{max-width:calc(100% - 148px)}
   #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
-  #hbp .phone-aura{width:300px;height:300px}
 }
 @media(max-width:480px){
-  #hbp .phone{width:225px}
+  #hbp .phone{width:118px}
+  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
+  #hbp .story-step:first-child ul{max-width:calc(100% - 132px)}
   #hbp .story-step{grid-template-columns:30px 1fr;gap:11px;padding-inline:2px}
 }
 </style>""", 1)
