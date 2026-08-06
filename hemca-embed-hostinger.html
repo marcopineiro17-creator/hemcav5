@@ -76,7 +76,7 @@
     /* ============================================================
        5. HERO
        ============================================================ */
-    .hemca .hero { position: relative; min-height: clamp(560px, 78vh, 880px); display: grid; align-items: end; isolation: isolate; background: var(--ink); color: #fff; }
+    .hemca .hero { position: relative; min-height: clamp(560px, calc(var(--vh-real, 100svh) * .78), 880px); display: grid; align-items: end; isolation: isolate; background: var(--ink); color: #fff; }
     .hemca .hero-image { position: absolute; z-index: -3; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 58%; filter: saturate(.72) contrast(1.05); }
     .hemca .hero::before { content: ""; position: absolute; z-index: -2; inset: 0; background: linear-gradient(90deg, rgba(7, 19, 31, .98) 0%, rgba(7, 19, 31, .91) 40%, rgba(7, 19, 31, .24) 75%, rgba(7, 19, 31, .44) 100%); }
     .hemca .hero::after { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .22; background-image: linear-gradient(rgba(255, 255, 255, .16) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .16) 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(to right, #000, transparent 78%); }
@@ -112,8 +112,8 @@
        Aqui el escenario se mueve con translateY calculado desde
        getBoundingClientRect, que si es fiable en cualquier contenedor.
        La altura del bloque ES el recorrido: 4 pantallas, una por etapa. */
-    .hemca .story-layout { position: relative; height: 400vh; height: 400svh; }
-    .hemca .story-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100vh; height: 100svh; overflow: hidden; will-change: transform; }
+    .hemca .story-layout { position: relative; height: calc(var(--vh-real, 100svh) * 4); }
+    .hemca .story-stage { position: absolute; top: 0; left: 0; width: 100%; height: var(--vh-real, 100svh); overflow: hidden; will-change: transform; }
     .hemca .story-media { position: absolute; inset: 0; }
     .hemca .story-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 19, 31, .95) 0%, rgba(7, 19, 31, .69) 44%, rgba(7, 19, 31, .12) 76%), linear-gradient(0deg, rgba(7, 19, 31, .65), transparent 40%); }
     .hemca .story-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0; filter: saturate(.7) contrast(1.05); transition: opacity .55s ease; }
@@ -269,7 +269,7 @@
     .hemca { --pad: 20px; --nav-h: 54px; }
     .hemca .mini-brand small { display: none; }
     .hemca .nav-cta { padding: 9px 12px; }
-    .hemca .hero { min-height: clamp(540px, 86vh, 760px); }
+    .hemca .hero { min-height: clamp(540px, calc(var(--vh-real, 100svh) * .86), 760px); }
     .hemca .hero-content { padding-block: 66px 62px; }
     .hemca .hero-mark { margin-bottom: 62px; }
     .hemca .hero h1 { font-size: clamp(3.35rem, 16vw, 5.5rem); letter-spacing: -.075em; }
@@ -321,6 +321,11 @@
     .hemca *, .hemca *::before, .hemca *::after { animation: none !important; transition-duration: .01ms !important; }
     .hemca.js-on [data-reveal] { opacity: 1; transform: none; }
     }
+
+    /* Cuando no se puede medir el scroll (iframe de otro origen), el
+       bloque no debe reservar 4 pantallas: seria un hueco vacio. */
+    .hemca.etapas-tiempo .story-layout { height: auto; }
+    .hemca.etapas-tiempo .story-stage { position: relative; height: clamp(560px, 74vh, 820px); transform: none !important; }
 
 </style>
 
@@ -591,151 +596,392 @@
   if (!raiz) return;
 
   var WA = "529995690047";
-  var lento = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* Cada bloque va aislado: si uno falla, los demas siguen funcionando. */
+  /* Si algo falla, se quita el ocultado y todo el contenido queda visible. */
+  function rendirse(e) {
+    try { raiz.classList.remove("js-on"); } catch (_) {}
+    try { if (window.console && console.warn) console.warn("[HEMCA] modo seguro:", e); } catch (_) {}
+  }
   function safe(fn) { try { fn(); } catch (e) {} }
 
-  /* ---------- 1. Etapas ancladas y avanzando con el scroll ----------
-     El original usaba position:sticky, que los contenedores del constructor
-     anulan (crean bloque contenedor con transform u overflow) y dejaban un
-     hueco vacio de varias pantallas.
+  try { principal(); } catch (e) { rendirse(e); }
 
-     Aqui el anclaje se calcula: getBoundingClientRect devuelve coordenadas
-     de ventana correctas dentro de cualquier contenedor, y el escenario se
-     mueve con translateY. El resultado es identico al sticky, pero no
-     depende de que el navegador pueda aplicarlo. */
-  safe(function () {
+  function principal() {
+
+    /* ===================================================================
+       MOTOR DE SCROLL PARA BLOQUES INCRUSTADOS  (compartido)
+       -------------------------------------------------------------------
+       EL PROBLEMA QUE RESUELVE
+       Hostinger inserta el codigo personalizado dentro de un <iframe>. Si
+       ese iframe mide menos que su contenido, se convierte en una ventana
+       pequena sobre una pagina muy alta:
+         - El iframe no hace scroll por dentro; el que se desplaza es el
+           documento padre.
+         - IntersectionObserver mide contra el viewport DEL IFRAME, asi que
+           todo lo que quede por debajo de su caja nunca "entra a vista".
+         - getBoundingClientRect() dentro del iframe no sabe donde esta el
+           iframe en la pagina real.
+       Resultado: el fondo se pinta (es CSS) pero el contenido se queda en
+       opacity:0 -> "bajo y solo se carga el fondo".
+
+       LA CURA, EN ORDEN
+       1. Si el iframe es del mismo origen, se le fija la altura de su
+          propio contenido. Asi desaparece el scroll interno y la geometria
+          vuelve a ser coherente. Tambien se avisa por postMessage para los
+          anfitriones que sepan escucharlo.
+       2. El viewport de referencia es el del padre, y a cada medida se le
+          suma el desplazamiento del iframe dentro de esa pagina.
+       3. Se escucha el scroll del padre ademas del propio.
+       4. Sondeo periodico por si no llega ningun evento.
+       5. Red de seguridad: pasado un tiempo, lo que siga pendiente se
+          muestra. Nunca puede quedar contenido invisible.
+       6. Si el padre no es legible (otro origen), no se oculta nada: se
+          renuncia a las animaciones de scroll antes que arriesgar una
+          pagina en blanco.
+
+       NUNCA escribe la posicion de scroll de nadie: eso es lo que hacia
+       saltar la pagina al inicio.
+       =================================================================== */
+    function hbEngine(root, opts) {
+      "use strict";
+      opts = opts || {};
+
+      var lento = false;
+      try { lento = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
+
+      /* ---------- contexto ---------- */
+      var enMarco = false, padre = null, marco = null;
+      try { enMarco = (window.self !== window.top); } catch (e) { enMarco = true; }
+      if (enMarco) {
+        try {
+          marco = window.frameElement;
+          if (marco && typeof window.parent.innerHeight === "number") padre = window.parent;
+          if (!padre) marco = null;
+        } catch (e) { marco = null; padre = null; }
+      }
+      /* Legible = podemos medir de verdad. Es la condicion para animar. */
+      var legible = !enMarco || !!marco;
+
+      /* ---------- alto del viewport REAL como variable CSS ----------
+         Al fijar la altura del iframe a la de su contenido, el viewport del
+         iframe PASA A SER esa altura: 100svh dejaria de valer una pantalla y
+         se realimentaria (mas alto -> mas contenido -> mas alto). Por eso las
+         alturas de pantalla se toman de --vh-real, en pixeles, medidos sobre
+         la pagina padre. El valor por omision en CSS es 100svh, para que
+         funcione sin JS y fuera de un iframe. */
+      var ultimaVista = 0;
+      function sincronizarVista() {
+        var H = altoVista();
+        if (Math.abs(H - ultimaVista) < 2) return;
+        ultimaVista = H;
+        try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
+      }
+
+      /* ---------- altura del iframe = altura del contenido ----------
+         Con dos frenos. Si alguna medida en el CSS depende de la altura del
+         viewport (vh/svh), crecer el iframe agranda su propio viewport y se
+         entra en bucle: mas alto -> mas contenido -> mas alto. Por eso hay
+         un techo duro y un detector de crecimiento sostenido. */
+      var TECHO = 60000;
+      var ultimaAltura = 0, subidas = 0, congelado = false;
+      function ajustarMarco() {
+        if (!enMarco || congelado) return;
+        var alto = Math.ceil(root.getBoundingClientRect().height);
+        if (!alto || Math.abs(alto - ultimaAltura) < 2) return;
+
+        if (alto > ultimaAltura + 8) { subidas++; } else { subidas = 0; }
+        if (alto > TECHO || subidas > 12) {
+          congelado = true;
+          try {
+            if (window.console && console.warn) {
+              console.warn('[hbEngine] altura desbocada (' + alto + 'px): se congela. ' +
+                           'Suele venir de una medida en vh/svh dentro del iframe; usa --vh-real.');
+            }
+          } catch (e) {}
+          return;
+        }
+        ultimaAltura = alto;
+        /* Mismo origen: lo arreglamos nosotros y se acaba el scroll interno. */
+        if (marco) {
+          try {
+            marco.style.height = alto + "px";
+            marco.style.minHeight = alto + "px";
+            marco.setAttribute("scrolling", "no");
+          } catch (e) {}
+        }
+        /* Y avisamos, por si el anfitrion prefiere gestionarlo el. */
+        try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
+      }
+
+      /* ---------- geometria real ---------- */
+      function altoVista() {
+        if (padre) { try { return padre.innerHeight || window.innerHeight || 800; } catch (e) {} }
+        return window.innerHeight || 800;
+      }
+      function desfaseMarco() {
+        if (!marco) return 0;
+        try { return marco.getBoundingClientRect().top; } catch (e) { return 0; }
+      }
+      /* Posicion del elemento en el viewport REAL. */
+      function techo(el, S) {
+        try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; }
+      }
+      function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+      /* ---------- registros ---------- */
+      var entradas = [], continuos = [], encolado = false, sondeo = null;
+
+      function alEntrar(el, cb) { if (el) entradas.push({ el: el, cb: cb }); }
+      function continuo(fn) { if (fn) continuos.push(fn); }
+
+      function ciclo() {
+        encolado = false;
+        sincronizarVista();
+        ajustarMarco();
+        var H = altoVista(), S = desfaseMarco();
+
+        for (var i = entradas.length - 1; i >= 0; i--) {
+          var it = entradas[i];
+          if (techo(it.el, S) < H * 0.93) {
+            it.el.classList.add(opts.claseVisible || "in");
+            if (it.cb) { try { it.cb(it.el); } catch (e) {} }
+            entradas.splice(i, 1);
+          }
+        }
+        if (!entradas.length && sondeo) { clearInterval(sondeo); sondeo = null; }
+
+        for (var j = 0; j < continuos.length; j++) {
+          try { continuos[j](H, S); } catch (e) {}
+        }
+      }
+      function pedir() { if (!encolado) { encolado = true; requestAnimationFrame(ciclo); } }
+
+      /* ---------- mostrar todo (red de seguridad y modo sin medida) ---------- */
+      function mostrarTodo() {
+        for (var i = 0; i < entradas.length; i++) {
+          entradas[i].el.classList.add(opts.claseVisible || "in");
+          if (entradas[i].cb) { try { entradas[i].cb(entradas[i].el); } catch (e) {} }
+        }
+        entradas.length = 0;
+        if (sondeo) { clearInterval(sondeo); sondeo = null; }
+      }
+
+      /* ---------- arranque ---------- */
+      function arrancar() {
+        sincronizarVista();
+        ajustarMarco();
+
+        /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
+        if (!legible || lento) {
+          mostrarTodo();
+          continuos.length = 0;
+          if (opts.alRendirse) { try { opts.alRendirse(); } catch (e) {} }
+          seguirAltura();
+          return;
+        }
+
+        function liga(w) {
+          try {
+            w.addEventListener("scroll", pedir, { passive: true });
+            w.addEventListener("resize", pedir, { passive: true });
+          } catch (e) {}
+        }
+        liga(window);
+        if (padre) liga(padre);
+
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) { ciclo(); pedir(); }
+        });
+
+        /* Sondeo: cubre el caso de que no llegue ningun evento de scroll.
+           Llama a ciclo() directo porque requestAnimationFrame se congela
+           en pestanas de segundo plano. */
+        sondeo = setInterval(ciclo, 300);
+
+        pedir();
+        [80, 300, 800, 1600, 3000].forEach(function (ms) { setTimeout(pedir, ms); });
+        window.addEventListener("load", pedir);
+        try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(pedir); } catch (e) {}
+        seguirAltura();
+
+        /* Red de seguridad final: nada se queda invisible. */
+        setTimeout(mostrarTodo, opts.limite || 9000);
+      }
+
+      /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
+      function seguirAltura() {
+        if (!enMarco) return;
+        try { new ResizeObserver(ajustarMarco).observe(root); } catch (e) {}
+        window.addEventListener("load", ajustarMarco);
+        window.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); });
+        if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); }, { passive: true }); } catch (e) {} }
+        [400, 1200, 2500].forEach(function (ms) { setTimeout(ajustarMarco, ms); });
+        Array.prototype.slice.call(root.querySelectorAll("img")).forEach(function (im) {
+          if (!im.complete) im.addEventListener("load", function () { ajustarMarco(); pedir(); }, { once: true });
+        });
+      }
+
+      return {
+        alEntrar: alEntrar,
+        continuo: continuo,
+        pedir: pedir,
+        arrancar: arrancar,
+        mostrarTodo: mostrarTodo,
+        altoVista: altoVista,
+        sincronizarVista: sincronizarVista,
+        desfase: desfaseMarco,
+        techo: techo,
+        limita: limita,
+        enMarco: enMarco,
+        legible: legible,
+        lento: lento
+      };
+    }
+
+    var M = hbEngine(raiz, {
+      claseVisible: "visible",
+      limite: 9000,
+      /* Sin medida fiable (iframe de otro origen) se renuncia al scroll:
+         las etapas pasan a turnarse por tiempo y clic. */
+      alRendirse: function () { etapasPorTiempo(); }
+    });
+
+    /* ---------- 1. Etapas ----------
+       Con medida fiable: ancladas y avanzando con el scroll, igual que el
+       original, pero calculando el anclaje en vez de usar position:sticky
+       (que los contenedores del constructor anulan).
+       Sin medida fiable: se turnan por tiempo y clic. */
     var bloque    = raiz.querySelector("#story-layout");
     var escenario = raiz.querySelector("#story-stage");
     var fichas  = [].slice.call(raiz.querySelectorAll("[data-story]"));
     var fotos   = [].slice.call(raiz.querySelectorAll("[data-story-image]"));
     var botones = [].slice.call(raiz.querySelectorAll(".chapter-dot"));
-    if (!bloque || !escenario || !fichas.length) return;
-
-    var actual = -1, pendiente = false;
+    var actual = -1;
 
     function marcar(lista, n) {
       for (var k = 0; k < lista.length; k++) lista[k].classList.toggle("active", k === n);
     }
-
-    function pintar() {
-      pendiente = false;
-
-      var caja = bloque.getBoundingClientRect();
-      var altoEscenario = escenario.offsetHeight;
-      /* Recorrido util: lo que el bloque sobresale por debajo del escenario. */
-      var recorrido = Math.max(1, bloque.offsetHeight - altoEscenario);
-
-      /* Mientras el bloque no llega arriba, el escenario descansa en su sitio;
-         cuando lo pasa, se desplaza para quedarse pegado al borde superior. */
-      var desfase = Math.min(Math.max(-caja.top, 0), recorrido);
-      escenario.style.transform = "translateY(" + desfase + "px)";
-
-      var avance = desfase / recorrido;
-      var i = Math.min(fichas.length - 1, Math.floor(avance * fichas.length));
-      if (i === actual) return;
-      actual = i;
-
-      marcar(fichas, i); marcar(fotos, i); marcar(botones, i);
+    function mostrarEtapa(n) {
+      if (!fichas.length) return;
+      n = (n + fichas.length) % fichas.length;
+      if (n === actual) return;
+      actual = n;
+      marcar(fichas, n); marcar(fotos, n); marcar(botones, n);
       for (var k = 0; k < botones.length; k++) {
-        botones[k].setAttribute("aria-selected", k === i ? "true" : "false");
+        botones[k].setAttribute("aria-selected", k === n ? "true" : "false");
       }
     }
 
-    function alScroll() {
-      if (!pendiente) { pendiente = true; window.requestAnimationFrame(pintar); }
+    function recorrido() {
+      return Math.max(1, bloque.offsetHeight - escenario.offsetHeight);
     }
 
-    window.addEventListener("scroll", alScroll, { passive: true });
-    window.addEventListener("resize", alScroll, { passive: true });
-
-    /* Los indicadores llevan el scroll al tramo de su etapa. */
-    botones.forEach(function (b, k) {
-      b.addEventListener("click", function () {
-        var recorrido = Math.max(1, bloque.offsetHeight - escenario.offsetHeight);
-        var arriba = bloque.getBoundingClientRect().top + window.pageYOffset;
-        var destino = arriba + ((k + 0.5) / fichas.length) * recorrido;
-        window.scrollTo({ top: destino, behavior: lento ? "auto" : "smooth" });
+    if (bloque && escenario && fichas.length) {
+      raiz.classList.add("etapas-scroll");
+      M.continuo(function (H, S) {
+        var arriba = M.techo(bloque, S);
+        var rec = recorrido();
+        /* Mientras el bloque no llega al borde superior el escenario
+           descansa; cuando lo pasa, se desplaza para quedarse pegado. */
+        var desfase = Math.min(Math.max(-arriba, 0), rec);
+        escenario.style.transform = "translateY(" + desfase + "px)";
+        mostrarEtapa(Math.min(fichas.length - 1, Math.floor((desfase / rec) * fichas.length)));
       });
-      b.addEventListener("keydown", function (e) {
-        var salto = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1
-                  : (e.key === "ArrowLeft"  || e.key === "ArrowUp")   ? -1 : 0;
-        if (!salto) return;
-        e.preventDefault();
-        var n = Math.min(fichas.length - 1, Math.max(0, k + salto));
-        botones[n].focus(); botones[n].click();
+
+      /* Los indicadores llevan el scroll al tramo de su etapa. */
+      botones.forEach(function (b, k) {
+        b.addEventListener("click", function () {
+          if (!raiz.classList.contains("etapas-scroll")) { mostrarEtapa(k); return; }
+          var rec = recorrido();
+          var arribaDoc = bloque.getBoundingClientRect().top + window.pageYOffset;
+          var destino = arribaDoc + ((k + 0.5) / fichas.length) * rec;
+          /* Dentro de un iframe hay que desplazar la pagina padre: lo hace
+             scrollIntoView, que si atraviesa el marco. */
+          if (M.enMarco) {
+            var ref = document.createElement("div");
+            ref.style.cssText = "position:absolute;left:0;width:1px;height:1px;pointer-events:none";
+            ref.style.top = ((k + 0.5) / fichas.length) * rec + "px";
+            bloque.appendChild(ref);
+            try { ref.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); } catch (e) {}
+            setTimeout(function () { try { bloque.removeChild(ref); } catch (e) {} }, 900);
+          } else {
+            window.scrollTo({ top: destino, behavior: M.lento ? "auto" : "smooth" });
+          }
+        });
+        b.addEventListener("keydown", function (e) {
+          var salto = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1
+                    : (e.key === "ArrowLeft"  || e.key === "ArrowUp")   ? -1 : 0;
+          if (!salto) return;
+          e.preventDefault();
+          var n = Math.min(fichas.length - 1, Math.max(0, k + salto));
+          botones[n].focus(); botones[n].click();
+        });
       });
-    });
-
-    pintar();
-    /* Las fuentes y las fotos cambian las alturas: recalcular al terminar. */
-    window.addEventListener("load", pintar);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(pintar);
-  });
-
-  /* ---------- 2. Aparicion de bloques al entrar en pantalla ---------- */
-  safe(function () {
-    var bloques = [].slice.call(raiz.querySelectorAll("[data-reveal]"));
-    if (lento || !("IntersectionObserver" in window)) {
-      bloques.forEach(function (el) { el.classList.add("visible"); });
-      return;
     }
-    var ob = new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add("visible"); ob.unobserve(e.target); }
+
+    /* Plan B de las etapas cuando no se puede medir el scroll. */
+    function etapasPorTiempo() {
+      if (!fichas.length || !escenario) return;
+      raiz.classList.remove("etapas-scroll");
+      raiz.classList.add("etapas-tiempo");
+      escenario.style.transform = "";
+      if (M.lento) return;
+      var reloj = setInterval(function () { mostrarEtapa(actual + 1); }, 5200);
+      escenario.addEventListener("mouseenter", function () { clearInterval(reloj); reloj = null; });
+      escenario.addEventListener("mouseleave", function () {
+        if (!reloj) reloj = setInterval(function () { mostrarEtapa(actual + 1); }, 5200);
       });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-    bloques.forEach(function (el) { ob.observe(el); });
-  });
+    }
 
-  /* ---------- 3. Enlaces internos con desplazamiento suave ----------
-     Sustituye a scroll-behavior en la raiz del documento, que aqui no se toca. */
-  safe(function () {
-    raiz.addEventListener("click", function (ev) {
-      var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
-      if (!a) return;
-      var destino = raiz.querySelector(a.getAttribute("href"));
-      if (!destino) return;
-      ev.preventDefault();
-      destino.scrollIntoView({ behavior: lento ? "auto" : "smooth", block: "start" });
+    /* ---------- 2. Aparicion de bloques ---------- */
+    [].slice.call(raiz.querySelectorAll("[data-reveal]")).forEach(function (el) { M.alEntrar(el); });
+
+    /* ---------- 3. Enlaces internos ---------- */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
+        if (!a) return;
+        var destino = raiz.querySelector(a.getAttribute("href"));
+        if (!destino) return;
+        ev.preventDefault();
+        /* scrollIntoView funciona tambien dentro de un iframe: arrastra el
+           scroll del documento padre. */
+        try { destino.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); }
+        catch (e) { try { destino.scrollIntoView(); } catch (e2) {} }
+      });
     });
-  });
 
-  /* ---------- 4. Formulario -> WhatsApp ---------- */
-  safe(function () {
-    var form = raiz.querySelector("#quote-form");
-    if (!form) return;
-
-    form.addEventListener("submit", function (ev) {
-      ev.preventDefault();
-
-      var d = new FormData(form);
-      var detalle = (d.get("detail") || "").toString().trim();
-
-      /* Se filtran solo las lineas opcionales vacias; el renglon en blanco
-         tras el saludo se anade despues para que no se pierda. */
-      var lineas = [
-        "Nombre: " + d.get("name"),
-        "Teléfono: " + d.get("phone"),
-        "Proyecto: " + d.get("type"),
-        "Ubicación: " + d.get("place"),
-        detalle ? "Detalles: " + detalle : null
-      ].filter(function (l) { return l; });
-
-      var texto = "Hola Edgar, me interesa cotizar un proyecto con HEMCA.\n\n" + lineas.join("\n");
-      var url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(texto);
-
-      /* Si el navegador bloquea la ventana emergente, navegamos en la misma. */
-      var v = window.open(url, "_blank", "noopener");
-      if (!v) window.location.href = url;
+    /* ---------- 4. Formulario -> WhatsApp ---------- */
+    safe(function () {
+      var form = raiz.querySelector("#quote-form");
+      if (!form) return;
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var d = new FormData(form);
+        var detalle = (d.get("detail") || "").toString().trim();
+        /* Se filtran solo las lineas opcionales vacias; el renglon en
+           blanco tras el saludo se anade despues para que no se pierda. */
+        var lineas = [
+          "Nombre: " + d.get("name"),
+          "Teléfono: " + d.get("phone"),
+          "Proyecto: " + d.get("type"),
+          "Ubicación: " + d.get("place"),
+          detalle ? "Detalles: " + detalle : null
+        ].filter(function (l) { return l; });
+        var texto = "Hola Edgar, me interesa cotizar un proyecto con HEMCA.\n\n" + lineas.join("\n");
+        var url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(texto);
+        var v = window.open(url, "_blank", "noopener");
+        if (!v) window.location.href = url;
+      });
     });
-  });
 
-  /* ---------- 5. Ano del pie ---------- */
-  safe(function () {
-    var y = raiz.querySelector("#year");
-    if (y) y.textContent = String(new Date().getFullYear());
-  });
+    /* ---------- 5. Ano del pie ---------- */
+    safe(function () {
+      var y = raiz.querySelector("#year");
+      if (y) y.textContent = String(new Date().getFullYear());
+    });
+
+    M.arrancar();
+  }
 })();
 </script>

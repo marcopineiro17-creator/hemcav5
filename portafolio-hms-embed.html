@@ -1,0 +1,958 @@
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<!--
+  HUMMINGBIRD MARKETING SOLUTIONS — PORTAFOLIO
+  Subrama de Corporativo Piñeiro Medina
+
+  Uso: pega el bloque completo en un elemento de Código personalizado de Hostinger.
+  Animación: motor propio, sin librerías externas. Hostinger encapsula el bloque en
+  un iframe; si ese iframe mide menos que su contenido, nada de lo que quede por
+  debajo de su caja llega a "entrar a vista" y el sitio se queda con el fondo y sin
+  contenido. El motor le fija al iframe la altura de su propio contenido, mide contra
+  el viewport de la página padre y escucha también el scroll del padre.
+  Seguridad: sin JavaScript, con un error, con el padre ilegible (otro origen) o con
+  prefers-reduced-motion, todo el contenido permanece visible y navegable.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://assets.zyrosite.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+
+<div id="hbp">
+  <a class="skip" href="#hbp-work">Saltar al portafolio</a>
+
+  <div class="ambient" aria-hidden="true">
+    <i class="orb orb-a"></i><i class="orb orb-b"></i><i class="orb orb-c"></i>
+    <i class="noise"></i><i class="grid"></i>
+  </div>
+
+  <nav class="nav" id="hbpNav" aria-label="Navegación principal">
+    <div class="nav-inner">
+      <a class="brand" href="#hbp-top" aria-label="Hummingbird, inicio del portafolio">
+        <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/hummingbird-todo-blanco-sin-fondo-nuHQ5fVkjTrHuY3w.png" alt="" width="60" height="60"/>
+        <span><b>Hummingbird</b><small>Selected work</small></span>
+      </a>
+      <div class="nav-links">
+        <a href="#hbp-work">Casos</a><a href="#hbp-social">Social</a><a href="#hbp-method">Enfoque</a>
+      </div>
+      <a class="button button-small button-primary" href="#hbp-contact">Iniciar proyecto</a>
+      <button class="menu-button" id="hbpMenuButton" type="button" aria-expanded="false" aria-controls="hbpMenu" aria-label="Abrir menú">
+        <span></span><span></span>
+      </button>
+    </div>
+    <i class="nav-progress" id="hbpProgress" aria-hidden="true"></i>
+  </nav>
+
+  <div class="mobile-menu" id="hbpMenu" aria-hidden="true">
+    <a href="#hbp-work">Casos</a><a href="#hbp-social">Social</a><a href="#hbp-method">Enfoque</a>
+    <a class="button button-primary" href="#hbp-contact">Iniciar proyecto</a>
+  </div>
+
+  <main>
+    <span id="hbp-top"></span>
+    <section class="hero" aria-labelledby="hbp-title">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="wrap hero-copy">
+        <div class="division-pill reveal hero-reveal">
+          <span>Una división de</span><i></i>
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro Medina" width="190" height="46"/>
+        </div>
+        <p class="eyebrow reveal hero-reveal">Portfolio / 2026</p>
+        <h1 id="hbp-title" class="reveal hero-reveal">Marcas que se sienten.<br/><span class="gradient-text">Experiencias que venden.</span></h1>
+        <p class="lead reveal hero-reveal">Una selección de universos visuales, contenido y experiencias digitales creadas por Hummingbird para negocios que decidieron verse a la altura de lo que ofrecen.</p>
+        <div class="hero-actions reveal hero-reveal">
+          <a class="button button-primary magnetic" href="#hbp-work">Explorar proyectos
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="button button-ghost" href="#hbp-social">Ver contenido social</a>
+        </div>
+      </div>
+
+      <div class="hero-stage wrap reveal hero-reveal" aria-label="Vista previa de trabajos seleccionados">
+        <div class="hero-frame liquid hero-frame-main" data-depth="1">
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/interior-mazda-UMkCM9zWpMx7OfBe.jpeg" alt="Interior de automóvil fotografiado para CDA Automotriz" width="1500" height="1000" fetchpriority="high"/>
+          <span><b>CDA Automotriz</b><small>Dirección visual</small></span>
+        </div>
+        <div class="hero-frame liquid hero-frame-left" data-depth="2" aria-hidden="true">
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_1447-QB17uJHIz9u5RjFa.jpg" alt="" width="900" height="1200"/>
+        </div>
+        <div class="hero-frame liquid hero-frame-right" data-depth="3" aria-hidden="true">
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/ttki-atun-2-KffhormreVCJOILa.jpeg" alt="" width="900" height="1200"/>
+        </div>
+        <div class="glass-stamp liquid" aria-hidden="true"><span>Selected</span><b>WORK</b><small>2026</small></div>
+      </div>
+
+      <div class="scroll-cue" aria-hidden="true"><span>Desliza para descubrir</span><i></i></div>
+    </section>
+
+    <div class="client-ticker" aria-label="Clientes presentados">
+      <div class="ticker-track" id="hbpTicker">
+        <span>CDA Automotriz</span><i></i><span>Pulatu Café</span><i></i><span>Marisquería Poseidón</span><i></i><span>Distribuidora Serrano</span><i></i><span>Amorcito Corazón</span><i></i>
+        <span aria-hidden="true">CDA Automotriz</span><i aria-hidden="true"></i><span aria-hidden="true">Pulatu Café</span><i aria-hidden="true"></i><span aria-hidden="true">Marisquería Poseidón</span><i aria-hidden="true"></i><span aria-hidden="true">Distribuidora Serrano</span><i aria-hidden="true"></i><span aria-hidden="true">Amorcito Corazón</span><i aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <section class="intro" id="hbp-work" aria-labelledby="hbp-work-title">
+      <div class="wrap split-head">
+        <div class="reveal">
+          <p class="eyebrow">Trabajo seleccionado</p>
+          <h2 id="hbp-work-title">Cada marca tiene una energía.<br/><span class="gradient-text">Nosotros la hacemos visible.</span></h2>
+        </div>
+        <p class="section-copy reveal">Fotografía, dirección de arte y narrativa digital concebidas como un mismo sistema. Explora cada caso y descubre cómo cambia la atmósfera sin perder la precisión de Hummingbird.</p>
+      </div>
+    </section>
+
+    <section class="project project-cda" aria-labelledby="cda-title" data-project="01">
+      <div class="wrap project-head">
+        <div class="project-index reveal"><span>01</span><i></i><small>Automotriz</small></div>
+        <div class="project-title reveal">
+          <p class="eyebrow">CDA Automotriz</p>
+          <h2 id="cda-title">Precisión, confianza<br/>y deseo de conducir.</h2>
+        </div>
+        <div class="project-note liquid reveal"><span>Enfoque</span><p>Una presencia visual sobria y aspiracional que convierte cada detalle del automóvil en una experiencia.</p></div>
+      </div>
+      <div class="wrap mosaic mosaic-cda">
+        <figure class="media media-hero reveal" data-parallax="-7">
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/interior-mazda-UMkCM9zWpMx7OfBe.jpeg" alt="Interior premium de automóvil para CDA Automotriz" loading="lazy" decoding="async"/>
+          <figcaption><span>Hero visual</span><b>El producto como protagonista</b></figcaption>
+        </figure>
+        <figure class="media media-tall reveal" data-parallax="5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4287-M0O2tVeyOCvvNb7r.JPG" alt="Fotografía vertical de automóvil para CDA Automotriz" loading="lazy" decoding="async"/></figure>
+        <figure class="media media-small reveal" data-parallax="-4"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4286-nK6DKxKPHhCrcG8v.JPG" alt="Detalle exterior de automóvil para CDA Automotriz" loading="lazy" decoding="async"/></figure>
+        <figure class="media media-wide reveal" data-parallax="6"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4284-fxZvea5W0u2RfRTo.JPG" alt="Automóvil presentado en contenido de CDA Automotriz" loading="lazy" decoding="async"/></figure>
+        <figure class="media reveal" data-parallax="-5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4283-Hy3iL0XDmntKZm3n.JPG" alt="Fotografía comercial de vehículo para CDA Automotriz" loading="lazy" decoding="async"/></figure>
+        <figure class="media reveal" data-parallax="5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4282-jK4GcDdZCpUrjRNq.JPG" alt="Detalle de vehículo dentro de la campaña de CDA Automotriz" loading="lazy" decoding="async"/></figure>
+        <figure class="media media-last reveal" data-parallax="-3"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4277-rgROBXRpHjYSZ0D4.JPG" alt="Composición de producto para CDA Automotriz" loading="lazy" decoding="async"/></figure>
+      </div>
+      <div class="wrap deliverables reveal" aria-label="Entregables de CDA Automotriz"><span>Dirección de arte</span><span>Fotografía de producto</span><span>Contenido digital</span><span>Sistema visual</span></div>
+    </section>
+
+    <section class="project project-pulatu" aria-labelledby="pulatu-title" data-project="02">
+      <div class="wrap project-head project-head-inverse">
+        <div class="project-index reveal"><span>02</span><i></i><small>Hospitalidad</small></div>
+        <div class="project-title reveal"><p class="eyebrow">Pulatu Café</p><h2 id="pulatu-title">Una pausa cálida<br/>que se puede saborear.</h2></div>
+        <div class="project-note liquid reveal"><span>Enfoque</span><p>Texturas, rituales y cercanía para construir una identidad que invita a quedarse un café más.</p></div>
+      </div>
+      <div class="wrap editorial-grid">
+        <figure class="editorial-main media reveal" data-parallax="-6">
+          <img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_1443-Le6fDMqtUS8pzAGF.jpg" alt="Experiencia y producto de Pulatu Café" loading="lazy" decoding="async"/>
+          <figcaption><em>01</em><span><small>Momentos Pulatu</small><b>El ritual detrás de cada taza.</b></span></figcaption>
+        </figure>
+        <figure class="editorial-top media reveal" data-parallax="5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_1447-QB17uJHIz9u5RjFa.jpg" alt="Bebida presentada para Pulatu Café" loading="lazy" decoding="async"/></figure>
+        <figure class="editorial-bottom media reveal" data-parallax="-4"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_1445-s0j4zDCVoCiCfrbi.jpg" alt="Contenido gastronómico de Pulatu Café" loading="lazy" decoding="async"/></figure>
+        <figure class="editorial-wide media reveal" data-parallax="4"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_1441-PQdy9CzC2441RWlX.jpg" alt="Atmósfera y producto de Pulatu Café" loading="lazy" decoding="async"/></figure>
+      </div>
+      <div class="wrap pullquote reveal"><span>“</span><p>Una identidad que traduce el aroma, la calma y la conversación a cada punto de contacto.</p></div>
+    </section>
+
+    <section class="project project-poseidon" aria-labelledby="poseidon-title" data-project="03">
+      <div class="ocean-glow" aria-hidden="true"></div>
+      <div class="wrap project-head">
+        <div class="project-index reveal"><span>03</span><i></i><small>Gastronomía</small></div>
+        <div class="project-title reveal"><p class="eyebrow">Marisquería Poseidón</p><h2 id="poseidon-title">Frescura con carácter.<br/>Sabor que irrumpe.</h2></div>
+        <div class="project-note liquid reveal"><span>Enfoque</span><p>Color, abundancia y apetito en una narrativa visual diseñada para detener el scroll.</p></div>
+      </div>
+      <div class="wrap poseidon-grid">
+        <figure class="poseidon-a media reveal" data-parallax="-6"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4263-c6SJDjitkPe1g8rQ.JPG" alt="Platillo de Marisquería Poseidón" loading="lazy" decoding="async"/></figure>
+        <figure class="poseidon-b media reveal" data-parallax="5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4267-3aILLboEiypRLM3Z.JPG" alt="Contenido gastronómico para Marisquería Poseidón" loading="lazy" decoding="async"/></figure>
+        <div class="poseidon-copy liquid reveal"><small>Campaña visual</small><b>Del antojo<br/>a la mesa.</b><p>Encuadres cercanos, contraste intenso y una voz gráfica directa.</p></div>
+        <figure class="poseidon-c media reveal" data-parallax="-5"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/ttki-atun-2-KffhormreVCJOILa.jpeg" alt="Tostada de atún fotografiada para Marisquería Poseidón" loading="lazy" decoding="async"/></figure>
+        <figure class="poseidon-d media reveal" data-parallax="4"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/img_4255-W3DLxHQEOF8BWtCG.JPG" alt="Presentación de platillo para Marisquería Poseidón" loading="lazy" decoding="async"/></figure>
+      </div>
+    </section>
+
+    <section class="social" id="hbp-social" aria-labelledby="social-title">
+      <div class="wrap split-head social-head">
+        <div class="reveal"><p class="eyebrow">Social en movimiento</p><h2 id="social-title">El contenido cambia.<br/><span class="gradient-text">La atención se queda.</span></h2></div>
+        <p class="section-copy reveal">Desliza para recorrer distintas marcas. El teléfono funciona como una ventana viva: cada capítulo activa una nueva pieza social.</p>
+      </div>
+
+      <div class="wrap story-layout" id="hbpStoryLayout">
+        <div class="phone-rail" id="hbpPhoneRail">
+          <div class="phone-stage" id="hbpPhoneStage">
+            <div class="phone-aura" aria-hidden="true"></div>
+            <div class="phone" aria-label="Vista de contenidos en un teléfono">
+              <div class="phone-edge"><i></i><i></i></div>
+              <div class="phone-screen">
+                <div class="phone-ui" aria-hidden="true"><span class="phone-time">9:41</span><i class="dynamic-island"></i><span class="phone-signal">●●●</span></div>
+                <div class="story-bars" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+                <div class="story-brand"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/hummingbird-todo-blanco-sin-fondo-nuHQ5fVkjTrHuY3w.png" alt=""/><span id="hbpPhoneBrand">Poseidón</span><small>Contenido por Hummingbird</small></div>
+                <div class="story-slides" id="hbpStorySlides">
+                  <figure class="story-slide active" data-brand="Poseidón"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/disea--o-sin-tatulo-53-vN1KE07wACxspxiO.png" alt="Historia para redes sociales de Marisquería Poseidón" loading="lazy" decoding="async"/></figure>
+                  <figure class="story-slide" data-brand="Distribuidora Serrano"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.17.59-n2VsxuQs9ZbQeKl6.jpeg" alt="Historia para redes sociales de Distribuidora Serrano" loading="lazy" decoding="async"/></figure>
+                  <figure class="story-slide" data-brand="Pulatu Café"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.18.43-1yqS8jB9sO4B6kHn.jpeg" alt="Historia para redes sociales de Pulatu Café" loading="lazy" decoding="async"/></figure>
+                  <figure class="story-slide" data-brand="Amorcito Corazón"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2026-08-05-at-18.19.16-rgYl3JeK7cmFn8HB.jpeg" alt="Historia para redes sociales de Amorcito Corazón" loading="lazy" decoding="async"/></figure>
+                </div>
+                <div class="phone-bottom" aria-hidden="true"><span>Enviar mensaje…</span><i>♡</i><i>⌁</i></div>
+              </div>
+            </div>
+            <div class="phone-caption liquid" aria-live="polite"><small>Ahora viendo</small><b id="hbpPhoneCaption">Marisquería Poseidón</b></div>
+          </div>
+        </div>
+
+        <div class="story-steps" id="hbpStorySteps">
+          <article class="story-step active" data-slide="0" tabindex="0">
+            <span class="step-no">01</span><div><small>Marisquería Poseidón</small><h3>Contenido que abre el apetito.</h3><p>Una pieza vertical construida para comunicar producto, energía y antojo en segundos.</p><ul><li>Dirección visual</li><li>Diseño social</li></ul></div>
+          </article>
+          <article class="story-step" data-slide="1" tabindex="0">
+            <span class="step-no">02</span><div><small>Distribuidora Serrano</small><h3>Claridad comercial en formato social.</h3><p>Información organizada con jerarquía visual para que el mensaje se entienda antes del siguiente swipe.</p><ul><li>Comunicación comercial</li><li>Contenido digital</li></ul></div>
+          </article>
+          <article class="story-step" data-slide="2" tabindex="0">
+            <span class="step-no">03</span><div><small>Pulatu Café</small><h3>Una atmósfera que cabe en la pantalla.</h3><p>La calidez de la marca llevada al lenguaje ágil e íntimo de las historias.</p><ul><li>Storytelling visual</li><li>Diseño editorial</li></ul></div>
+          </article>
+          <article class="story-step" data-slide="3" tabindex="0">
+            <span class="step-no">04</span><div><small>Amorcito Corazón</small><h3>Emoción, color y personalidad.</h3><p>Una composición expresiva para una marca que habla desde la cercanía y necesita ser recordada.</p><ul><li>Identidad aplicada</li><li>Social media</li></ul></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="method" id="hbp-method" aria-labelledby="method-title">
+      <div class="wrap method-wrap liquid reveal">
+        <div class="method-title"><p class="eyebrow">Hummingbird method</p><h2 id="method-title">No hacemos piezas aisladas.<br/><span class="gradient-text">Construimos percepción.</span></h2></div>
+        <ol class="method-list">
+          <li><span>01</span><div><b>Encontramos la esencia</b><p>Leemos el negocio, el público y el contexto antes de diseñar.</p></div></li>
+          <li><span>02</span><div><b>Definimos el lenguaje</b><p>Convertimos la estrategia en color, ritmo, encuadre y mensaje.</p></div></li>
+          <li><span>03</span><div><b>Diseñamos el sistema</b><p>Creamos una experiencia consistente que puede vivir y crecer en distintos formatos.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="cta" id="hbp-contact" aria-labelledby="cta-title">
+      <div class="cta-lens" aria-hidden="true"></div>
+      <div class="wrap cta-inner">
+        <img class="cta-logo reveal" src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/hummingbird-todo-blanco-sin-fondo-nuHQ5fVkjTrHuY3w.png" alt="Hummingbird Marketing Solutions" width="150" height="150" loading="lazy"/>
+        <p class="eyebrow reveal">Tu marca puede ser la siguiente</p>
+        <h2 id="cta-title" class="reveal">Hagamos algo<br/><span class="gradient-text">imposible de ignorar.</span></h2>
+        <p class="reveal">Cuéntanos qué quieres transformar. Nosotros convertimos esa intención en una experiencia de marca.</p>
+        <a class="button button-primary button-large magnetic reveal" id="hbpWhatsapp" href="https://wa.me/529999490874?text=Hola%20Hummingbird%2C%20vi%20su%20portafolio%20y%20quiero%20platicar%20sobre%20mi%20proyecto." target="_blank" rel="noopener">Platicar por WhatsApp
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-main">
+      <div class="footer-brand"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/hummingbird-todo-blanco-sin-fondo-nuHQ5fVkjTrHuY3w.png" alt="Hummingbird" width="58" height="58"/><p>Estrategia, diseño y tecnología para marcas que quieren crecer con intención.</p></div>
+      <div><small>Explora</small><a href="#hbp-work">Casos</a><a href="#hbp-social">Social</a><a href="#hbp-method">Enfoque</a></div>
+      <div><small>Contacto</small><a href="https://wa.me/529999490874" target="_blank" rel="noopener">WhatsApp</a><a href="#hbp-contact">Iniciar proyecto</a></div>
+    </div>
+    <div class="footer-bottom"><div class="wrap"><p>© <span id="hbpYear">2026</span> Hummingbird Marketing Solutions.</p><span class="division"><small>Una división de</small><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro Medina" width="170" height="42" loading="lazy"/></span></div></div>
+  </footer>
+
+  <a class="wa-float" href="https://wa.me/529999490874?text=Hola%20Hummingbird%2C%20vi%20su%20portafolio%20y%20quiero%20platicar%20sobre%20mi%20proyecto." target="_blank" rel="noopener" aria-label="Escribir a Hummingbird por WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.5A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.8.9.9-2.7-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.5-.5-.9-1.1-1.2-1.7-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3.2-.5 0-.2 0-.3 0-.5 0-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.7.7-1 1.6-1 2.5.1 1 .5 2 1.1 2.8 1.2 1.7 2.7 2.9 4.5 3.5.6.2 1.1.4 1.7.4.6 0 1.2-.1 1.7-.4.5-.3.9-.8 1.1-1.3.1-.3.1-.6 0-.7-.1-.1-.2-.1-.4-.2z"/></svg>
+  </a>
+</div>
+
+<style>
+#hbp{
+  --pink:#F890B5;--violet:#5A2BFF;--purple:#8b5cff;--lav:#d1bcff;--cyan:#00daf8;
+  --bg:#07070c;--bg2:#0b0b13;--panel:#101019;--text:#f6f3fb;--muted:#aaa4bd;--dim:#777187;
+  --grad:linear-gradient(135deg,#5A2BFF 0%,#8b5cff 45%,#F890B5 100%);
+  --glass:linear-gradient(145deg,rgba(255,255,255,.115),rgba(255,255,255,.028) 58%,rgba(255,255,255,.045));
+  --stroke:rgba(255,255,255,.13);--soft-stroke:rgba(255,255,255,.075);--ease:cubic-bezier(.16,1,.3,1);
+  --navh:78px;position:relative;isolation:isolate;width:100%;max-width:100%;margin:0!important;padding:0!important;
+  overflow-x:clip;background:var(--bg);color:var(--text);font:400 16px/1.65 'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-anchor:none;color-scheme:dark;
+}
+@supports not (overflow:clip){#hbp{overflow-x:hidden}}
+#hbp *,#hbp *::before,#hbp *::after{box-sizing:border-box;margin:0;padding:0}
+#hbp img{display:block;max-width:100%}
+#hbp a{color:inherit;text-decoration:none}
+#hbp button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+#hbp h1,#hbp h2,#hbp h3{font-family:'Geist',sans-serif;line-height:.98;letter-spacing:-.055em}
+#hbp :focus-visible{outline:2px solid var(--lav);outline-offset:4px;border-radius:8px}
+#hbp ::selection{background:rgba(90,43,255,.55);color:#fff}
+#hbp [id]{scroll-margin-top:calc(var(--navh) + 20px)}
+#hbp .wrap{width:min(1220px,calc(100% - 48px));margin-inline:auto;position:relative;z-index:2}
+#hbp .skip{position:absolute;left:16px;top:10px;z-index:1000;background:#fff;color:#09090f;padding:10px 16px;border-radius:9px;transform:translateY(-150%);transition:transform .2s}
+#hbp .skip:focus{transform:none}
+#hbp .ambient{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#hbp .orb{position:absolute;border-radius:50%;filter:blur(130px);opacity:.35;will-change:transform}
+#hbp .orb-a{width:48vw;height:48vw;top:-7vw;left:-20vw;background:var(--violet)}
+#hbp .orb-b{width:42vw;height:42vw;top:20%;right:-20vw;background:var(--pink);opacity:.19}
+#hbp .orb-c{width:42vw;height:42vw;top:63%;left:15%;background:var(--cyan);opacity:.09}
+#hbp .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.023) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.023) 1px,transparent 1px);background-size:62px 62px;mask-image:linear-gradient(to bottom,#000,transparent 24%,transparent 73%,#000)}
+#hbp .noise{position:absolute;inset:0;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E")}
+#hbp .liquid{position:relative;background:var(--glass);border:1px solid var(--stroke);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.035),0 24px 70px rgba(0,0,0,.4);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%)}
+#hbp .liquid::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(360px circle at var(--mx,20%) var(--my,0%),rgba(255,255,255,.18),transparent 45%);opacity:.72}
+#hbp .gradient-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#hbp .eyebrow{font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.22em;text-transform:uppercase;color:var(--pink);margin-bottom:20px}
+#hbp .button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:52px;padding:0 28px;border-radius:999px;font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s,background .3s}
+#hbp .button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#hbp .button-primary{background:var(--grad);color:#fff;box-shadow:0 14px 38px rgba(90,43,255,.36),inset 0 1px 0 rgba(255,255,255,.27)}
+#hbp .button-primary:hover{transform:translateY(-3px);box-shadow:0 20px 46px rgba(90,43,255,.48),inset 0 1px 0 rgba(255,255,255,.3)}
+#hbp .button-ghost{border:1px solid var(--stroke);background:rgba(255,255,255,.035)}
+#hbp .button-ghost:hover{transform:translateY(-3px);border-color:rgba(209,188,255,.6);background:rgba(255,255,255,.07)}
+#hbp .button-small{min-height:44px;padding:0 21px;font-size:10px}
+
+#hbp .nav{position:sticky;top:0;z-index:80;border-bottom:1px solid var(--soft-stroke);background:rgba(7,7,12,.66);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);transition:background .25s,box-shadow .25s}
+#hbp .nav.scrolled{background:rgba(7,7,12,.92);box-shadow:0 14px 40px rgba(0,0,0,.34)}
+#hbp .nav-inner{width:min(1320px,calc(100% - 48px));height:var(--navh);margin:auto;display:flex;align-items:center;gap:26px}
+#hbp .brand{display:flex;align-items:center;gap:11px;min-width:max-content}
+#hbp .brand img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(248,144,181,.32))}
+#hbp .brand span{display:flex;flex-direction:column;line-height:1}
+#hbp .brand b{font-size:1.04rem;letter-spacing:-.02em}
+#hbp .brand small{margin-top:5px;color:var(--muted);font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase}
+#hbp .nav-links{display:flex;align-items:center;gap:29px;margin-left:auto}
+#hbp .nav-links a{font:500 10px/1 'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);transition:color .2s}
+#hbp .nav-links a:hover,#hbp .nav-links a.active{color:#fff}
+#hbp .nav-progress{position:absolute;left:0;bottom:-1px;width:100%;height:2px;background:var(--grad);transform:scaleX(0);transform-origin:left;box-shadow:0 0 14px rgba(139,92,255,.7)}
+#hbp .menu-button{display:none;width:42px;height:42px;margin-left:auto;border:1px solid var(--stroke);border-radius:50%;position:relative}
+#hbp .menu-button span{position:absolute;left:11px;width:18px;height:1.5px;background:#fff;transition:.25s}
+#hbp .menu-button span:first-child{top:16px}#hbp .menu-button span:last-child{top:23px}
+#hbp .menu-button[aria-expanded="true"] span:first-child{transform:translateY(3.5px) rotate(45deg)}
+#hbp .menu-button[aria-expanded="true"] span:last-child{transform:translateY(-3.5px) rotate(-45deg)}
+#hbp .mobile-menu{position:fixed;z-index:70;inset:var(--navh) 0 auto;padding:28px 24px 34px;background:rgba(7,7,12,.97);border-bottom:1px solid var(--stroke);backdrop-filter:blur(24px);display:flex;flex-direction:column;gap:20px;opacity:0;visibility:hidden;transform:translateY(-18px);transition:.3s var(--ease)}
+#hbp .mobile-menu.open{opacity:1;visibility:visible;transform:none}
+#hbp .mobile-menu>a:not(.button){font-size:1.3rem;font-weight:650}
+#hbp.frame-mode .mobile-menu{position:absolute;top:var(--navh)}
+
+#hbp .hero{position:relative;min-height:calc(var(--vh-real, 100svh) - var(--navh));padding:clamp(64px,9vw,118px) 0 72px;overflow:hidden;text-align:center}
+#hbp .hero-glow{position:absolute;top:-150px;left:50%;width:min(850px,90vw);height:620px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(90,43,255,.22),rgba(248,144,181,.08) 36%,transparent 70%);filter:blur(20px)}
+#hbp .hero-copy{display:flex;flex-direction:column;align-items:center}
+#hbp .division-pill{display:inline-flex;align-items:center;gap:14px;padding:8px 16px;border:1px solid var(--stroke);border-radius:999px;background:rgba(255,255,255,.04);backdrop-filter:blur(14px);margin-bottom:34px}
+#hbp .division-pill span{font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.17em;text-transform:uppercase;color:var(--muted)}
+#hbp .division-pill i{width:1px;height:19px;background:var(--stroke)}
+#hbp .division-pill img{width:126px;height:28px;object-fit:contain}
+#hbp .hero h1{font-size:clamp(3rem,7.5vw,7rem);font-weight:800;max-width:1050px;margin:auto;line-height:.9}
+#hbp .hero .lead{max-width:720px;margin:30px auto 32px;color:var(--muted);font-size:clamp(1rem,1.7vw,1.2rem)}
+#hbp .hero-actions{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+#hbp .hero-stage{height:clamp(360px,50vw,640px);margin-top:clamp(62px,9vw,118px);perspective:1300px}
+#hbp .hero-frame{position:absolute;border-radius:clamp(20px,3vw,36px);overflow:hidden;transform-style:preserve-3d}
+#hbp .hero-frame img{width:100%;height:100%;object-fit:cover}
+#hbp .hero-frame-main{inset:0 12% 0 12%;z-index:2;transform:rotateX(2deg);box-shadow:0 36px 100px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08)}
+#hbp .hero-frame-main::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 58%,rgba(5,5,10,.78));pointer-events:none}
+#hbp .hero-frame-main>span{position:absolute;z-index:2;left:28px;bottom:25px;text-align:left;display:flex;flex-direction:column}
+#hbp .hero-frame-main b{font-size:1.18rem}#hbp .hero-frame-main small{font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.17em;text-transform:uppercase;color:var(--lav);margin-top:6px}
+#hbp .hero-frame-left{width:23%;height:63%;left:-2%;top:14%;z-index:3;transform:rotate(-7deg);box-shadow:0 30px 70px rgba(0,0,0,.55)}
+#hbp .hero-frame-right{width:22%;height:58%;right:-1%;top:24%;z-index:3;transform:rotate(8deg);box-shadow:0 30px 70px rgba(0,0,0,.55)}
+#hbp .glass-stamp{position:absolute;right:5%;top:-35px;z-index:5;width:126px;height:126px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(8deg);text-transform:uppercase}
+#hbp .glass-stamp span,#hbp .glass-stamp small{font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.18em;color:var(--lav)}
+#hbp .glass-stamp b{font-size:1.25rem;letter-spacing:.04em;margin:5px 0}
+#hbp .scroll-cue{display:flex;flex-direction:column;align-items:center;gap:11px;margin-top:37px;color:var(--dim);font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.2em;text-transform:uppercase}
+#hbp .scroll-cue i{width:1px;height:46px;background:linear-gradient(var(--lav),transparent)}
+
+#hbp .client-ticker{position:relative;z-index:3;overflow:hidden;border-block:1px solid var(--soft-stroke);background:rgba(255,255,255,.022);padding:22px 0}
+#hbp .ticker-track{display:flex;align-items:center;gap:35px;width:max-content;will-change:transform}
+#hbp .ticker-track span{font:600 clamp(1rem,2vw,1.4rem)/1 'Geist';letter-spacing:-.025em;color:rgba(255,255,255,.72);white-space:nowrap}
+#hbp .ticker-track i{width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 16px var(--pink)}
+
+#hbp .intro{padding:clamp(110px,15vw,205px) 0 80px}
+#hbp .split-head{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.65fr);gap:clamp(40px,9vw,130px);align-items:end}
+#hbp .split-head h2{font-size:clamp(2.45rem,5.5vw,5.4rem);font-weight:750}
+#hbp .section-copy{color:var(--muted);font-size:1.05rem;padding-bottom:6px}
+
+#hbp .project{position:relative;padding:clamp(80px,11vw,150px) 0;border-top:1px solid var(--soft-stroke)}
+#hbp .project-head{display:grid;grid-template-columns:130px minmax(0,1fr) 330px;gap:36px;align-items:end;margin-bottom:clamp(50px,8vw,100px)}
+#hbp .project-index{align-self:start;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;color:var(--dim)}
+#hbp .project-index span{font:500 11px/1 'JetBrains Mono',monospace;color:var(--pink)}
+#hbp .project-index i{height:1px;background:var(--stroke)}
+#hbp .project-index small{grid-column:1/-1;font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase}
+#hbp .project-title h2{font-size:clamp(2.7rem,5.8vw,5.65rem);font-weight:750;max-width:12ch}
+#hbp .project-note{padding:26px;border-radius:22px}
+#hbp .project-note span{font:600 9px/1 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--lav)}
+#hbp .project-note p{margin-top:12px;color:var(--muted);font-size:.93rem;line-height:1.6}
+#hbp .media{position:relative;overflow:hidden;border-radius:clamp(16px,2.1vw,27px);background:#111;box-shadow:0 24px 75px rgba(0,0,0,.35)}
+#hbp .media::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1px solid rgba(255,255,255,.095);pointer-events:none}
+#hbp .media img{width:100%;height:calc(100% + 14%);object-fit:cover;transform:translateY(var(--parallax-y,-7%));will-change:transform}
+#hbp .mosaic{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:85px;gap:18px}
+#hbp .mosaic .media-hero{grid-column:1/9;grid-row:1/7}#hbp .mosaic .media-tall{grid-column:9/13;grid-row:1/6}#hbp .mosaic .media-small{grid-column:9/13;grid-row:6/10}
+#hbp .mosaic .media-wide{grid-column:1/8;grid-row:7/12}#hbp .mosaic .media:nth-of-type(5){grid-column:8/13;grid-row:10/14}#hbp .mosaic .media:nth-of-type(6){grid-column:1/6;grid-row:12/16}#hbp .mosaic .media-last{grid-column:6/13;grid-row:14/18}
+#hbp .media figcaption{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:50px 26px 24px;background:linear-gradient(transparent,rgba(5,5,9,.82));display:flex;align-items:end;justify-content:space-between;gap:20px}
+#hbp .media figcaption span,#hbp .media figcaption small{font:500 8px/1 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--lav)}
+#hbp .media figcaption b{font-size:1rem}
+#hbp .deliverables{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+#hbp .deliverables span{padding:10px 15px;border:1px solid var(--stroke);border-radius:999px;color:var(--muted);font:500 9px/1 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.025)}
+
+#hbp .project-pulatu{background:radial-gradient(circle at 10% 30%,rgba(248,144,181,.09),transparent 28%),#0a090f}
+#hbp .editorial-grid{display:grid;grid-template-columns:1.08fr .92fr;grid-template-rows:360px 360px 400px;gap:20px}
+#hbp .editorial-main{grid-row:1/3}#hbp .editorial-top{grid-column:2;grid-row:1}#hbp .editorial-bottom{grid-column:2;grid-row:2}#hbp .editorial-wide{grid-column:1/3;grid-row:3}
+#hbp .editorial-main figcaption{padding:80px 30px 28px;align-items:center;justify-content:flex-start}
+#hbp .editorial-main figcaption em{font:500 3rem/1 'JetBrains Mono';font-style:normal;color:rgba(255,255,255,.28)}
+#hbp .editorial-main figcaption span{display:flex;flex-direction:column;gap:8px}
+#hbp .editorial-main figcaption b{font-size:1.25rem;color:#fff;text-transform:none;letter-spacing:-.02em}
+#hbp .pullquote{display:grid;grid-template-columns:auto minmax(0,750px);gap:22px;justify-content:center;margin-top:80px}
+#hbp .pullquote span{font-size:5rem;color:var(--pink);line-height:.8}#hbp .pullquote p{font-size:clamp(1.5rem,3.4vw,2.7rem);line-height:1.15;letter-spacing:-.04em}
+
+#hbp .project-poseidon{overflow:hidden;background:#070a10}
+#hbp .ocean-glow{position:absolute;width:60vw;height:60vw;right:-25vw;top:6%;border-radius:50%;background:rgba(0,218,248,.09);filter:blur(110px)}
+#hbp .poseidon-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:410px 310px 380px;gap:20px}
+#hbp .poseidon-a{grid-column:1/8;grid-row:1}#hbp .poseidon-b{grid-column:8/13;grid-row:1/3}#hbp .poseidon-copy{grid-column:1/5;grid-row:2;padding:34px;border-radius:24px;display:flex;flex-direction:column;justify-content:end}
+#hbp .poseidon-copy small{font:500 8px/1 'JetBrains Mono';letter-spacing:.18em;text-transform:uppercase;color:var(--cyan)}
+#hbp .poseidon-copy b{font-size:clamp(1.7rem,3vw,2.8rem);line-height:1;margin:14px 0;letter-spacing:-.045em}#hbp .poseidon-copy p{color:var(--muted);font-size:.92rem}
+#hbp .poseidon-c{grid-column:5/8;grid-row:2}#hbp .poseidon-d{grid-column:1/13;grid-row:3}
+
+#hbp .social{position:relative;padding:clamp(110px,15vw,190px) 0;background:radial-gradient(circle at 50% 30%,rgba(90,43,255,.12),transparent 34%),var(--bg);border-top:1px solid var(--soft-stroke)}
+#hbp .social-head{margin-bottom:80px}
+#hbp .story-layout{display:grid;grid-template-columns:minmax(340px,.85fr) minmax(0,1fr);gap:clamp(50px,9vw,140px);align-items:start}
+#hbp .phone-rail{position:relative;min-height:100%}
+#hbp .phone-stage{position:relative;top:auto;will-change:transform;display:flex;align-items:center;justify-content:center;min-height:720px;will-change:transform}
+
+#hbp .phone-aura{position:absolute;width:480px;height:480px;border-radius:50%;background:conic-gradient(from 150deg,rgba(90,43,255,.38),rgba(248,144,181,.22),rgba(0,218,248,.15),rgba(90,43,255,.38));filter:blur(70px);opacity:.48}
+#hbp .phone{position:relative;z-index:2;width:310px;aspect-ratio:9/19.4;border-radius:47px;padding:9px;background:linear-gradient(145deg,#3b3b42,#08080b 34%,#282830 72%,#070708);box-shadow:0 44px 90px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.29),inset 0 0 0 3px rgba(0,0,0,.8);transform:perspective(900px) rotateY(-4deg) rotateX(1deg)}
+#hbp .phone::before{content:'';position:absolute;inset:5px;border-radius:43px;border:1px solid rgba(255,255,255,.12);pointer-events:none;z-index:5}
+#hbp .phone-edge i{position:absolute;left:-3px;width:3px;border-radius:3px 0 0 3px;background:#27272e}#hbp .phone-edge i:first-child{top:120px;height:62px}#hbp .phone-edge i:last-child{top:195px;height:84px}
+#hbp .phone-screen{position:relative;width:100%;height:100%;border-radius:39px;overflow:hidden;background:#111;color:#fff}
+#hbp .phone-ui{position:absolute;z-index:10;top:0;left:0;right:0;height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font:600 9px/1 'Geist';text-shadow:0 1px 5px #000}
+#hbp .dynamic-island{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:83px;height:23px;border-radius:20px;background:#050505}
+#hbp .phone-signal{font-size:5px;letter-spacing:2px}
+#hbp .story-bars{position:absolute;z-index:10;top:40px;left:10px;right:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+#hbp .story-bars i{height:2px;border-radius:2px;background:rgba(255,255,255,.38);overflow:hidden}#hbp .story-bars i::after{content:'';display:block;width:0;height:100%;background:#fff;transition:width .45s}#hbp .story-bars i.done::after,#hbp .story-bars i.on::after{width:100%}
+#hbp .story-brand{position:absolute;z-index:10;top:51px;left:12px;display:grid;grid-template-columns:28px auto;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-shadow:0 2px 7px #000}
+#hbp .story-brand img{grid-row:1/3;width:28px;height:28px;object-fit:contain;border:1px solid rgba(255,255,255,.55);border-radius:50%;padding:3px;background:rgba(5,5,10,.45)}
+#hbp .story-brand span{font-size:10px;font-weight:700;line-height:1.1}#hbp .story-brand small{font-size:7px;color:rgba(255,255,255,.78);line-height:1.1}
+#hbp .story-slides{position:absolute;inset:0}
+#hbp .story-slide{position:absolute;inset:0;opacity:0;visibility:hidden;transform:scale(1.045);transition:opacity .5s ease,transform .8s var(--ease),visibility .5s}
+#hbp .story-slide.active{opacity:1;visibility:visible;transform:scale(1)}
+#hbp .story-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.32),transparent 19%,transparent 74%,rgba(0,0,0,.45));pointer-events:none}
+#hbp .story-slide img{width:100%;height:100%;object-fit:cover}
+#hbp .phone-bottom{position:absolute;z-index:10;left:13px;right:13px;bottom:15px;display:flex;align-items:center;gap:10px;text-shadow:0 2px 5px #000}
+#hbp .phone-bottom span{flex:1;border:1px solid rgba(255,255,255,.7);border-radius:20px;padding:8px 11px;font-size:8px}#hbp .phone-bottom i{font-size:19px;font-style:normal}
+#hbp .phone-caption{position:absolute;z-index:4;right:-35px;bottom:62px;border-radius:17px;padding:15px 18px;display:flex;flex-direction:column;min-width:180px}
+#hbp .phone-caption small{font:500 7px/1 'JetBrains Mono';letter-spacing:.17em;text-transform:uppercase;color:var(--lav);margin-bottom:7px}#hbp .phone-caption b{font-size:.93rem}
+#hbp .story-steps{display:flex;flex-direction:column}
+#hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .78);display:grid;grid-template-columns:55px minmax(0,1fr);gap:24px;align-content:center;border-top:1px solid var(--soft-stroke);opacity:.42;transition:opacity .35s,transform .5s var(--ease);cursor:pointer}
+#hbp .story-step:last-child{border-bottom:1px solid var(--soft-stroke)}
+#hbp .story-step.active{opacity:1;transform:translateX(-8px)}
+#hbp .step-no{font:500 10px/1 'JetBrains Mono';color:var(--pink);padding-top:10px}
+#hbp .story-step small{font:600 9px/1 'JetBrains Mono';letter-spacing:.17em;text-transform:uppercase;color:var(--lav)}
+#hbp .story-step h3{font-size:clamp(2rem,4.2vw,4rem);max-width:10ch;margin:18px 0 21px;line-height:1}
+#hbp .story-step p{color:var(--muted);max-width:550px}
+#hbp .story-step ul{list-style:none;display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}
+#hbp .story-step li{font:500 8px/1 'JetBrains Mono';letter-spacing:.11em;text-transform:uppercase;padding:9px 12px;border:1px solid var(--stroke);border-radius:999px;color:var(--muted)}
+
+#hbp .method{padding:clamp(90px,12vw,160px) 0}
+#hbp .method-wrap{border-radius:clamp(26px,4vw,44px);padding:clamp(34px,7vw,80px);display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(45px,8vw,100px);overflow:hidden}
+#hbp .method-title h2{font-size:clamp(2.4rem,4.8vw,4.7rem)}
+#hbp .method-list{list-style:none}
+#hbp .method-list li{display:grid;grid-template-columns:48px 1fr;gap:18px;padding:25px 0;border-bottom:1px solid var(--soft-stroke)}
+#hbp .method-list li:first-child{padding-top:0}#hbp .method-list li:last-child{border:0;padding-bottom:0}
+#hbp .method-list span{font:500 9px/1 'JetBrains Mono';color:var(--pink);padding-top:7px}
+#hbp .method-list b{font-size:1.12rem}#hbp .method-list p{color:var(--muted);font-size:.92rem;margin-top:7px}
+
+#hbp .cta{position:relative;text-align:center;padding:clamp(120px,18vw,230px) 0;overflow:hidden;border-top:1px solid var(--soft-stroke)}
+#hbp .cta-lens{position:absolute;left:50%;top:50%;width:min(850px,95vw);height:min(850px,95vw);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.08),rgba(90,43,255,.16) 28%,rgba(248,144,181,.08) 44%,transparent 68%);filter:blur(7px)}
+#hbp .cta-inner{display:flex;flex-direction:column;align-items:center}
+#hbp .cta-logo{width:110px;height:110px;object-fit:contain;margin-bottom:28px;filter:drop-shadow(0 0 26px rgba(248,144,181,.42))}
+#hbp .cta h2{font-size:clamp(3rem,7.8vw,7.3rem);max-width:950px}
+#hbp .cta p:not(.eyebrow){color:var(--muted);font-size:1.08rem;max-width:600px;margin:28px auto 34px}
+#hbp .button-large{min-height:60px;padding:0 35px}
+
+#hbp .footer{position:relative;z-index:2;background:#08080e;border-top:1px solid var(--soft-stroke)}
+#hbp .footer-main{display:grid;grid-template-columns:1.5fr .6fr .6fr;gap:60px;padding-block:65px}
+#hbp .footer-brand img{width:60px;height:60px;object-fit:contain;margin-bottom:17px}#hbp .footer-brand p{max-width:370px;color:var(--muted);font-size:.92rem}
+#hbp .footer-main>div:not(:first-child){display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+#hbp .footer-main small{font:600 8px/1 'JetBrains Mono';letter-spacing:.18em;text-transform:uppercase;color:var(--pink);margin-bottom:9px}#hbp .footer-main a{font-size:.93rem;color:var(--muted)}#hbp .footer-main a:hover{color:#fff}
+#hbp .footer-bottom{border-top:1px solid var(--soft-stroke)}
+#hbp .footer-bottom>.wrap{min-height:82px;display:flex;align-items:center;justify-content:space-between;gap:25px;flex-wrap:wrap}
+#hbp .footer-bottom p{color:var(--dim);font-size:.78rem}
+#hbp .footer-bottom .division{display:flex;align-items:center;gap:13px}#hbp .footer-bottom .division small{font:500 7px/1 'JetBrains Mono';letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}#hbp .footer-bottom .division img{width:134px;height:33px;object-fit:contain;opacity:.88}
+#hbp .wa-float{position:fixed;right:22px;bottom:22px;z-index:65;width:55px;height:55px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#25d366,#16a650);box-shadow:0 15px 35px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.25);transition:transform .25s}
+#hbp .wa-float:hover{transform:translateY(-4px) scale(1.04)}#hbp .wa-float svg{width:27px;height:27px;fill:#fff}
+
+/* La visibilidad solo cambia después de que el motor haya iniciado. */
+#hbp.motion-ready .reveal{opacity:0;transform:translateY(34px);
+  transition:opacity .9s var(--ease),transform .9s var(--ease)}
+#hbp.motion-ready .reveal.is-visible{opacity:1;transform:none}
+
+@media(max-width:980px){
+  #hbp .nav-links{display:none}#hbp .menu-button{display:block}#hbp .nav-inner>.button{display:none}
+  #hbp .project-head{grid-template-columns:90px 1fr}#hbp .project-note{grid-column:2}
+  #hbp .story-layout{grid-template-columns:330px 1fr;gap:55px}
+  #hbp .phone{width:276px}#hbp .phone-stage{min-height:650px}#hbp .phone-caption{right:-16px}
+  #hbp .method-wrap{grid-template-columns:1fr;gap:55px}
+}
+@media(max-width:760px){
+  #hbp{--navh:68px;font-size:15px}#hbp .wrap{width:min(100% - 32px,1220px)}
+  #hbp .nav-inner{width:calc(100% - 32px)}#hbp .brand img{width:38px;height:38px}#hbp .brand b{font-size:.96rem}
+  #hbp .hero{padding-top:54px}#hbp .hero h1{font-size:clamp(2.75rem,14vw,4.9rem)}#hbp .hero .lead{margin-top:24px}#hbp .hero-stage{height:390px;margin-top:72px}
+  #hbp .hero-frame-main{inset:20px 3% 20px}#hbp .hero-frame-left{width:31%;height:48%;left:-9%;top:5%}#hbp .hero-frame-right{width:29%;height:46%;right:-8%;top:49%}#hbp .glass-stamp{width:94px;height:94px;right:0;top:-30px}#hbp .glass-stamp b{font-size:1rem}
+  #hbp .split-head{grid-template-columns:1fr;gap:30px}#hbp .split-head h2{font-size:clamp(2.45rem,11.5vw,4.3rem)}
+  #hbp .project{padding-block:95px}#hbp .project-head{grid-template-columns:1fr;gap:25px}#hbp .project-index{width:110px}#hbp .project-note{grid-column:auto}#hbp .project-title h2{font-size:clamp(2.7rem,12vw,4.6rem)}
+  #hbp .mosaic{grid-template-columns:1fr 1fr;grid-auto-rows:220px;gap:12px}#hbp .mosaic .media-hero{grid-column:1/3;grid-row:1/3}#hbp .mosaic .media-tall{grid-column:1;grid-row:3/5}#hbp .mosaic .media-small{grid-column:2;grid-row:3}#hbp .mosaic .media-wide{grid-column:2;grid-row:4/6}#hbp .mosaic .media:nth-of-type(5){grid-column:1;grid-row:5}#hbp .mosaic .media:nth-of-type(6){grid-column:1;grid-row:6}#hbp .mosaic .media-last{grid-column:2;grid-row:6}
+  #hbp .editorial-grid{grid-template-columns:1fr 1fr;grid-template-rows:480px 250px 270px;gap:12px}#hbp .editorial-main{grid-column:1/3;grid-row:1}#hbp .editorial-top{grid-column:1;grid-row:2}#hbp .editorial-bottom{grid-column:2;grid-row:2}#hbp .editorial-wide{grid-column:1/3;grid-row:3}#hbp .pullquote{margin-top:60px}
+  #hbp .poseidon-grid{grid-template-columns:1fr 1fr;grid-template-rows:350px 300px 330px;gap:12px}#hbp .poseidon-a{grid-column:1/3;grid-row:1}#hbp .poseidon-b{grid-column:2;grid-row:2}#hbp .poseidon-copy{grid-column:1;grid-row:2;padding:24px}#hbp .poseidon-c{grid-column:1;grid-row:3}#hbp .poseidon-d{grid-column:2;grid-row:3}
+  #hbp .social{padding-top:110px}#hbp .social-head{margin-bottom:60px}#hbp .story-layout{display:block;position:relative}#hbp .phone-rail{position:absolute;inset:0;min-height:0;pointer-events:none;z-index:2}#hbp .phone-stage{top:calc(var(--navh) + 12px);min-height:calc(var(--vh-real, 100svh) - var(--navh) - 20px);align-items:flex-start;padding-top:8px}#hbp .phone{width:248px}#hbp .phone-caption{right:calc(50% - 154px);bottom:auto;top:470px;min-width:150px}#hbp .story-steps{position:relative;z-index:4;padding-top:calc(var(--vh-real, 100svh) - var(--navh))}#hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .92);align-content:end;background:linear-gradient(transparent 38%,rgba(7,7,12,.84) 68%,rgba(7,7,12,.98));padding:52px 12px}#hbp .story-step h3{font-size:clamp(2.2rem,11vw,3.6rem)}
+  #hbp.frame-mode .phone-rail{min-height:0}#hbp.frame-mode .phone-stage{position:relative}
+  #hbp .footer-main{grid-template-columns:1fr 1fr}#hbp .footer-brand{grid-column:1/3}
+}
+@media(max-width:480px){
+  #hbp .division-pill{gap:10px;padding-inline:12px}#hbp .division-pill img{width:105px}#hbp .division-pill span{font-size:7px}
+  #hbp .hero-actions{width:100%}#hbp .hero-actions .button{width:100%}#hbp .hero-frame-main>span{left:18px;bottom:18px}#hbp .hero-frame-main b{font-size:.95rem}
+  #hbp .mosaic{grid-auto-rows:175px}#hbp .mosaic .media-hero{grid-row:1/3}#hbp .media figcaption{padding:45px 16px 17px}#hbp .media figcaption b{display:none}
+  #hbp .project-note{padding:21px}#hbp .deliverables{gap:7px}#hbp .deliverables span{font-size:7px;padding:8px 10px}
+  #hbp .editorial-grid{grid-template-rows:390px 200px 220px}#hbp .editorial-main figcaption em{font-size:2.2rem}#hbp .editorial-main figcaption b{display:block;font-size:1rem}
+  #hbp .poseidon-grid{grid-template-rows:300px 270px 260px}#hbp .poseidon-copy b{font-size:1.65rem}#hbp .poseidon-copy p{font-size:.8rem}
+  #hbp .phone{width:224px}#hbp .phone-stage{min-height:calc(var(--vh-real, 100svh) - var(--navh) - 16px)}#hbp .phone-rail{min-height:0}#hbp .phone-caption{right:calc(50% - 140px);top:425px;bottom:auto;padding:12px 14px;min-width:140px}
+  #hbp .story-step{grid-template-columns:35px 1fr;gap:12px}#hbp .story-step p{font-size:.94rem}
+  #hbp .method-wrap{padding:30px 23px}#hbp .method-list li{grid-template-columns:34px 1fr}
+  #hbp .cta .button{width:100%}#hbp .footer-main{grid-template-columns:1fr;gap:38px}#hbp .footer-brand{grid-column:auto}#hbp .footer-bottom>.wrap{justify-content:center;text-align:center;padding-block:20px}
+  #hbp .wa-float{right:14px;bottom:14px;width:51px;height:51px}
+}
+@media(prefers-reduced-motion:reduce){
+  #hbp *,#hbp *::before,#hbp *::after{scroll-behavior:auto!important;animation:none!important;transition-duration:.001ms!important}
+  #hbp .reveal{opacity:1!important;transform:none!important}#hbp .media img{transform:translateY(-7%)!important}
+}
+
+/* Sin scroll medible (iframe de otro origen): sin recorridos largos ni
+   desplazamientos calculados; el contenido se muestra tal cual. */
+#hbp.sin-scroll .story-step{min-height:0!important}
+#hbp.sin-scroll .story-steps{padding-top:0!important}
+#hbp.sin-scroll .phone-stage{transform:none!important}
+</style>
+<script>
+(function () {
+  'use strict';
+  var root = document.getElementById('hbp');
+  if (!root || root.getAttribute('data-init')) return;
+  root.setAttribute('data-init', 'starting');
+
+  var q = function (s, c) { return Array.prototype.slice.call((c || root).querySelectorAll(s)); };
+  var one = function (s, c) { return (c || root).querySelector(s); };
+  var numAttr = function (el, a, d) { var v = parseFloat(el.getAttribute(a)); return isNaN(v) ? d : v; };
+
+  /* Si algo falla, se retira el ocultado y todo el contenido queda visible. */
+  function rendirse(err) {
+    try {
+      root.classList.remove('motion-ready');
+      q('.reveal').forEach(function (el) { el.classList.add('is-visible'); el.style.opacity = ''; el.style.transform = ''; });
+      root.setAttribute('data-init', 'fallback');
+    } catch (e) {}
+    try { if (window.console && console.warn) console.warn('[HBP] modo seguro:', err); } catch (e) {}
+  }
+  function safe(fn) { try { fn(); } catch (e) {} }
+
+  try { principal(); } catch (err) { rendirse(err); }
+
+  function principal() {
+
+    /* ===================================================================
+       MOTOR DE SCROLL PARA BLOQUES INCRUSTADOS  (compartido)
+       -------------------------------------------------------------------
+       EL PROBLEMA QUE RESUELVE
+       Hostinger inserta el codigo personalizado dentro de un <iframe>. Si
+       ese iframe mide menos que su contenido, se convierte en una ventana
+       pequena sobre una pagina muy alta:
+         - El iframe no hace scroll por dentro; el que se desplaza es el
+           documento padre.
+         - IntersectionObserver mide contra el viewport DEL IFRAME, asi que
+           todo lo que quede por debajo de su caja nunca "entra a vista".
+         - getBoundingClientRect() dentro del iframe no sabe donde esta el
+           iframe en la pagina real.
+       Resultado: el fondo se pinta (es CSS) pero el contenido se queda en
+       opacity:0 -> "bajo y solo se carga el fondo".
+
+       LA CURA, EN ORDEN
+       1. Si el iframe es del mismo origen, se le fija la altura de su
+          propio contenido. Asi desaparece el scroll interno y la geometria
+          vuelve a ser coherente. Tambien se avisa por postMessage para los
+          anfitriones que sepan escucharlo.
+       2. El viewport de referencia es el del padre, y a cada medida se le
+          suma el desplazamiento del iframe dentro de esa pagina.
+       3. Se escucha el scroll del padre ademas del propio.
+       4. Sondeo periodico por si no llega ningun evento.
+       5. Red de seguridad: pasado un tiempo, lo que siga pendiente se
+          muestra. Nunca puede quedar contenido invisible.
+       6. Si el padre no es legible (otro origen), no se oculta nada: se
+          renuncia a las animaciones de scroll antes que arriesgar una
+          pagina en blanco.
+
+       NUNCA escribe la posicion de scroll de nadie: eso es lo que hacia
+       saltar la pagina al inicio.
+       =================================================================== */
+    function hbEngine(root, opts) {
+      "use strict";
+      opts = opts || {};
+
+      var lento = false;
+      try { lento = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
+
+      /* ---------- contexto ---------- */
+      var enMarco = false, padre = null, marco = null;
+      try { enMarco = (window.self !== window.top); } catch (e) { enMarco = true; }
+      if (enMarco) {
+        try {
+          marco = window.frameElement;
+          if (marco && typeof window.parent.innerHeight === "number") padre = window.parent;
+          if (!padre) marco = null;
+        } catch (e) { marco = null; padre = null; }
+      }
+      /* Legible = podemos medir de verdad. Es la condicion para animar. */
+      var legible = !enMarco || !!marco;
+
+      /* ---------- alto del viewport REAL como variable CSS ----------
+         Al fijar la altura del iframe a la de su contenido, el viewport del
+         iframe PASA A SER esa altura: 100svh dejaria de valer una pantalla y
+         se realimentaria (mas alto -> mas contenido -> mas alto). Por eso las
+         alturas de pantalla se toman de --vh-real, en pixeles, medidos sobre
+         la pagina padre. El valor por omision en CSS es 100svh, para que
+         funcione sin JS y fuera de un iframe. */
+      var ultimaVista = 0;
+      function sincronizarVista() {
+        var H = altoVista();
+        if (Math.abs(H - ultimaVista) < 2) return;
+        ultimaVista = H;
+        try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
+      }
+
+      /* ---------- altura del iframe = altura del contenido ----------
+         Con dos frenos. Si alguna medida en el CSS depende de la altura del
+         viewport (vh/svh), crecer el iframe agranda su propio viewport y se
+         entra en bucle: mas alto -> mas contenido -> mas alto. Por eso hay
+         un techo duro y un detector de crecimiento sostenido. */
+      var TECHO = 60000;
+      var ultimaAltura = 0, subidas = 0, congelado = false;
+      function ajustarMarco() {
+        if (!enMarco || congelado) return;
+        var alto = Math.ceil(root.getBoundingClientRect().height);
+        if (!alto || Math.abs(alto - ultimaAltura) < 2) return;
+
+        if (alto > ultimaAltura + 8) { subidas++; } else { subidas = 0; }
+        if (alto > TECHO || subidas > 12) {
+          congelado = true;
+          try {
+            if (window.console && console.warn) {
+              console.warn('[hbEngine] altura desbocada (' + alto + 'px): se congela. ' +
+                           'Suele venir de una medida en vh/svh dentro del iframe; usa --vh-real.');
+            }
+          } catch (e) {}
+          return;
+        }
+        ultimaAltura = alto;
+        /* Mismo origen: lo arreglamos nosotros y se acaba el scroll interno. */
+        if (marco) {
+          try {
+            marco.style.height = alto + "px";
+            marco.style.minHeight = alto + "px";
+            marco.setAttribute("scrolling", "no");
+          } catch (e) {}
+        }
+        /* Y avisamos, por si el anfitrion prefiere gestionarlo el. */
+        try { window.parent.postMessage({ type: "hb:height", height: alto }, "*"); } catch (e) {}
+      }
+
+      /* ---------- geometria real ---------- */
+      function altoVista() {
+        if (padre) { try { return padre.innerHeight || window.innerHeight || 800; } catch (e) {} }
+        return window.innerHeight || 800;
+      }
+      function desfaseMarco() {
+        if (!marco) return 0;
+        try { return marco.getBoundingClientRect().top; } catch (e) { return 0; }
+      }
+      /* Posicion del elemento en el viewport REAL. */
+      function techo(el, S) {
+        try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; }
+      }
+      function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+      /* ---------- registros ---------- */
+      var entradas = [], continuos = [], encolado = false, sondeo = null;
+
+      function alEntrar(el, cb) { if (el) entradas.push({ el: el, cb: cb }); }
+      function continuo(fn) { if (fn) continuos.push(fn); }
+
+      function ciclo() {
+        encolado = false;
+        sincronizarVista();
+        ajustarMarco();
+        var H = altoVista(), S = desfaseMarco();
+
+        for (var i = entradas.length - 1; i >= 0; i--) {
+          var it = entradas[i];
+          if (techo(it.el, S) < H * 0.93) {
+            it.el.classList.add(opts.claseVisible || "in");
+            if (it.cb) { try { it.cb(it.el); } catch (e) {} }
+            entradas.splice(i, 1);
+          }
+        }
+        if (!entradas.length && sondeo) { clearInterval(sondeo); sondeo = null; }
+
+        for (var j = 0; j < continuos.length; j++) {
+          try { continuos[j](H, S); } catch (e) {}
+        }
+      }
+      function pedir() { if (!encolado) { encolado = true; requestAnimationFrame(ciclo); } }
+
+      /* ---------- mostrar todo (red de seguridad y modo sin medida) ---------- */
+      function mostrarTodo() {
+        for (var i = 0; i < entradas.length; i++) {
+          entradas[i].el.classList.add(opts.claseVisible || "in");
+          if (entradas[i].cb) { try { entradas[i].cb(entradas[i].el); } catch (e) {} }
+        }
+        entradas.length = 0;
+        if (sondeo) { clearInterval(sondeo); sondeo = null; }
+      }
+
+      /* ---------- arranque ---------- */
+      function arrancar() {
+        sincronizarVista();
+        ajustarMarco();
+
+        /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
+        if (!legible || lento) {
+          mostrarTodo();
+          continuos.length = 0;
+          if (opts.alRendirse) { try { opts.alRendirse(); } catch (e) {} }
+          seguirAltura();
+          return;
+        }
+
+        function liga(w) {
+          try {
+            w.addEventListener("scroll", pedir, { passive: true });
+            w.addEventListener("resize", pedir, { passive: true });
+          } catch (e) {}
+        }
+        liga(window);
+        if (padre) liga(padre);
+
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) { ciclo(); pedir(); }
+        });
+
+        /* Sondeo: cubre el caso de que no llegue ningun evento de scroll.
+           Llama a ciclo() directo porque requestAnimationFrame se congela
+           en pestanas de segundo plano. */
+        sondeo = setInterval(ciclo, 300);
+
+        pedir();
+        [80, 300, 800, 1600, 3000].forEach(function (ms) { setTimeout(pedir, ms); });
+        window.addEventListener("load", pedir);
+        try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(pedir); } catch (e) {}
+        seguirAltura();
+
+        /* Red de seguridad final: nada se queda invisible. */
+        setTimeout(mostrarTodo, opts.limite || 9000);
+      }
+
+      /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
+      function seguirAltura() {
+        if (!enMarco) return;
+        try { new ResizeObserver(ajustarMarco).observe(root); } catch (e) {}
+        window.addEventListener("load", ajustarMarco);
+        window.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); });
+        if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); ajustarMarco(); }, { passive: true }); } catch (e) {} }
+        [400, 1200, 2500].forEach(function (ms) { setTimeout(ajustarMarco, ms); });
+        Array.prototype.slice.call(root.querySelectorAll("img")).forEach(function (im) {
+          if (!im.complete) im.addEventListener("load", function () { ajustarMarco(); pedir(); }, { once: true });
+        });
+      }
+
+      return {
+        alEntrar: alEntrar,
+        continuo: continuo,
+        pedir: pedir,
+        arrancar: arrancar,
+        mostrarTodo: mostrarTodo,
+        altoVista: altoVista,
+        sincronizarVista: sincronizarVista,
+        desfase: desfaseMarco,
+        techo: techo,
+        limita: limita,
+        enMarco: enMarco,
+        legible: legible,
+        lento: lento
+      };
+    }
+
+    var M = hbEngine(root, {
+      claseVisible: 'is-visible',
+      limite: 9000,
+      /* Sin medida fiable (iframe de otro origen): nada de scroll, todo
+         visible, y el carrusel del teléfono pasa a tiempo y clic. */
+      alRendirse: function () { root.classList.add('sin-scroll'); porTiempo(); }
+    });
+
+    var menuButton = one('#hbpMenuButton'), menu = one('#hbpMenu');
+    var nav = one('#hbpNav'), progress = one('#hbpProgress');
+    var steps = q('.story-step'), slides = q('.story-slide'), bars = q('.story-bars i');
+    var brand = one('#hbpPhoneBrand'), caption = one('#hbpPhoneCaption');
+    var activeSlide = -1;
+    var names = ['Marisquería Poseidón', 'Distribuidora Serrano', 'Pulatu Café', 'Amorcito Corazón'];
+
+    /* ---------- 1. Interacción básica: funciona siempre ---------- */
+    function setMenu(open) {
+      if (!menu) return;
+      menu.classList.toggle('open', open);
+      menu.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (menuButton) {
+        menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        menuButton.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      }
+    }
+    if (menuButton) menuButton.addEventListener('click', function () { setMenu(!menu.classList.contains('open')); });
+    q('#hbpMenu a').forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setMenu(false); });
+
+    /* scrollIntoView arrastra también el scroll del documento padre. */
+    q('a[href^="#hbp"]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var t; try { t = document.querySelector(a.getAttribute('href')); } catch (err) { return; }
+        if (!t) return;
+        e.preventDefault();
+        try { t.scrollIntoView({ behavior: M.lento ? 'auto' : 'smooth', block: 'start' }); }
+        catch (err) { try { t.scrollIntoView(); } catch (e2) {} }
+      });
+    });
+
+    var year = one('#hbpYear'); if (year) year.textContent = (new Date()).getFullYear();
+    q('svg').forEach(function (s) { s.setAttribute('focusable', 'false'); });
+
+    /* ---------- 2. Carrusel de casos ---------- */
+    function selectSlide(index) {
+      if (!slides.length) return;
+      index = Math.max(0, Math.min(slides.length - 1, index));
+      if (index === activeSlide) return;
+      activeSlide = index;
+      slides.forEach(function (s, i) { s.classList.toggle('active', i === index); });
+      steps.forEach(function (s, i) {
+        s.classList.toggle('active', i === index);
+        s.setAttribute('aria-current', i === index ? 'step' : 'false');
+      });
+      bars.forEach(function (b, i) { b.classList.toggle('on', i === index); b.classList.toggle('done', i < index); });
+      if (brand) brand.textContent = slides[index].getAttribute('data-brand') || names[index] || '';
+      if (caption) caption.textContent = names[index] || '';
+    }
+    steps.forEach(function (step, i) {
+      step.addEventListener('click', function () { selectSlide(i); });
+      step.addEventListener('focus', function () { selectSlide(i); });
+      step.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSlide(i); }
+      });
+    });
+    selectSlide(0);
+
+    /* Plan B del carrusel cuando no hay scroll medible. */
+    function porTiempo() {
+      if (slides.length < 2 || M.lento) return;
+      setInterval(function () { selectSlide((activeSlide + 1) % slides.length); }, 4200);
+    }
+
+    /* ---------- 3. Estado del nav y barra de progreso ---------- */
+    var navLinks = q('.nav-links a');
+    var anclas = ['hbp-work', 'hbp-social', 'hbp-method'].map(function (id) { return document.getElementById(id); });
+    M.continuo(function (H, S) {
+      var r = root.getBoundingClientRect();
+      var top = r.top + S, total = Math.max(1, r.height - H);
+      var p = M.limita(-top / total);
+      if (progress) progress.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      if (nav) nav.classList.toggle('scrolled', top < -35);
+      var act = '';
+      anclas.forEach(function (s) { if (s && M.techo(s, S) < H * 0.36) act = s.id; });
+      navLinks.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === '#' + act); });
+    });
+
+    /* ---------- 4. Modo sin movimiento ---------- */
+    if (M.lento) {
+      root.setAttribute('data-init', 'sin-movimiento');
+      M.arrancar();
+      return;
+    }
+    root.classList.add('motion-ready');
+
+    /* ---------- 5. Entradas ---------- */
+    q('.reveal').forEach(function (el) { M.alEntrar(el); });
+
+    /* ---------- 6. Marcos que se abren con clip-path ---------- */
+    q('.media').forEach(function (el) {
+      M.continuo(function (H, S) {
+        var r;
+        try { r = el.getBoundingClientRect(); } catch (e) { return; }
+        var p = M.limita((H - (r.top + S)) / (H + r.height));
+        var e = 1 - M.limita((H * 0.95 - (r.top + S)) / (H * 0.57));
+        var y = (7 * e).toFixed(2), x = (8 * e).toFixed(2), rad = (30 * e).toFixed(1);
+        var cp = 'inset(' + y + '% ' + x + '% ' + y + '% ' + x + '% round ' + rad + 'px)';
+        el.style.clipPath = cp; el.style.webkitClipPath = cp;
+        /* El parallax va por variable CSS: la regla de .media img ya la usa. */
+        var amount = numAttr(el, 'data-parallax', 0);
+        if (amount) el.style.setProperty('--parallax-y', (-7 + amount * (p - 0.5)).toFixed(2) + '%');
+      });
+    });
+
+    /* ---------- 7. Parallax del hero y la cinta ---------- */
+    (function () {
+      var stage = one('.hero-stage');
+      var frames = q('.hero-frame');
+      if (stage && frames.length) {
+        M.continuo(function (H, S) {
+          var r = stage.getBoundingClientRect();
+          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          frames.forEach(function (el, i) {
+            var y = ((i + 1) * -9) * (p - 0.5) * 2;
+            var rot = (i === 1 ? -9 : i === 2 ? 10 : 0) * (p - 0.5) * 2;
+            el.style.transform = 'translateY(' + y.toFixed(2) + '%) rotate(' + rot.toFixed(2) + 'deg)';
+          });
+        });
+      }
+      var ticker = one('#hbpTicker'), tBox = one('.client-ticker');
+      if (ticker && tBox) {
+        M.continuo(function (H, S) {
+          var r = tBox.getBoundingClientRect();
+          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          ticker.style.transform = 'translateX(' + (-p * 22).toFixed(2) + '%)';
+        });
+      }
+      var aura = one('.phone-aura'), social = document.getElementById('hbp-social');
+      if (aura && social) {
+        M.continuo(function (H, S) {
+          var r = social.getBoundingClientRect();
+          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          aura.style.transform = 'rotate(' + (p * 190).toFixed(1) + 'deg)';
+        });
+      }
+    })();
+
+    /* ---------- 8. Teléfono anclado + caso activo según el scroll ----------
+       Antes era position:sticky. Dentro del iframe el documento no hace
+       scroll propio, así que el sticky no puede funcionar: el anclaje se
+       calcula con translateY sobre coordenadas del viewport real. */
+    (function () {
+      var layout = one('#hbpStoryLayout'), stage = one('#hbpPhoneStage');
+      if (!layout || !stage) return;
+      root.classList.add('telefono-js');
+      M.continuo(function (H, S) {
+        var r = layout.getBoundingClientRect();
+        var arriba = r.top + S;
+        var rec = Math.max(0, layout.offsetHeight - stage.offsetHeight);
+        var y = Math.min(Math.max(-arriba + H * 0.08, 0), rec);
+        stage.style.transform = 'translateY(' + y.toFixed(1) + 'px)';
+        /* El caso activo es el paso más cercano al centro de la pantalla. */
+        if (steps.length) {
+          var mejor = 0, dist = Infinity;
+          for (var i = 0; i < steps.length; i++) {
+            var sr = steps[i].getBoundingClientRect();
+            var d = Math.abs((sr.top + sr.bottom) / 2 + S - H * 0.52);
+            if (d < dist) { dist = d; mejor = i; }
+          }
+          selectSlide(mejor);
+        }
+      });
+    })();
+
+    /* ---------- 9. Detalles de puntero ---------- */
+    q('.liquid').forEach(function (el) {
+      el.addEventListener('pointermove', function (e) {
+        var r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+        el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+      });
+    });
+    q('.magnetic').forEach(function (el) {
+      el.style.transition = 'transform .35s cubic-bezier(.16,1,.3,1)';
+      el.addEventListener('pointermove', function (e) {
+        if (window.innerWidth < 900) return;
+        var r = el.getBoundingClientRect();
+        el.style.transform = 'translate(' + ((e.clientX - r.left - r.width / 2) * 0.12).toFixed(1) + 'px,' +
+                                            ((e.clientY - r.top - r.height / 2) * 0.18).toFixed(1) + 'px)';
+      });
+      el.addEventListener('pointerleave', function () { el.style.transform = ''; });
+    });
+
+    M.arrancar();
+    root.setAttribute('data-init', M.enMarco ? (M.legible ? 'iframe-medible' : 'iframe-ciego') : 'directo');
+  }
+})();
+</script>
