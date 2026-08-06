@@ -125,26 +125,29 @@ def portafolio():
 
     src = src.replace('</style>', """
 /* --------------------------------------------------------------------
-   MOVIL: el telefono se ancla en una banda superior y el texto pasa por
-   DEBAJO, no por encima. Antes ambos ocupaban la misma zona y se pisaban:
-   el rotulo del telefono caia sobre el titular y nada era legible.
+   MOVIL: el telefono NO se ancla ni se superpone.
+   Superponerlo era la causa de que el texto lo tapara por completo: el panel
+   de texto necesita fondo solido para ser legible, y ese fondo cubria el
+   telefono. Aqui el telefono va en el flujo, arriba de los capitulos, y la
+   imagen sigue cambiando conforme cada capitulo entra en pantalla.
    -------------------------------------------------------------------- */
 @media(max-width:760px){
-  #hbp .phone-stage{align-items:flex-start;min-height:0;padding-top:10px}
-  #hbp .phone{width:196px}
-  #hbp .phone-caption{display:none}
-  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .5)}
-  #hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .62);
-    background:linear-gradient(transparent,rgba(7,7,12,.96) 22%,rgba(7,7,12,1) 46%);
-    padding:40px 6px 46px;align-content:end}
+  #hbp .story-layout{display:block;position:relative}
+  #hbp .phone-rail{position:relative!important;inset:auto;min-height:0;pointer-events:auto;
+    z-index:1;display:flex;justify-content:center;margin-bottom:34px}
+  #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
+    padding:0;align-items:center;transform:none!important}
+  #hbp .phone{width:250px}
+  #hbp .phone-caption{position:relative;right:auto;left:auto;top:auto;bottom:auto;
+    margin-top:18px;min-width:0;align-self:center}
+  #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
+  #hbp .story-step{min-height:0;background:none;padding:34px 4px;align-content:start}
   #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
-  #hbp .story-step p{font-size:.95rem}
   #hbp .phone-aura{width:300px;height:300px}
 }
 @media(max-width:480px){
-  #hbp .phone{width:176px}
-  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .46)}
-  #hbp .story-step{grid-template-columns:28px 1fr;gap:10px;padding-inline:2px}
+  #hbp .phone{width:225px}
+  #hbp .story-step{grid-template-columns:30px 1fr;gap:11px;padding-inline:2px}
 }
 </style>""", 1)
 

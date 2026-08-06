@@ -62,7 +62,12 @@ function hbEngine(root, opts) {
   var ultimaVista = 0;
   function sincronizarVista() {
     var H = altoVista();
-    if (Math.abs(H - ultimaVista) < 2) return;
+    /* Holgura grande a proposito. Este valor alimenta las alturas del bloque:
+       si se mueve, cambia el alto del contenido, el anfitrion redimensiona su
+       iframe y la geometria se desplaza. Ese ida y vuelta es el temblor. En
+       movil la barra de direcciones hace variar el viewport constantemente,
+       asi que solo se atiende un cambio de orientacion o similar. */
+    if (Math.abs(H - ultimaVista) < 80) return;
     ultimaVista = H;
     try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
   }

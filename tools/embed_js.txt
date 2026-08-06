@@ -1,0 +1,169 @@
+<script>
+(function () {
+  "use strict";
+
+  var raiz = document.querySelector(".hemca");
+  if (!raiz) return;
+
+  var WA = "529995690047";
+
+  /* Si algo falla, se quita el ocultado y todo el contenido queda visible. */
+  function rendirse(e) {
+    try { raiz.classList.remove("js-on"); } catch (_) {}
+    try { if (window.console && console.warn) console.warn("[HEMCA] modo seguro:", e); } catch (_) {}
+  }
+  function safe(fn) { try { fn(); } catch (e) {} }
+
+  try { principal(); } catch (e) { rendirse(e); }
+
+  function principal() {
+
+/*__MOTOR__*/
+
+    var M = hbEngine(raiz, {
+      claseVisible: "visible",
+      limite: 9000,
+      /* Sin medida fiable (iframe de otro origen) se renuncia al scroll:
+         las etapas pasan a turnarse por tiempo y clic. */
+      alRendirse: function () { etapasPorTiempo(); }
+    });
+
+    /* ---------- 1. Etapas ----------
+       Con medida fiable: ancladas y avanzando con el scroll, igual que el
+       original, pero calculando el anclaje en vez de usar position:sticky
+       (que los contenedores del constructor anulan).
+       Sin medida fiable: se turnan por tiempo y clic. */
+    var bloque    = raiz.querySelector("#story-layout");
+    var escenario = raiz.querySelector("#story-stage");
+    var fichas  = [].slice.call(raiz.querySelectorAll("[data-story]"));
+    var fotos   = [].slice.call(raiz.querySelectorAll("[data-story-image]"));
+    var botones = [].slice.call(raiz.querySelectorAll(".chapter-dot"));
+    var actual = -1;
+
+    function marcar(lista, n) {
+      for (var k = 0; k < lista.length; k++) lista[k].classList.toggle("active", k === n);
+    }
+    function mostrarEtapa(n) {
+      if (!fichas.length) return;
+      n = (n + fichas.length) % fichas.length;
+      if (n === actual) return;
+      actual = n;
+      marcar(fichas, n); marcar(fotos, n); marcar(botones, n);
+      for (var k = 0; k < botones.length; k++) {
+        botones[k].setAttribute("aria-selected", k === n ? "true" : "false");
+      }
+    }
+
+    function recorrido() {
+      return Math.max(1, bloque.offsetHeight - escenario.offsetHeight);
+    }
+
+    if (bloque && escenario && fichas.length) {
+      raiz.classList.add("etapas-scroll");
+      M.continuo(function (H, S) {
+        var arriba = M.techo(bloque, S);
+        var rec = recorrido();
+        /* Mientras el bloque no llega al borde superior el escenario
+           descansa; cuando lo pasa, se desplaza para quedarse pegado. */
+        var desfase = Math.min(Math.max(-arriba, 0), rec);
+        escenario.style.transform = "translateY(" + desfase + "px)";
+        mostrarEtapa(Math.min(fichas.length - 1, Math.floor((desfase / rec) * fichas.length)));
+      });
+
+      /* Los indicadores llevan el scroll al tramo de su etapa. */
+      botones.forEach(function (b, k) {
+        b.addEventListener("click", function () {
+          if (!raiz.classList.contains("etapas-scroll")) { mostrarEtapa(k); return; }
+          var rec = recorrido();
+          var arribaDoc = bloque.getBoundingClientRect().top + window.pageYOffset;
+          var destino = arribaDoc + ((k + 0.5) / fichas.length) * rec;
+          /* Dentro de un iframe hay que desplazar la pagina padre: lo hace
+             scrollIntoView, que si atraviesa el marco. */
+          if (M.enMarco) {
+            var ref = document.createElement("div");
+            ref.style.cssText = "position:absolute;left:0;width:1px;height:1px;pointer-events:none";
+            ref.style.top = ((k + 0.5) / fichas.length) * rec + "px";
+            bloque.appendChild(ref);
+            try { ref.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); } catch (e) {}
+            setTimeout(function () { try { bloque.removeChild(ref); } catch (e) {} }, 900);
+          } else {
+            window.scrollTo({ top: destino, behavior: M.lento ? "auto" : "smooth" });
+          }
+        });
+        b.addEventListener("keydown", function (e) {
+          var salto = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1
+                    : (e.key === "ArrowLeft"  || e.key === "ArrowUp")   ? -1 : 0;
+          if (!salto) return;
+          e.preventDefault();
+          var n = Math.min(fichas.length - 1, Math.max(0, k + salto));
+          botones[n].focus(); botones[n].click();
+        });
+      });
+    }
+
+    /* Plan B de las etapas cuando no se puede medir el scroll. */
+    function etapasPorTiempo() {
+      if (!fichas.length || !escenario) return;
+      raiz.classList.remove("etapas-scroll");
+      raiz.classList.add("etapas-tiempo");
+      escenario.style.transform = "";
+      if (M.lento) return;
+      var reloj = setInterval(function () { mostrarEtapa(actual + 1); }, 5200);
+      escenario.addEventListener("mouseenter", function () { clearInterval(reloj); reloj = null; });
+      escenario.addEventListener("mouseleave", function () {
+        if (!reloj) reloj = setInterval(function () { mostrarEtapa(actual + 1); }, 5200);
+      });
+    }
+
+    /* ---------- 2. Aparicion de bloques ---------- */
+    [].slice.call(raiz.querySelectorAll("[data-reveal]")).forEach(function (el) { M.alEntrar(el); });
+
+    /* ---------- 3. Enlaces internos ---------- */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
+        if (!a) return;
+        var destino = raiz.querySelector(a.getAttribute("href"));
+        if (!destino) return;
+        ev.preventDefault();
+        /* scrollIntoView funciona tambien dentro de un iframe: arrastra el
+           scroll del documento padre. */
+        try { destino.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); }
+        catch (e) { try { destino.scrollIntoView(); } catch (e2) {} }
+      });
+    });
+
+    /* ---------- 4. Formulario -> WhatsApp ---------- */
+    safe(function () {
+      var form = raiz.querySelector("#quote-form");
+      if (!form) return;
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var d = new FormData(form);
+        var detalle = (d.get("detail") || "").toString().trim();
+        /* Se filtran solo las lineas opcionales vacias; el renglon en
+           blanco tras el saludo se anade despues para que no se pierda. */
+        var lineas = [
+          "Nombre: " + d.get("name"),
+          "Teléfono: " + d.get("phone"),
+          "Proyecto: " + d.get("type"),
+          "Ubicación: " + d.get("place"),
+          detalle ? "Detalles: " + detalle : null
+        ].filter(function (l) { return l; });
+        var texto = "Hola Edgar, me interesa cotizar un proyecto con HEMCA.\n\n" + lineas.join("\n");
+        var url = "https://wa.me/" + WA + "?text=" + encodeURIComponent(texto);
+        var v = window.open(url, "_blank", "noopener");
+        if (!v) window.location.href = url;
+      });
+    });
+
+    /* ---------- 5. Ano del pie ---------- */
+    safe(function () {
+      var y = raiz.querySelector("#year");
+      if (y) y.textContent = String(new Date().getFullYear());
+    });
+
+    M.arrancar();
+  }
+})();
+</script>
