@@ -182,14 +182,10 @@
           M.escribe(ticker, 'transform', 'translateX(' + (-(Math.round(p * 60) / 60) * 22).toFixed(2) + '%)');
         });
       }
-      var aura = one('.phone-aura'), social = document.getElementById('hbp-social');
-      if (aura && social) {
-        M.continuo(function (H, S) {
-          var r = social.getBoundingClientRect();
-          var p = M.limita((H - (r.top + S)) / (H + r.height));
-          M.escribe(aura, 'transform', 'rotate(' + ((Math.round(p * 40) / 40) * 190).toFixed(0) + 'deg)');
-        });
-      }
+      /* El aura NO se anima con el scroll. Es un conic-gradient con blur(70px):
+         rotarlo obliga al navegador a re-rasterizar toda esa capa en cada
+         fotograma, y era el mayor coste de la seccion (mediana de 50ms).
+         Queda estatica; como adorno difuminado no se nota la diferencia. */
     })();
 
     /* ---------- 8. Teléfono anclado + caso activo según el scroll ----------

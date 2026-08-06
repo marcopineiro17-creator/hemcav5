@@ -108,6 +108,18 @@ acotado = acota(css)
 
 # ------------------------------------------------------ 3. Reglas adicionales
 acotado += """
+    /* Desenfoque del menu mas barato: se recalcula al desplazarse. */
+    .hemca .section-nav { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+    /* Las etapas inactivas seguian pintandose y componiendose: cuatro
+       imagenes a pantalla completa con filtros, en cada fotograma del
+       escenario en movimiento. Con visibility se saltan por completo y solo
+       queda una. Es lo que abarata la animacion en escritorio. */
+    .hemca .story-image { visibility: hidden; transition: opacity .55s ease, visibility .55s ease; }
+    .hemca .story-image.active { visibility: visible; }
+    /* El escenario aisla sus repintados y vive en su propia capa. */
+    .hemca .story-stage { contain: paint; backface-visibility: hidden; }
+
     /* Cuando no se puede medir el scroll (iframe de otro origen), el bloque
        no debe reservar cuatro pantallas: seria un hueco vacio. */
     .hemca.etapas-tiempo .story-layout { height: auto; }

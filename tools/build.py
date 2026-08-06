@@ -125,42 +125,32 @@ def portafolio():
 
     src = src.replace('</style>', """
 /* --------------------------------------------------------------------
-   MOVIL: el telefono queda anclado arriba a la derecha, pequeno, como
-   vista previa. En el flujo no servia (te lo pasabas y no veias el cambio)
-   y superpuesto a lo ancho tapaba el texto. Asi se ve cambiar siempre y el
-   texto corre a ancho completo por debajo.
+   MOVIL: el telefono anclado y CENTRADO, a buen tamano, por encima del
+   texto. Pequeno y a un lado casi no se notaba; en el flujo te lo pasabas
+   y no veias el cambio. El texto corre por detras: el telefono manda en el
+   z-index, asi que siempre se ve cambiar.
    -------------------------------------------------------------------- */
-/* contain:paint aisla cada marco: al cambiar su clip-path no obliga al
-   navegador a re-desenfocar los orbes del fondo (130px de blur) ni los
-   paneles con backdrop-filter. Es lo que hace barata la animacion. */
-#hbp .media{contain:paint}
-#hbp .ambient,#hbp .ambient .orb{will-change:auto;contain:paint}
-
 @media(max-width:760px){
   #hbp .story-layout{display:block;position:relative}
   #hbp .phone-rail{position:absolute!important;inset:0;min-height:0;
     pointer-events:none;z-index:6;display:block}
   #hbp .phone-stage{position:relative!important;top:auto!important;min-height:0;
-    padding:0;display:flex;justify-content:flex-end;align-items:flex-start}
-  #hbp .phone{width:132px;border-radius:22px;padding:4px;
-    box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.28)}
-  #hbp .phone::before{inset:3px;border-radius:19px}
-  #hbp .phone-screen{border-radius:18px}
-  #hbp .phone-edge,#hbp .phone-ui,#hbp .story-brand,#hbp .phone-bottom,
-  #hbp .dynamic-island,#hbp .phone-aura,#hbp .phone-caption{display:none}
-  #hbp .story-bars{top:6px;left:6px;right:6px}
-  #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
-  /* Solo el primer capitulo cede espacio a la vista previa. */
-  #hbp .story-step{min-height:0;background:none;padding:34px 4px;align-content:start}
-  #hbp .story-step:first-child{padding-top:20px}
-  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
-  #hbp .story-step:first-child ul{max-width:calc(100% - 148px)}
+    padding:0;display:flex;justify-content:center;align-items:flex-start}
+  #hbp .phone{width:min(230px,62vw)}
+  #hbp .phone-aura{width:300px;height:300px;opacity:.42}
+  #hbp .phone-caption{position:absolute;left:50%;right:auto;top:auto;bottom:-14px;
+    transform:translateX(-50%);min-width:0;white-space:nowrap;padding:9px 14px}
+  /* Los capitulos empiezan bajo el telefono y su fondo solo se vuelve opaco
+     en la parte baja, para no borrarlo cuando pasan por detras. */
+  #hbp .story-steps{padding-top:calc(var(--vh-real, 100svh) * .6)!important;position:relative;z-index:2}
+  #hbp .story-step{min-height:calc(var(--vh-real, 100svh) * .66);align-content:end;
+    padding:44px 6px 40px;
+    background:linear-gradient(transparent,rgba(7,7,12,.5) 32%,rgba(7,7,12,.9) 60%,rgba(7,7,12,.99))}
   #hbp .story-step h3{font-size:clamp(2rem,9vw,3rem);max-width:none}
+  #hbp .story-step p{font-size:.95rem}
 }
 @media(max-width:480px){
-  #hbp .phone{width:118px}
-  #hbp .story-step:first-child h3,#hbp .story-step:first-child p,
-  #hbp .story-step:first-child ul{max-width:calc(100% - 132px)}
+  #hbp .phone{width:min(206px,60vw)}
   #hbp .story-step{grid-template-columns:30px 1fr;gap:11px;padding-inline:2px}
 }
 </style>""", 1)
@@ -169,6 +159,36 @@ def portafolio():
     src = src.replace('<div id="hbp">', '<div id="hbp">\n' + TEMPRANO, 1)
     src = CABECERA + '\n' + src
     assert '--vh-real' in src.split('<style>')[0], 'el guion temprano no quedo antes del CSS'
+
+    # -------- Coste de pintado. Se anade al final para que gane siempre. -----
+    OPTIM = """
+/* --------------------------------------------------------------------
+   COSTE DE PINTADO
+   Medido con muestreo de fotogramas durante el scroll: la seccion social
+   daba una mediana de 50-66ms por fotograma en escritorio. Lo que domina
+   son los desenfoques, que se recalculan cada vez que algo se mueve
+   encima o debajo. El radio es lo que cuesta, no el hecho de desenfocar.
+   -------------------------------------------------------------------- */
+#hbp .media{contain:paint}
+#hbp .ambient,#hbp .ambient .orb{will-change:auto;contain:paint}
+#hbp .orb{filter:blur(80px)}
+#hbp .phone-aura{filter:blur(46px)}
+#hbp .liquid{backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%)}
+#hbp .nav{backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%)}
+/* El teléfono y su pantalla viven en su propia capa: al desplazarse no
+   obligan a repintar el fondo de la seccion. */
+#hbp .phone-stage{contain:paint}
+#hbp .story-slides{contain:paint}
+/* Las entradas duran menos y recorren menos distancia. Animar opacidad sobre
+   un panel con backdrop-filter obliga a recomponer el desenfoque en cada
+   fotograma de la transicion: menos fotogramas, menos picos. Y mientras el
+   bloque aun no es visible no hay nada que desenfocar, asi que se apaga. */
+#hbp.motion-ready .reveal{transform:translateY(20px);
+  transition:opacity .55s var(--ease),transform .55s var(--ease)}
+#hbp.motion-ready .reveal:not(.is-visible){backdrop-filter:none;-webkit-backdrop-filter:none}
+"""
+    src = src.replace('</style>', OPTIM + '</style>', 1)
+    assert 'contain:paint' in src, 'no se aplico el bloque de coste de pintado'
 
     js = inserta_motor(open('/tmp/portfolio_js.txt', encoding='utf-8').read().strip())
     src = re.sub(r"<script>\n\(function\(\)\{\n  'use strict';.*?</script>", js, src, flags=re.S)
