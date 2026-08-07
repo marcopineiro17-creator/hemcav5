@@ -289,6 +289,71 @@ def portafolio():
     open('/home/user/hemcav5/portafolio-hms-embed.html', 'w', encoding='utf-8').write(src)
     return revisa('portafolio-hms-embed.html', src)
 
+# ------------------------------------------------------------- DIVISIONES
+def divisiones():
+    ORIGEN = '/root/.claude/uploads/9cc97cf1-cf11-5baf-bfa7-8b088d8a288d/878c7a51-codigohostinger.html'
+    src = open(ORIGEN, encoding='utf-8').read()
+    css = open('/tmp/div_css.txt', encoding='utf-8').read()
+    cuerpo = src.split('<body>', 1)[1].rsplit('</body>', 1)[0]
+    cuerpo = re.sub(r'\s*<script>.*?</script>\s*$', '', cuerpo, flags=re.S)
+    assert '<style' not in cuerpo and '<script' not in cuerpo
+
+    # ---- Destinos que salen del bloque -------------------------------------
+    # Cada enlace declara CON QUE PALABRA buscarse en el menu real del sitio y
+    # a que ruta caer si no aparece. Es la unica tabla que hay que tocar si
+    # alguna direccion del sitio cambia.
+    #   ruta original          -> (claves de busqueda en el menu, ruta de respaldo)
+    DESTINOS = {
+        '/construccion-desarrollo': ('construccion|construccion y desarrollo', '/construccion'),
+        '/servicios-inmobiliarios': ('inmobiliaria|servicios inmobiliarios', '/servicios-inmobiliarios'),
+        '/division-legal':          ('legal|division legal|juridico', '/division-legal'),
+        '/marketing':               ('marketing|hummingbird', '/marketing'),
+        '/contacto':                ('contacto|contactanos', '/contacto'),
+        '/catalogo-de-propiedades': ('propiedades|catalogo de propiedades|inmuebles', '/catalogo-de-propiedades'),
+        '/divisiones':              ('divisiones', '/divisiones'),
+        '/':                        ('inicio|home', '/'),
+    }
+    usados = {}
+    def marca(m):
+        ruta = m.group(1)
+        if ruta not in DESTINOS:
+            raise AssertionError('enlace sin destino declarado: ' + ruta)
+        claves, respaldo = DESTINOS[ruta]
+        usados[ruta] = usados.get(ruta, 0) + 1
+        # El href se deja apuntando ya al sitio real: si el JS no llegara a
+        # ejecutarse, el enlace sigue siendo valido y absoluto.
+        return ('href="https://www.cpmempresarial.com%s" target="_top" rel="noopener"'
+                ' data-cpm-destino="%s" data-cpm-respaldo="%s"' % (respaldo, claves, respaldo))
+    cuerpo, n = re.subn(r'href="(/[^"#]*)"', marca, cuerpo)
+    assert n == 12, 'se esperaban 12 enlaces de salida, se marcaron %d' % n
+    assert not re.search(r'href="/(?!/)', cuerpo), 'queda algun enlace relativo'
+    assert set(usados) == set(DESTINOS), 'destinos declarados y no usados: %s' % (set(DESTINOS) - set(usados))
+
+    # El ano del pie deja de estar escrito a mano.
+    cuerpo = cuerpo.replace('© 2026 Corporativo', '© <span id="cpmYear">2026</span> Corporativo')
+    assert 'cpmYear' in cuerpo
+
+    fuentes = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+               '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+               '<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800'
+               '&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">')
+    js = inserta_motor(open('/tmp/div_js.txt', encoding='utf-8').read().strip())
+
+    temprano = TEMPRANO.replace('if (!r) return;', 'if (!r) return;\n  r.classList.add("js-on");')
+    cuerpo = cuerpo.replace('<div id="cpm-divisiones">',
+                            '<div id="cpm-divisiones">\n' + temprano, 1)
+    assert 'js-on' in cuerpo
+
+    out = (CABECERA + '\n'
+           '<!-- CPM Divisiones | bloque para el contenedor de codigo de Hostinger.\n'
+           '     Todo el CSS esta acotado bajo #cpm-divisiones: en el editor, que inserta\n'
+           '     el codigo en linea, ya no puede alcanzar a la propia interfaz.\n'
+           '     No lleva etiquetas de documento ni depende de ningun CDN de scripts. -->\n'
+           + fuentes + '\n<style>\n' + css + '\n</style>\n\n'
+           + cuerpo.strip() + '\n\n' + js + '\n')
+    open('/home/user/hemcav5/divisiones-embed-hostinger.html', 'w', encoding='utf-8').write(out)
+    return revisa('divisiones-embed-hostinger.html', out)
+
 print('Construyendo:')
-ok = hemca() and portafolio()
+ok = hemca() and portafolio() and divisiones()
 sys.exit(0 if ok else 1)

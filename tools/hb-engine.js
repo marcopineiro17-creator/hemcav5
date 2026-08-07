@@ -114,11 +114,14 @@ function hbEngine(root, opts) {
        resizeFrame, que ademas colapsa la altura reservada del bloque de
        Hostinger (cleanContainer sobre grid-embed, layout-element,
        block-layout y section). Eso es lo que elimina la franja blanca.
-       Antes se emitia "hb:height", un tipo que nadie atendia. */
-    try {
-      window.parent.postMessage({ type: "hummingbird:height", height: alto,
-                                  whatsappUrl: opts.whatsapp || "" }, "*");
-    } catch (e) {}
+       Antes se emitia "hb:height", un tipo que nadie atendia.
+       Cada bloque puede pedir su propio tipo: el de divisiones usa
+       "cpm-divisiones:height", que el runtime atiende sin crear ademas el
+       boton flotante de WhatsApp. */
+    var aviso = { type: opts.tipoAltura || "hummingbird:height", height: alto };
+    if (opts.whatsapp) aviso.whatsappUrl = opts.whatsapp;
+    if (opts.proyecto) aviso.project = opts.proyecto;
+    try { window.parent.postMessage(aviso, "*"); } catch (e) {}
   }
 
   /* El documento del iframe es blanco por omision. Si el iframe queda un
@@ -295,10 +298,14 @@ function hbEngine(root, opts) {
        flotante de WhatsApp FUERA del iframe (dentro no puede ser flotante de
        verdad) y pide la altura. */
     if (enMarco) {
-      try {
-        window.parent.postMessage({ type: "hummingbird:ready",
-                                    whatsappUrl: opts.whatsapp || "" }, "*");
-      } catch (e) {}
+      /* El saludo hace que el runtime global cree el boton flotante de
+         WhatsApp. Solo lo mandan los bloques que lo quieren. */
+      if (opts.whatsapp) {
+        try {
+          window.parent.postMessage({ type: "hummingbird:ready",
+                                      whatsappUrl: opts.whatsapp }, "*");
+        } catch (e) {}
+      }
       window.addEventListener("message", function (ev) {
         var d = ev && ev.data;
         if (d && (d.type === "hummingbird:request-height" || d.type === "cpm-divisiones:request-height")) {

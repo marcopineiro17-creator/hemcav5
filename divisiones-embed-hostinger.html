@@ -1,0 +1,1145 @@
+<script>
+/* Primera linea del bloque: fija --vh-real en la raiz del documento antes de
+   que el CSS se aplique a nada. Las propiedades personalizadas se heredan, asi
+   que el valor llega a todo el bloque. Sin esto, 100svh se evaluaria una vez
+   contra el viewport del iframe -- que puede medir miles de pixeles -- y el
+   anfitrion dimensionaria el iframe con ese valor inflado: de ahi la franja
+   blanca interminable al final. */
+(function () {
+  var H = 0;
+  try { H = (window.self !== window.top && window.parent.innerHeight) || window.innerHeight; }
+  catch (e) { H = window.innerHeight; }
+  if (H > 0) try { document.documentElement.style.setProperty('--vh-real', H + 'px'); } catch (e) {}
+  /* Solo se reajusta ante cambios grandes (girar el telefono). Los pequenos
+     -- la barra de direcciones al desplazarse -- se ignoran a proposito: si
+     este valor se mueve, cambian las alturas, el anfitrion redimensiona el
+     iframe y aparece el temblor. */
+  function s() {
+    var h = 0;
+    try { h = (window.self !== window.top && window.parent.innerHeight) || window.innerHeight; }
+    catch (e) { h = window.innerHeight; }
+    if (h > 0 && Math.abs(h - H) > 80) {
+      H = h;
+      try { document.documentElement.style.setProperty('--vh-real', h + 'px'); } catch (e) {}
+    }
+  }
+  window.addEventListener('resize', s, { passive: true });
+  try { if (window.self !== window.top) window.parent.addEventListener('resize', s, { passive: true }); } catch (e) {}
+})();
+</script>
+<!-- CPM Divisiones | bloque para el contenedor de codigo de Hostinger.
+     Todo el CSS esta acotado bajo #cpm-divisiones: en el editor, que inserta
+     el codigo en linea, ya no puede alcanzar a la propia interfaz.
+     No lleva etiquetas de documento ni depende de ningun CDN de scripts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+    #cpm-divisiones { color-scheme:dark }
+    #cpm-divisiones * { box-sizing:border-box }
+    #cpm-divisiones { --navy:#192c41;--navy-2:#223c56;--ink:#192c41;--paper:#f4f1e9; --gold:#d8a845;--orange:#e86a2a;--teal:#28a0c8; --purple:#8b5cf6;--pink:#f890b5;--white:#fff;--muted:#aebbd2; --vh:var(--vh-real,100svh);--theme:#d8a845;--theme-ink:#192c41; position:relative;width:100%;max-width:100%;min-height:0;margin:0;padding:0; overflow:hidden;background:var(--navy);color:#fff; font-family:'Geist',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; -webkit-font-smoothing:antialiased;overflow-anchor:none; }
+    #cpm-divisiones * { box-sizing:border-box }
+    #cpm-divisiones a { color:inherit }
+    #cpm-divisiones img { display:block;max-width:100% }
+    #cpm-divisiones button, #cpm-divisiones a { font:inherit }
+    #cpm-divisiones [id] { scroll-margin-top:22px }
+    #cpm-divisiones .mono { font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.14em }
+    #cpm-divisiones .wrap { width:min(1180px,calc(100% - 48px));margin-inline:auto }
+    /* Entrada corporativa: diseñada para funcionar dentro del iframe de Hostinger. */
+    #cpm-divisiones .intro { position:absolute;inset:0 0 auto;height:var(--vh);z-index:5000;display:grid;place-items:center; background:#192c41;overflow:hidden;isolation:isolate; }
+    #cpm-divisiones .intro::before, #cpm-divisiones .intro::after { content:"";position:absolute;pointer-events:none }
+    #cpm-divisiones .intro::before { inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(circle,#000 20%,transparent 72%) }
+    #cpm-divisiones .intro::after { width:min(72vw,780px);height:1px;background:linear-gradient(90deg,transparent,#d8a845,transparent);top:50%;left:50%;transform:translate(-50%,-50%) }
+    #cpm-divisiones .intro-mark { position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center }
+    #cpm-divisiones .intro-logo { width:clamp(230px,34vw,430px);height:auto;filter:drop-shadow(0 16px 36px rgba(0,0,0,.28)) }
+    #cpm-divisiones .intro-word { margin-top:26px;font-size:clamp(.8rem,1.3vw,1rem);font-weight:600;color:#d8a845;letter-spacing:.42em;padding-left:.42em }
+    #cpm-divisiones .intro-skip { position:absolute;right:24px;bottom:24px;z-index:3;border:1px solid rgba(255,255,255,.24);background:transparent;color:#fff;border-radius:999px;padding:10px 15px;cursor:pointer;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase }
+    #cpm-divisiones .intro.is-gone { visibility:hidden;pointer-events:none }
+    /* Hero */
+    #cpm-divisiones .hero { position:relative;min-height:var(--vh);display:grid;align-items:end;padding:92px 0 72px;isolation:isolate;overflow:hidden;background:#192c41 }
+    #cpm-divisiones .hero-media { position:absolute;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;filter:saturate(.5) contrast(1.12) brightness(.42) }
+    #cpm-divisiones .hero::before { content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,rgba(25,44,65,.98) 0%,rgba(25,44,65,.84) 46%,rgba(25,44,65,.2) 100%) }
+    #cpm-divisiones .hero::after { content:"";position:absolute;right:8%;top:14%;width:clamp(190px,28vw,420px);aspect-ratio:1;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 52px rgba(255,255,255,.025),0 0 0 104px rgba(255,255,255,.018);z-index:-1 }
+    #cpm-divisiones .hero-grid { display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:8vw;align-items:end }
+    #cpm-divisiones .eyebrow { display:flex;align-items:center;gap:12px;color:#d8a845;font-size:.7rem;margin-bottom:26px }
+    #cpm-divisiones .eyebrow::before { content:"";width:36px;height:1px;background:currentColor }
+    #cpm-divisiones h1, #cpm-divisiones h2, #cpm-divisiones h3, #cpm-divisiones p { margin:0 }
+    #cpm-divisiones h1 { max-width:900px;font-size:clamp(3.35rem,8.2vw,8rem);line-height:.88;letter-spacing:-.07em;font-weight:750;text-wrap:balance }
+    #cpm-divisiones h1 em { display:block;color:#d8a845;font-style:normal }
+    #cpm-divisiones .hero-lead { margin-top:30px;max-width:650px;color:#cbd5e7;font-size:clamp(1rem,1.5vw,1.22rem);line-height:1.7 }
+    #cpm-divisiones .hero-side { border-left:1px solid rgba(255,255,255,.22);padding-left:30px }
+    #cpm-divisiones .hero-side-label { font-size:.67rem;color:#d8a845;margin-bottom:22px }
+    #cpm-divisiones .hero-cells { display:grid;gap:0 }
+    #cpm-divisiones .hero-cell { display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:16px;text-decoration:none;padding:16px 0;border-top:1px solid rgba(255,255,255,.16);transition:color .25s,padding-left .25s }
+    #cpm-divisiones .hero-cell:last-child { border-bottom:1px solid rgba(255,255,255,.16) }
+    #cpm-divisiones .hero-cell:hover { color:#d8a845;padding-left:8px }
+    #cpm-divisiones .hero-cell-num { font-size:.63rem;color:#8fa0bd }
+    #cpm-divisiones .hero-cell-name { font-weight:650;font-size:.95rem }
+    #cpm-divisiones .hero-cell-arrow { font-size:1.1rem }
+    /* Menú de capítulos */
+    #cpm-divisiones .chapter-nav { position:relative;z-index:70;background:#fff;color:#192c41;border-bottom:1px solid #d9dfeb }
+    #cpm-divisiones .chapter-nav-inner { display:grid;grid-template-columns:1.25fr repeat(4,1fr);align-items:stretch;min-height:84px }
+    #cpm-divisiones .chapter-nav-title { display:flex;align-items:center;font-size:.7rem;color:#68758d;padding-right:22px }
+    #cpm-divisiones .chapter-link { position:relative;display:flex;align-items:center;justify-content:center;gap:10px;border-left:1px solid #e0e5ed;text-decoration:none;font-weight:650;font-size:.78rem;padding:18px 12px;text-align:center;transition:color .25s,background .25s }
+    #cpm-divisiones .chapter-link::after { content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--cell);transform:scaleX(0);transition:transform .3s;transform-origin:center }
+    #cpm-divisiones .chapter-link:hover, #cpm-divisiones .chapter-link.is-active { background:#f3f5f8;color:#192c41 }
+    #cpm-divisiones .chapter-link.is-active::after { transform:scaleX(1) }
+    #cpm-divisiones .chapter-link span { font-size:.6rem;color:#8a96a9 }
+    /* Capítulos */
+    #cpm-divisiones .chapter { position:relative;min-height:var(--vh);padding:110px 0;display:grid;align-items:center;overflow:hidden;isolation:isolate }
+    #cpm-divisiones .chapter-grid { display:grid;grid-template-columns:minmax(0,.9fr) minmax(360px,1.1fr);gap:clamp(54px,8vw,120px);align-items:center }
+    #cpm-divisiones .chapter-grid>* { min-width:0 }
+    #cpm-divisiones .chapter-number { font-size:.66rem;margin-bottom:24px;color:var(--accent-color) }
+    #cpm-divisiones .chapter h2 { max-width:100%;font-size:clamp(2.9rem,6.5vw,6.5rem);line-height:.92;letter-spacing:-.062em;font-weight:760;text-wrap:balance }
+    #cpm-divisiones .chapter-copy { margin-top:26px;max-width:620px;font-size:clamp(1rem,1.35vw,1.16rem);line-height:1.72;color:var(--copy) }
+    #cpm-divisiones .chapter-actions { display:flex;gap:12px;flex-wrap:wrap;margin-top:34px }
+    #cpm-divisiones .action { display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 20px;border-radius:999px;text-decoration:none;font-size:.78rem;font-weight:700;transition:transform .25s,box-shadow .25s }
+    #cpm-divisiones .action:hover { transform:translateY(-3px) }
+    #cpm-divisiones .action-primary { background:var(--accent-color);color:var(--action-ink) }
+    #cpm-divisiones .action-secondary { border:1px solid var(--line);color:inherit }
+    #cpm-divisiones .visual { position:relative;min-height:590px }
+    #cpm-divisiones .visual-photo { position:absolute;inset:0;width:100%;height:100%;object-fit:cover }
+    #cpm-divisiones .visual-frame { position:absolute;inset:22px;border:1px solid var(--line);pointer-events:none }
+    #cpm-divisiones .visual-badge { position:absolute;left:24px;bottom:24px;max-width:270px;background:var(--badge);color:var(--badge-ink);padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.25) }
+    #cpm-divisiones .visual-badge strong { display:block;font-size:1.2rem;line-height:1.2 }
+    #cpm-divisiones .visual-badge small { display:block;margin-top:10px;font-size:.67rem;line-height:1.55;color:var(--badge-muted) }
+    #cpm-divisiones .capabilities { display:grid;grid-template-columns:repeat(3,1fr);margin-top:50px;border-top:1px solid var(--line);border-bottom:1px solid var(--line) }
+    #cpm-divisiones .capability { padding:22px 18px 22px 0;border-right:1px solid var(--line) }
+    #cpm-divisiones .capability:not(:first-child) { padding-left:18px }
+    #cpm-divisiones .capability:last-child { border-right:0 }
+    #cpm-divisiones .capability b { display:block;font-size:.67rem;color:var(--accent-color);margin-bottom:9px }
+    #cpm-divisiones .capability span { font-size:.86rem;line-height:1.45 }
+    /* Construcción */
+    #cpm-divisiones .construction { --accent-color:#e86a2a;--action-ink:#fff;--copy:#c8d8e8;--line:rgba(232,106,42,.3);--badge:#e86a2a;--badge-ink:#fff;--badge-muted:rgba(255,255,255,.78);background:#07111f;color:#f0f5fa }
+    #cpm-divisiones .construction::before { content:"";position:absolute;inset:0;z-index:-2;background-image:linear-gradient(rgba(40,160,200,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(40,160,200,.055) 1px,transparent 1px);background-size:64px 64px }
+    #cpm-divisiones .construction::after { content:"CONSTRUCCIÓN";position:absolute;left:-.03em;bottom:-.12em;z-index:-1;font-size:min(17vw,260px);font-weight:800;letter-spacing:-.075em;color:rgba(255,255,255,.024) }
+    #cpm-divisiones .construction .chapter-grid { grid-template-columns:minmax(0,1.08fr) minmax(420px,.92fr);gap:clamp(48px,6vw,94px) }
+    #cpm-divisiones .construction h2 { font-size:clamp(2.8rem,4.4vw,4.65rem);line-height:.96;letter-spacing:-.052em }
+    #cpm-divisiones .construction .visual { clip-path:polygon(0 0,calc(100% - 34px) 0,100% 34px,100% 100%,34px 100%,0 calc(100% - 34px)) }
+    #cpm-divisiones .construction-mark { display:inline-flex;align-items:center;margin-bottom:18px;color:#fff;font-size:.74rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;border-left:3px solid #e86a2a;padding:7px 0 7px 12px }
+    /* Inmobiliaria */
+    #cpm-divisiones .realestate { --accent-color:#bb8a31;--action-ink:#fff;--copy:#4c5d77;--line:rgba(25,44,65,.18);--badge:#192c41;--badge-ink:#fff;--badge-muted:#bac6dc;background:#f4f1e9;color:#192c41 }
+    #cpm-divisiones .realestate::before { content:"";position:absolute;width:44vw;aspect-ratio:1;border:1px solid rgba(25,44,65,.09);border-radius:50%;left:-19vw;top:5%;z-index:-1;box-shadow:0 0 0 70px rgba(25,44,65,.025),0 0 0 140px rgba(25,44,65,.018) }
+    #cpm-divisiones .realestate .visual { border-radius:50% 50% 8px 8px;overflow:visible }
+    #cpm-divisiones .realestate .visual-photo { border-radius:50% 50% 8px 8px }
+    #cpm-divisiones .realestate .visual-frame { border-radius:50% 50% 8px 8px }
+    /* Legal */
+    #cpm-divisiones .legal { --accent-color:#fff;--action-ink:#051958;--copy:#cbd5e7;--line:rgba(255,255,255,.22);--badge:#fff;--badge-ink:#051958;--badge-muted:#5a6980;background:#051958;color:#fff }
+    #cpm-divisiones .legal::before { content:"";position:absolute;inset:0;z-index:-2;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(25% - 1px),rgba(255,255,255,.06) 25%) }
+    #cpm-divisiones .legal .legal-visual { min-height:590px;display:grid;place-items:center;position:relative }
+    #cpm-divisiones .legal-orbit { width:min(76%,420px);aspect-ratio:1;border:1px solid rgba(255,255,255,.24);border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 54px rgba(255,255,255,.025),0 0 0 108px rgba(255,255,255,.018) }
+    #cpm-divisiones .legal-document { width:210px;min-height:282px;background:#fff;color:#051958;padding:34px 28px;box-shadow:22px 22px 0 #0b2c7d;transform:rotate(-3deg) }
+    #cpm-divisiones .legal-document .doc-kicker { font-size:.58rem;color:#6a7890 }
+    #cpm-divisiones .legal-document strong { display:block;margin-top:54px;font-size:1.55rem;line-height:1.05 }
+    #cpm-divisiones .legal-document i { display:block;height:1px;background:#aeb8c8;margin-top:13px }
+    #cpm-divisiones .legal-document i:nth-of-type(2) { width:78% }
+    #cpm-divisiones .legal-document i:nth-of-type(3) { width:54% }
+    /* Marketing / HMS */
+    #cpm-divisiones .marketing { --accent-color:#f890b5;--action-ink:#090814;--copy:#c7c3d5;--line:rgba(248,144,181,.25);--badge:#f890b5;--badge-ink:#090814;--badge-muted:#49394c;background:#090814;color:#fff }
+    #cpm-divisiones .marketing::before { content:"";position:absolute;inset:0;z-index:-3;background-image:radial-gradient(circle at 78% 22%,rgba(139,92,246,.28),transparent 36%),radial-gradient(circle at 16% 80%,rgba(248,144,181,.16),transparent 34%) }
+    #cpm-divisiones .marketing::after { content:"";position:absolute;inset:0;z-index:-2;background-image:radial-gradient(rgba(255,255,255,.11) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(90deg,transparent,#000 40%,#000) }
+    #cpm-divisiones .hms-mark { width:122px;margin-bottom:24px }
+    #cpm-divisiones .marketing .visual { min-height:560px;border:1px solid rgba(255,255,255,.14);border-radius:30px;background:#11101d;padding:28px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden }
+    #cpm-divisiones .marketing .visual::before { content:"";position:absolute;width:340px;aspect-ratio:1;border-radius:50%;right:-80px;top:-70px;background:#8b5cf6;filter:blur(70px);opacity:.35 }
+    #cpm-divisiones .dashboard-head { display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2 }
+    #cpm-divisiones .dashboard-head span { font-size:.65rem;color:#f890b5 }
+    #cpm-divisiones .dashboard-head b { font-size:.7rem;color:#8f899f }
+    #cpm-divisiones .signal { position:relative;z-index:2;display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end;height:220px;margin:30px 0 }
+    #cpm-divisiones .signal i { display:block;background:linear-gradient(#f890b5,#8b5cf6);border-radius:999px 999px 3px 3px;min-height:18px;transform-origin:bottom }
+    #cpm-divisiones .signal i:nth-child(1) { height:24% }
+    #cpm-divisiones .signal i:nth-child(2) { height:40% }
+    #cpm-divisiones .signal i:nth-child(3) { height:32% }
+    #cpm-divisiones .signal i:nth-child(4) { height:58% }
+    #cpm-divisiones .signal i:nth-child(5) { height:49% }
+    #cpm-divisiones .signal i:nth-child(6) { height:73% }
+    #cpm-divisiones .signal i:nth-child(7) { height:64% }
+    #cpm-divisiones .signal i:nth-child(8) { height:92% }
+    #cpm-divisiones .dashboard-foot { position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);gap:10px }
+    #cpm-divisiones .metric { border-top:1px solid rgba(255,255,255,.15);padding-top:16px }
+    #cpm-divisiones .metric strong { display:block;font-size:1.3rem }
+    #cpm-divisiones .metric small { display:block;color:#8f899f;margin-top:5px;font-size:.62rem }
+    /* Integración */
+    #cpm-divisiones .integration { position:relative;padding:130px 0;background:#fff;color:#192c41;overflow:hidden }
+    #cpm-divisiones .integration-head { max-width:870px;margin:0 auto;text-align:center }
+    #cpm-divisiones .integration-head .mono { font-size:.67rem;color:#8a6a2d }
+    #cpm-divisiones .integration h2 { margin-top:22px;font-size:clamp(3rem,7vw,6.6rem);line-height:.92;letter-spacing:-.065em;text-wrap:balance }
+    #cpm-divisiones .integration p { margin:26px auto 0;max-width:690px;color:#56647a;line-height:1.72;font-size:1.06rem }
+    #cpm-divisiones .ecosystem { position:relative;width:min(880px,100%);min-height:620px;margin:76px auto 0;display:grid;place-items:center }
+    #cpm-divisiones .eco-ring { position:absolute;z-index:1;width:min(70vw,450px);aspect-ratio:1;border:1px solid #d5dce8;border-radius:50%;box-shadow:0 0 0 70px #f6f8fb,0 0 0 71px #e3e8f0;pointer-events:none }
+    #cpm-divisiones .eco-core { position:relative;z-index:3;width:180px;aspect-ratio:1;border-radius:50%;background:#192c41;display:grid;place-items:center;padding:35px;box-shadow:0 28px 70px rgba(25,44,65,.25) }
+    #cpm-divisiones .eco-node { position:absolute;z-index:4;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #dce2ec;border-radius:999px;padding:12px 16px;box-shadow:0 16px 34px rgba(25,44,65,.1);font-weight:700;font-size:.76rem }
+    #cpm-divisiones .eco-node::before { content:"";width:9px;height:9px;border-radius:50%;background:var(--node) }
+    #cpm-divisiones .eco-node.n1 { left:4%;top:12%;--node:#e86a2a }
+    #cpm-divisiones .eco-node.n2 { right:3%;top:16%;--node:#bb8a31 }
+    #cpm-divisiones .eco-node.n3 { left:7%;bottom:12%;--node:#051958 }
+    #cpm-divisiones .eco-node.n4 { right:5%;bottom:10%;--node:#f890b5 }
+    #cpm-divisiones .integration-actions { position:relative;z-index:6;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px }
+    #cpm-divisiones .integration-actions .action-primary { background:#192c41;color:#fff }
+    #cpm-divisiones .integration-actions .action-secondary { border:1px solid #cfd6e2;color:#192c41 }
+    /* Footer */
+    #cpm-divisiones .footer { background:#192c41;color:#fff;padding:62px 0 32px;border-top:1px solid rgba(255,255,255,.13) }
+    #cpm-divisiones .footer-grid { display:grid;grid-template-columns:1.25fr .75fr;gap:60px;align-items:end }
+    #cpm-divisiones .footer img { width:240px }
+    #cpm-divisiones .footer-copy { margin-top:20px;max-width:480px;color:#aebbd2;line-height:1.6;font-size:.88rem }
+    #cpm-divisiones .footer-links { display:flex;justify-content:flex-end;gap:22px;flex-wrap:wrap }
+    #cpm-divisiones .footer-links a { text-decoration:none;color:#d8e0ef;font-size:.78rem }
+    #cpm-divisiones .footer-bottom { display:flex;justify-content:space-between;gap:20px;margin-top:48px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12);color:#8795ae;font-size:.68rem }
+    /* Animación progresiva y estados */
+    #cpm-divisiones .reveal { opacity:0;transform:translateY(46px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1) }
+    #cpm-divisiones .reveal.is-visible { opacity:1;transform:none }
+    #cpm-divisiones .chapter.is-active .visual-frame { animation:cpmFrame 1.1s ease both }
+    @keyframes cpmFrame{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+    @media(max-width:900px) {
+      #cpm-divisiones .wrap { width:min(100% - 36px,760px) }
+      #cpm-divisiones .hero { padding:82px 0 58px }
+      #cpm-divisiones .hero-grid { grid-template-columns:1fr;gap:52px }
+      #cpm-divisiones .hero-side { padding-left:0;border-left:0 }
+      #cpm-divisiones .hero-side-label { margin-bottom:12px }
+      #cpm-divisiones .hero-cells { grid-template-columns:repeat(2,1fr) }
+      #cpm-divisiones .hero-cell { border-bottom:1px solid rgba(255,255,255,.16);padding-right:14px }
+      #cpm-divisiones .hero-cell:nth-child(odd) { border-right:1px solid rgba(255,255,255,.16) }
+      #cpm-divisiones .chapter-nav { overflow-x:auto;scrollbar-width:none }
+      #cpm-divisiones .chapter-nav::-webkit-scrollbar { display:none }
+      #cpm-divisiones .chapter-nav-inner { width:max-content;min-width:100%;grid-template-columns:140px repeat(4,160px);min-height:72px }
+      #cpm-divisiones .chapter-nav-title { padding-left:18px }
+      #cpm-divisiones .chapter-link { font-size:.72rem }
+      #cpm-divisiones .chapter { padding:88px 0 }
+      #cpm-divisiones .chapter-grid, #cpm-divisiones .construction .chapter-grid { grid-template-columns:minmax(0,1fr);gap:56px }
+      #cpm-divisiones .construction h2 { font-size:clamp(2.9rem,9vw,4.8rem) }
+      #cpm-divisiones .chapter .visual { min-height:520px }
+      #cpm-divisiones .chapter .legal-visual { min-height:500px }
+      #cpm-divisiones .visual-badge { left:18px;bottom:18px }
+      #cpm-divisiones .integration { padding:100px 0 }
+      #cpm-divisiones .ecosystem { min-height:580px }
+      #cpm-divisiones .eco-node.n1 { left:0 }
+      #cpm-divisiones .eco-node.n2 { right:0 }
+      #cpm-divisiones .eco-node.n3 { left:0 }
+      #cpm-divisiones .eco-node.n4 { right:0 }
+    }
+    @media(max-width:600px) {
+      #cpm-divisiones .wrap { width:calc(100% - 36px) }
+      #cpm-divisiones .intro-logo { width:245px }
+      #cpm-divisiones .intro-word { font-size:.72rem;letter-spacing:.34em }
+      #cpm-divisiones .intro-skip { right:16px;bottom:16px }
+      #cpm-divisiones .hero { min-height:var(--vh);padding:64px 0 44px }
+      #cpm-divisiones .hero::before { background:rgba(25,44,65,.88) }
+      #cpm-divisiones .hero::after { right:-30%;top:18% }
+      #cpm-divisiones .hero-grid { gap:34px }
+      #cpm-divisiones .eyebrow { margin-bottom:18px }
+      #cpm-divisiones .hero-lead { width:100%;max-width:none;margin-top:22px;font-size:1rem;line-height:1.65 }
+      #cpm-divisiones .hero-cells { grid-template-columns:1fr }
+      #cpm-divisiones .hero-cell:nth-child(odd) { border-right:0 }
+      #cpm-divisiones .hero-cell { padding:12px 0 }
+      #cpm-divisiones .hero-cell-name { font-size:.86rem }
+      #cpm-divisiones h1 { max-width:100%;font-size:clamp(3rem,15vw,4.35rem);line-height:.92 }
+      #cpm-divisiones .chapter { padding:76px 0 }
+      #cpm-divisiones .chapter h2, #cpm-divisiones .construction h2 { font-size:clamp(2.65rem,13vw,4rem);line-height:.96;overflow-wrap:break-word }
+      #cpm-divisiones .construction h2 { font-size:clamp(2.2rem,10.3vw,3.25rem);line-height:.98;letter-spacing:-.045em;overflow-wrap:normal;word-break:normal;hyphens:none }
+      #cpm-divisiones .chapter-grid, #cpm-divisiones .construction .chapter-grid { gap:42px }
+      #cpm-divisiones .chapter-copy { width:100%;max-width:none;font-size:.98rem }
+      #cpm-divisiones .chapter .visual, #cpm-divisiones .chapter .legal-visual, #cpm-divisiones .marketing .visual { min-height:430px }
+      #cpm-divisiones .visual-badge { max-width:calc(100% - 36px);padding:20px }
+      #cpm-divisiones .capabilities { grid-template-columns:1fr }
+      #cpm-divisiones .capability, #cpm-divisiones .capability:not(:first-child) { padding:16px 0;border-right:0;border-bottom:1px solid var(--line) }
+      #cpm-divisiones .capability:last-child { border-bottom:0 }
+      #cpm-divisiones .legal-document { width:178px;min-height:240px;padding:28px 22px }
+      #cpm-divisiones .legal-orbit { width:70% }
+      #cpm-divisiones .signal { height:170px }
+      #cpm-divisiones .dashboard-foot { grid-template-columns:1fr }
+      #cpm-divisiones .metric { padding-top:10px }
+      #cpm-divisiones .integration { padding:82px 0 }
+      #cpm-divisiones .integration h2 { font-size:clamp(2.8rem,14vw,4.5rem) }
+      #cpm-divisiones .ecosystem { min-height:520px;margin-top:46px }
+      #cpm-divisiones .eco-ring { width:260px;box-shadow:0 0 0 44px #f6f8fb,0 0 0 45px #e3e8f0 }
+      #cpm-divisiones .eco-core { width:142px }
+      #cpm-divisiones .eco-node { font-size:.68rem;padding:10px 12px }
+      #cpm-divisiones .eco-node.n1 { left:0;top:8% }
+      #cpm-divisiones .eco-node.n2 { right:0;top:23% }
+      #cpm-divisiones .eco-node.n3 { left:0;bottom:22% }
+      #cpm-divisiones .eco-node.n4 { right:0;bottom:7% }
+      #cpm-divisiones .integration-actions { margin-top:34px }
+      #cpm-divisiones .footer-grid { grid-template-columns:1fr }
+      #cpm-divisiones .footer-links { justify-content:flex-start }
+      #cpm-divisiones .footer-bottom { flex-direction:column }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      #cpm-divisiones .intro { display:none!important }
+      #cpm-divisiones .reveal { opacity:1!important;transform:none!important;transition:none!important }
+      #cpm-divisiones * { animation:none!important;transition-duration:.01ms!important }
+    }
+
+    /* Nada puede quedar invisible si el JS no llega a ejecutarse. El ocultado
+       de las entradas y la portada solo existen cuando el guion ya marco el
+       contenedor, cosa que hace antes del primer pintado. */
+    #cpm-divisiones .reveal { opacity: 1; transform: none; }
+    #cpm-divisiones.js-on .reveal { opacity: 0; transform: translateY(46px); }
+    #cpm-divisiones.js-on .reveal.is-visible { opacity: 1; transform: none; }
+    #cpm-divisiones .intro { display: none; }
+    #cpm-divisiones.js-on .intro { display: grid; }
+
+    /* La portada se cierra sola con una animacion de CSS, no con JS. Antes
+       dependia de que GSAP cargara desde un CDN externo: si tardaba o el
+       navegador lo bloqueaba, la portada se quedaba tapando el bloque. */
+    #cpm-divisiones.js-on .intro { animation: cpmIntroFuera .7s ease 2.5s both; }
+    #cpm-divisiones.js-on .intro-logo { animation: cpmIntroLogo .9s cubic-bezier(.2,.7,.2,1) both; }
+    #cpm-divisiones.js-on .intro-word { animation: cpmIntroPalabra .75s cubic-bezier(.2,.7,.2,1) .25s both; }
+    @keyframes cpmIntroFuera { to { opacity: 0; visibility: hidden; } }
+    @keyframes cpmIntroLogo { from { opacity: 0; transform: translateY(44px) scale(.94); } }
+    @keyframes cpmIntroPalabra { from { opacity: 0; transform: translateY(-26px); letter-spacing: .18em; } }
+    #cpm-divisiones .intro.is-gone { animation: none; opacity: 0; visibility: hidden; pointer-events: none; }
+
+    /* Enlaces que salen del bloque: siempre en la ventana completa. */
+    #cpm-divisiones a[target="_top"] { cursor: pointer; }
+
+    /* El escenario de cada capitulo aisla sus repintados. */
+    #cpm-divisiones .chapter { contain: paint; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #cpm-divisiones.js-on .intro { display: none; }
+      #cpm-divisiones.js-on .reveal { opacity: 1; transform: none; }
+    }
+
+</style>
+
+<div id="cpm-divisiones">
+<script>
+/* Se ejecuta antes de que el navegador pinte el bloque.
+   Fija --vh-real con la altura de la ventana REAL (la del documento padre si
+   estamos dentro de un iframe) y pinta el fondo del documento.
+   Es imprescindible hacerlo aqui: si el CSS llega a evaluar 100svh contra el
+   viewport del iframe (que puede medir miles de pixeles), el hero y las etapas
+   nacen gigantes, el anfitrion dimensiona el iframe con ese valor inflado y
+   queda la franja blanca al final. */
+(function () {
+  var d = document.currentScript, r = d && d.parentNode;
+  if (!r) return;
+  r.classList.add("js-on");
+  var H = 0;
+  try { H = (window.self !== window.top && window.parent.innerHeight) || window.innerHeight; }
+  catch (e) { H = window.innerHeight; }
+  if (H > 0) { try { r.style.setProperty('--vh-real', H + 'px'); } catch (e) {} }
+  try {
+    if (window.self !== window.top) {
+      var c = getComputedStyle(r).backgroundColor;
+      if (c && c !== 'transparent' && c !== 'rgba(0, 0, 0, 0)') {
+        document.documentElement.style.background = c;
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+  <div class="intro" id="cpmIntro" role="status" aria-label="Presentación de Divisiones">
+    <div class="intro-mark">
+      <img class="intro-logo" src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro Medina">
+      <div class="intro-word mono">Divisiones</div>
+    </div>
+    <button class="intro-skip" type="button">Omitir entrada</button>
+  </div>
+
+  <main>
+    <section class="hero" id="inicio">
+      <img class="hero-media" src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1920,fit=crop/5MikVliRfr5rWuzU/fzydbl-14Whxv5H28aK77pD.png" alt="Arquitectura e infraestructura corporativa">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow mono">Infraestructura de negocios</div>
+          <h1>Cuatro células.<em>Una sola visión.</em></h1>
+          <p class="hero-lead">Integramos certeza jurídica, desarrollo físico, estrategia inmobiliaria y tracción comercial para acompañar cada activo desde su origen hasta su consolidación.</p>
+        </div>
+        <aside class="hero-side" aria-label="Accesos a las divisiones">
+          <div class="hero-side-label mono">Catálogo corporativo</div>
+          <div class="hero-cells">
+            <a class="hero-cell" href="#construccion"><span class="hero-cell-num mono">01</span><span class="hero-cell-name">Construcción</span><span class="hero-cell-arrow">↘</span></a>
+            <a class="hero-cell" href="#inmobiliaria"><span class="hero-cell-num mono">02</span><span class="hero-cell-name">Inmobiliaria</span><span class="hero-cell-arrow">↘</span></a>
+            <a class="hero-cell" href="#legal"><span class="hero-cell-num mono">03</span><span class="hero-cell-name">Legal</span><span class="hero-cell-arrow">↘</span></a>
+            <a class="hero-cell" href="#marketing"><span class="hero-cell-num mono">04</span><span class="hero-cell-name">Marketing</span><span class="hero-cell-arrow">↘</span></a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <nav class="chapter-nav" id="catalogo" aria-label="Menú de divisiones">
+      <div class="chapter-nav-inner">
+        <div class="chapter-nav-title mono">Selecciona una célula</div>
+        <a class="chapter-link is-active" style="--cell:#e86a2a" href="#construccion" data-chapter="construccion"><span>01</span> Construcción</a>
+        <a class="chapter-link" style="--cell:#bb8a31" href="#inmobiliaria" data-chapter="inmobiliaria"><span>02</span> Inmobiliaria</a>
+        <a class="chapter-link" style="--cell:#051958" href="#legal" data-chapter="legal"><span>03</span> Legal</a>
+        <a class="chapter-link" style="--cell:#f890b5" href="#marketing" data-chapter="marketing"><span>04</span> Marketing</a>
+      </div>
+    </nav>
+
+    <section class="chapter construction" id="construccion" data-theme="construccion">
+      <div class="wrap chapter-grid">
+        <div class="reveal">
+          <div class="construction-mark mono">Construcción</div>
+          <div class="chapter-number mono">División 01 · Construcción y desarrollo</div>
+          <h2>La visión se vuelve infraestructura.</h2>
+          <p class="chapter-copy">Ejecutamos obras de gran envergadura mediante ingeniería de precisión, transformando suelo bruto en activos terminados con control técnico, financiero y operativo.</p>
+          <div class="capabilities">
+            <div class="capability"><b class="mono">01</b><span>Viabilidad de suelo</span></div>
+            <div class="capability"><b class="mono">02</b><span>Ingeniería y estructura</span></div>
+            <div class="capability"><b class="mono">03</b><span>Entrega del activo</span></div>
+          </div>
+          <div class="chapter-actions">
+            <a class="action action-primary" href="https://www.cpmempresarial.com/construccion" target="_top" rel="noopener" data-cpm-destino="construccion|construccion y desarrollo" data-cpm-respaldo="/construccion">Conocer construcción <span>↗</span></a>
+            <a class="action action-secondary" href="https://www.cpmempresarial.com/contacto" target="_top" rel="noopener" data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">Cotizar un proyecto</a>
+          </div>
+        </div>
+        <figure class="visual reveal">
+          <img class="visual-photo" src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1920,fit=crop/5MikVliRfr5rWuzU/mcxmah-ZlOg0R22DQXNiToI.png" alt="Construcción e infraestructura desarrollada por Corporativo Piñeiro Medina" loading="lazy" decoding="async">
+          <span class="visual-frame" aria-hidden="true"></span>
+          <figcaption class="visual-badge"><strong>Precisión en cada fase.</strong><small class="mono">Control de plazos · presupuesto · ejecución</small></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="chapter realestate" id="inmobiliaria" data-theme="inmobiliaria">
+      <div class="wrap chapter-grid">
+        <figure class="visual reveal">
+          <img class="visual-photo" src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/whatsapp-image-2025-12-04-at-16.55.20-sfW7FoskAJSvRfIP.jpeg" alt="Desarrollo inmobiliario gestionado por Corporativo Piñeiro Medina" loading="lazy" decoding="async">
+          <span class="visual-frame" aria-hidden="true"></span>
+          <figcaption class="visual-badge"><strong>De la tierra a la escritura.</strong><small class="mono">Un proceso · un expediente · un mismo rumbo</small></figcaption>
+        </figure>
+        <div class="reveal">
+          <div class="chapter-number mono">División 02 · Servicios inmobiliarios</div>
+          <h2>El valor de tu tierra merece estrategia.</h2>
+          <p class="chapter-copy">Desde el avalúo y la certeza jurídica hasta la promoción, el crédito y la escritura. Coordinamos las células que cada inmueble necesita para avanzar con claridad.</p>
+          <div class="capabilities">
+            <div class="capability"><b class="mono">01</b><span>Diagnóstico y avalúo</span></div>
+            <div class="capability"><b class="mono">02</b><span>Regularización y venta</span></div>
+            <div class="capability"><b class="mono">03</b><span>Desarrollo de macrolotes</span></div>
+          </div>
+          <div class="chapter-actions">
+            <a class="action action-primary" href="https://www.cpmempresarial.com/servicios-inmobiliarios" target="_top" rel="noopener" data-cpm-destino="inmobiliaria|servicios inmobiliarios" data-cpm-respaldo="/servicios-inmobiliarios">Explorar servicios <span>↗</span></a>
+            <a class="action action-secondary" href="https://www.cpmempresarial.com/catalogo-de-propiedades" target="_top" rel="noopener" data-cpm-destino="propiedades|catalogo de propiedades|inmuebles" data-cpm-respaldo="/catalogo-de-propiedades">Ver propiedades</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter legal" id="legal" data-theme="legal">
+      <div class="wrap chapter-grid">
+        <div class="reveal">
+          <div class="chapter-number mono">División 03 · Ingeniería legal</div>
+          <h2>Certeza que sostiene cada operación.</h2>
+          <p class="chapter-copy">Diseñamos la arquitectura corporativa que soporta operaciones inmobiliarias y de construcción, con auditoría preventiva, blindaje de activos y cumplimiento regulatorio.</p>
+          <div class="capabilities">
+            <div class="capability"><b class="mono">01</b><span>Fideicomisos y vehículos</span></div>
+            <div class="capability"><b class="mono">02</b><span>Blindaje de activos</span></div>
+            <div class="capability"><b class="mono">03</b><span>Cumplimiento normativo</span></div>
+          </div>
+          <div class="chapter-actions">
+            <a class="action action-primary" href="https://www.cpmempresarial.com/division-legal" target="_top" rel="noopener" data-cpm-destino="legal|division legal|juridico" data-cpm-respaldo="/division-legal">Conocer división legal <span>↗</span></a>
+            <a class="action action-secondary" href="https://www.cpmempresarial.com/contacto" target="_top" rel="noopener" data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">Solicitar diagnóstico</a>
+          </div>
+        </div>
+        <div class="legal-visual reveal" aria-label="Representación de documentación jurídica">
+          <div class="legal-orbit">
+            <div class="legal-document">
+              <span class="doc-kicker mono">CPM · Estructuración</span>
+              <strong>Certeza<br>jurídica.</strong>
+              <i></i><i></i><i></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chapter marketing" id="marketing" data-theme="marketing">
+      <div class="wrap chapter-grid">
+        <div class="visual reveal" aria-label="Panel de resultados de marketing">
+          <div class="dashboard-head"><span class="mono">Performance en tiempo real</span><b class="mono">HMS / CPM</b></div>
+          <div class="signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="dashboard-foot">
+            <div class="metric"><strong>Datos</strong><small class="mono">Decisiones medibles</small></div>
+            <div class="metric"><strong>Diseño</strong><small class="mono">Autoridad de marca</small></div>
+            <div class="metric"><strong>Ventas</strong><small class="mono">Tracción comercial</small></div>
+          </div>
+        </div>
+        <div class="reveal">
+          <img class="hms-mark" src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/hummingbird-todo-blanco-sin-fondo-nuHQ5fVkjTrHuY3w.png" alt="Hummingbird Marketing Solutions" loading="lazy" decoding="async">
+          <div class="chapter-number mono">División 04 · Marketing</div>
+          <h2>Marcas que generan movimiento.</h2>
+          <p class="chapter-copy">Hummingbird convierte estrategia, diseño, tecnología y datos en ecosistemas digitales preparados para atraer, convencer y convertir.</p>
+          <div class="capabilities">
+            <div class="capability"><b class="mono">01</b><span>Branding y contenido</span></div>
+            <div class="capability"><b class="mono">02</b><span>Performance y embudos</span></div>
+            <div class="capability"><b class="mono">03</b><span>Web, CRM y analítica</span></div>
+          </div>
+          <div class="chapter-actions">
+            <a class="action action-primary" href="https://www.cpmempresarial.com/marketing" target="_top" rel="noopener" data-cpm-destino="marketing|hummingbird" data-cpm-respaldo="/marketing">Conocer Hummingbird <span>↗</span></a>
+            <a class="action action-secondary" href="https://www.cpmempresarial.com/contacto" target="_top" rel="noopener" data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">Iniciar una estrategia</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="integration" id="integracion">
+      <div class="wrap">
+        <div class="integration-head reveal">
+          <span class="mono">Sinergia corporativa</span>
+          <h2>Una mesa. Cuatro especialistas. Cero fricción.</h2>
+          <p>Cada célula puede operar de forma independiente. Cuando el proyecto lo exige, se conectan bajo una sola dirección para proteger el activo, construirlo, posicionarlo y llevarlo al mercado.</p>
+        </div>
+        <div class="ecosystem reveal" aria-label="Ecosistema de divisiones de CPM">
+          <div class="eco-ring" aria-hidden="true"></div>
+          <div class="eco-core"><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro Medina"></div>
+          <div class="eco-node n1">Construcción</div><div class="eco-node n2">Inmobiliaria</div><div class="eco-node n3">Legal</div><div class="eco-node n4">Marketing</div>
+        </div>
+        <div class="integration-actions reveal">
+          <a class="action action-primary" href="https://www.cpmempresarial.com/contacto" target="_top" rel="noopener" data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">Diseñar una solución integral <span>↗</span></a>
+          <a class="action action-secondary" href="#inicio">Volver al inicio</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div><img src="https://assets.zyrosite.com/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro Medina"><p class="footer-copy">Infraestructura de negocios y desarrollo de activos respaldados por certeza operativa, visión comercial y solidez jurídica.</p></div>
+        <nav class="footer-links" aria-label="Navegación corporativa"><a href="https://www.cpmempresarial.com/" target="_top" rel="noopener" data-cpm-destino="inicio|home" data-cpm-respaldo="/">Inicio</a><a href="https://www.cpmempresarial.com/divisiones" target="_top" rel="noopener" data-cpm-destino="divisiones" data-cpm-respaldo="/divisiones">Divisiones</a><a href="https://www.cpmempresarial.com/contacto" target="_top" rel="noopener" data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">Contacto</a></nav>
+      </div>
+      <div class="footer-bottom"><span>© <span id="cpmYear">2026</span> Corporativo Piñeiro Medina. Todos los derechos reservados.</span><span class="mono">Mérida · Yucatán · México</span></div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var raiz = document.getElementById("cpm-divisiones");
+  if (!raiz || raiz.getAttribute("data-init")) return;
+  raiz.setAttribute("data-init", "arrancando");
+
+  /* Si algo falla, se retira el ocultado y todo el contenido queda visible. */
+  function rendirse(e) {
+    try {
+      raiz.classList.remove("js-on");
+      var i = raiz.querySelector(".intro");
+      if (i) i.classList.add("is-gone");
+    } catch (_) {}
+    try { if (window.console && console.warn) console.warn("[CPM] modo seguro:", e); } catch (_) {}
+  }
+  function safe(fn) { try { fn(); } catch (e) {} }
+
+  try { principal(); } catch (e) { rendirse(e); }
+
+  function principal() {
+
+    /* ===================================================================
+       MOTOR DE SCROLL PARA BLOQUES INCRUSTADOS  (compartido)
+       -------------------------------------------------------------------
+       EL PROBLEMA QUE RESUELVE
+       Hostinger inserta el codigo personalizado dentro de un <iframe>. Si
+       ese iframe mide menos que su contenido, se convierte en una ventana
+       pequena sobre una pagina muy alta:
+         - El iframe no hace scroll por dentro; el que se desplaza es el
+           documento padre.
+         - IntersectionObserver mide contra el viewport DEL IFRAME, asi que
+           todo lo que quede por debajo de su caja nunca "entra a vista".
+         - getBoundingClientRect() dentro del iframe no sabe donde esta el
+           iframe en la pagina real.
+       Resultado: el fondo se pinta (es CSS) pero el contenido se queda en
+       opacity:0 -> "bajo y solo se carga el fondo".
+
+       LA CURA, EN ORDEN
+       1. Si el iframe es del mismo origen, se le fija la altura de su
+          propio contenido. Asi desaparece el scroll interno y la geometria
+          vuelve a ser coherente. Tambien se avisa por postMessage para los
+          anfitriones que sepan escucharlo.
+       2. El viewport de referencia es el del padre, y a cada medida se le
+          suma el desplazamiento del iframe dentro de esa pagina.
+       3. Se escucha el scroll del padre ademas del propio.
+       4. Sondeo periodico por si no llega ningun evento.
+       5. Red de seguridad: pasado un tiempo, lo que siga pendiente se
+          muestra. Nunca puede quedar contenido invisible.
+       6. Si el padre no es legible (otro origen), no se oculta nada: se
+          renuncia a las animaciones de scroll antes que arriesgar una
+          pagina en blanco.
+
+       NUNCA escribe la posicion de scroll de nadie: eso es lo que hacia
+       saltar la pagina al inicio.
+       =================================================================== */
+    function hbEngine(root, opts) {
+      "use strict";
+      opts = opts || {};
+
+      var lento = false;
+      try { lento = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) {}
+
+      /* ---------- contexto ---------- */
+      var enMarco = false, padre = null, marco = null;
+      try { enMarco = (window.self !== window.top); } catch (e) { enMarco = true; }
+      if (enMarco) {
+        try {
+          marco = window.frameElement;
+          if (marco && typeof window.parent.innerHeight === "number") padre = window.parent;
+          if (!padre) marco = null;
+        } catch (e) { marco = null; padre = null; }
+      }
+      /* Legible = podemos medir de verdad. Es la condicion para animar. */
+      var legible = !enMarco || !!marco;
+
+      /* Marca el contenedor cuando vive dentro de un iframe. El CSS la usa para
+         ocultar el boton propio de WhatsApp: dentro del iframe no puede flotar
+         (el iframe mide lo que su contenido), y el runtime global crea el real
+         fuera. Se aplica aqui, que es donde se conoce el contexto. */
+      if (enMarco) { try { root.classList.add("hb-en-marco"); } catch (e) {} }
+
+      /* ---------- alto del viewport REAL como variable CSS ----------
+         Al fijar la altura del iframe a la de su contenido, el viewport del
+         iframe PASA A SER esa altura: 100svh dejaria de valer una pantalla y
+         se realimentaria (mas alto -> mas contenido -> mas alto). Por eso las
+         alturas de pantalla se toman de --vh-real, en pixeles, medidos sobre
+         la pagina padre. El valor por omision en CSS es 100svh, para que
+         funcione sin JS y fuera de un iframe. */
+      var ultimaVista = 0;
+      function sincronizarVista() {
+        var H = altoVista();
+        /* Holgura grande a proposito. Este valor alimenta las alturas del bloque:
+           si se mueve, cambia el alto del contenido, el anfitrion redimensiona su
+           iframe y la geometria se desplaza. Ese ida y vuelta es el temblor. En
+           movil la barra de direcciones hace variar el viewport constantemente,
+           asi que solo se atiende un cambio de orientacion o similar. */
+        if (Math.abs(H - ultimaVista) < 80) return;
+        ultimaVista = H;
+        try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
+      }
+
+      /* ---------- aviso de altura al anfitrion ---------- */
+      var TECHO = 60000;
+      var ultimaAltura = 0, subidas = 0, congelado = false;
+      function ajustarMarco() {
+        if (!enMarco || congelado) return;
+        var alto = Math.ceil(root.getBoundingClientRect().height);
+        /* Holgura de 6px: evita reajustes por diferencias de redondeo. */
+        if (!alto || Math.abs(alto - ultimaAltura) < 6) return;
+
+        if (alto > ultimaAltura + 8) { subidas++; } else { subidas = 0; }
+        if (alto > TECHO || subidas > 12) {
+          congelado = true;
+          try {
+            if (window.console && console.warn) {
+              console.warn('[hbEngine] altura desbocada (' + alto + 'px): se congela. ' +
+                           'Suele venir de una medida en vh/svh dentro del iframe; usa --vh-real.');
+            }
+          } catch (e) {}
+          return;
+        }
+        ultimaAltura = alto;
+        /* NO se escribe la altura del iframe.
+           El constructor tambien la gestiona; si los dos escribimos el mismo
+           valor entramos en una pugna: el iframe oscila entre dos alturas (eso
+           se ve como vibracion) y puede quedarse en un valor mayor que el
+           contenido (eso se ve como una franja blanca interminable al final).
+           Aqui solo se AVISA de la altura; quien decide es el anfitrion.
+           Para que el contenido no quede recortado, lo que si es nuestro es
+           --vh-real: se fija antes del primer pintado (ver el guion que
+           acompana al bloque), asi ninguna medida en svh se evalua nunca
+           contra el viewport del iframe. */
+        /* Se avisa con el tipo que el codigo global de CPM SI escucha.
+           Su runtime reconoce "hummingbird:height" y al recibirlo llama a
+           resizeFrame, que ademas colapsa la altura reservada del bloque de
+           Hostinger (cleanContainer sobre grid-embed, layout-element,
+           block-layout y section). Eso es lo que elimina la franja blanca.
+           Antes se emitia "hb:height", un tipo que nadie atendia.
+           Cada bloque puede pedir su propio tipo: el de divisiones usa
+           "cpm-divisiones:height", que el runtime atiende sin crear ademas el
+           boton flotante de WhatsApp. */
+        var aviso = { type: opts.tipoAltura || "hummingbird:height", height: alto };
+        if (opts.whatsapp) aviso.whatsappUrl = opts.whatsapp;
+        if (opts.proyecto) aviso.project = opts.proyecto;
+        try { window.parent.postMessage(aviso, "*"); } catch (e) {}
+      }
+
+      /* El documento del iframe es blanco por omision. Si el iframe queda un
+         poco mas alto que el contenido, ese blanco asoma como una franja (o un
+         fondo interminable al final). Se le pinta el mismo color del bloque. */
+      function pintarFondo() {
+        if (!enMarco) return;
+        var color = "";
+        try { color = getComputedStyle(root).backgroundColor; } catch (e) {}
+        if (!color || color === "transparent" || color === "rgba(0, 0, 0, 0)") return;
+        try {
+          document.documentElement.style.background = color;
+          if (document.body) document.body.style.background = color;
+        } catch (e) {}
+      }
+
+      /* Agrupa las peticiones de ajuste: nunca mas de una por fotograma. */
+      var ajustePedido = false;
+      function programarAjuste() {
+        if (ajustePedido) return;
+        ajustePedido = true;
+        requestAnimationFrame(function () { ajustePedido = false; ajustarMarco(); });
+      }
+
+      /* ---------- geometria real ---------- */
+      function altoVista() {
+        if (padre) { try { return padre.innerHeight || window.innerHeight || 800; } catch (e) {} }
+        return window.innerHeight || 800;
+      }
+      function desfaseMarco() {
+        if (!marco) return 0;
+        try { return marco.getBoundingClientRect().top; } catch (e) { return 0; }
+      }
+      /* Posicion del elemento en el viewport REAL. */
+      function techo(el, S) {
+        try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; }
+      }
+      function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+      /* ---------- registros ---------- */
+      var entradas = [], continuos = [], sondeo = null;
+
+      function alEntrar(el, cb) { if (el) entradas.push({ el: el, cb: cb }); }
+      function continuo(fn) { if (fn) continuos.push(fn); }
+
+      /* ---------- marca de "esto se esta moviendo" ----------
+         Los paneles de cristal usan backdrop-filter: blur(). Ese desenfoque hay
+         que recalcularlo en cada fotograma en que cambia lo que hay detras, y
+         mientras la pagina se desplaza cambia siempre. Medido, un radio de 12px
+         cuesta unos 3 fotogramas perdidos por segundo y medio de scroll; con 4px
+         el coste practicamente desaparece.
+         De ahi esta marca: mientras hay movimiento el CSS reduce el radio (no lo
+         quita: el texto de las tarjetas tiene que seguir legible sobre las
+         capturas), y al detenerse vuelve el desenfoque completo. En movimiento la
+         diferencia no se aprecia; quieto, que es cuando se mira, esta intacto. */
+      var refPrevia = null, moviendo = false, quietoDesde = 0;
+      function marcaMovimiento(si) {
+        if (si === moviendo) return;
+        moviendo = si;
+        try { root.classList[si ? "add" : "remove"]("hb-moviendo"); } catch (e) {}
+      }
+      /* Solo se encarga de QUITAR la marca: ponerla se hace en pedir(), que corre
+         de forma sincrona en el propio evento de scroll. Si se pusiera aqui,
+         dentro del requestAnimationFrame, el primer fotograma de cada gesto ya
+         habria pagado el desenfoque caro -- y el principio del gesto es
+         justamente donde mas se nota el tiron. */
+      function vigilarMovimiento(S) {
+        var ref = marco ? S : (window.pageYOffset || 0);
+        var salto = refPrevia === null ? 0 : Math.abs(ref - refPrevia);
+        refPrevia = ref;
+        if (salto > 1) { quietoDesde = 0; marcaMovimiento(true); return; }
+        if (!moviendo) return;
+        if (!quietoDesde) quietoDesde = Date.now();
+        else if (Date.now() - quietoDesde > 140) { quietoDesde = 0; marcaMovimiento(false); }
+      }
+
+      function ciclo() {
+        /* Aqui NO se toca la altura del iframe. Hacerlo en cada fotograma
+           obligaba al padre a recalcular, lo que movia el iframe, lo que
+           cambiaba todas las medidas, lo que generaba un transform distinto...
+           Ese bucle era la vibracion y el arrastre de los elementos anclados.
+           La altura se ajusta aparte, solo cuando el contenido cambia. */
+        sincronizarVista();
+        var H = altoVista(), S = desfaseMarco();
+        vigilarMovimiento(S);
+
+        for (var i = entradas.length - 1; i >= 0; i--) {
+          var it = entradas[i];
+          if (techo(it.el, S) < H * 0.93) {
+            it.el.classList.add(opts.claseVisible || "in");
+            if (it.cb) { try { it.cb(it.el); } catch (e) {} }
+            entradas.splice(i, 1);
+          }
+        }
+        if (!entradas.length && sondeo) { clearInterval(sondeo); sondeo = null; }
+
+        /* Primero se LEE todo, luego se ESCRIBE todo.
+           Si cada funcion lee getBoundingClientRect y escribe estilos acto
+           seguido, el navegador se ve obligado a recalcular la maquetacion en
+           cada paso: con veinte funciones son veinte recalculos por fotograma.
+           Eso es lo que se ve como temblor. Aqui las escrituras se acumulan y
+           se aplican juntas al final, con una sola maquetacion. */
+        for (var j = 0; j < continuos.length; j++) {
+          try { continuos[j](H, S); } catch (e) {}
+        }
+        for (var w = 0; w < cola.length; w += 3) {
+          try {
+            if (cola[w + 1] === "@prop") cola[w].style.setProperty(cola[w + 2][0], cola[w + 2][1]);
+            else cola[w].style[cola[w + 1]] = cola[w + 2];
+          } catch (e) {}
+        }
+        cola.length = 0;
+      }
+
+      /* Encola una escritura de estilo. Salta las que no cambian nada: evita
+         invalidaciones inutiles, que tambien encarecen cada fotograma. */
+      var cola = [], previo = new WeakMap();
+      function escribe(el, prop, valor) {
+        if (!el) return;
+        var m = previo.get(el);
+        if (!m) { m = {}; previo.set(el, m); }
+        if (m[prop] === valor) return;
+        m[prop] = valor;
+        cola.push(el, prop, valor);
+      }
+      function escribeProp(el, nombre, valor) {
+        if (!el) return;
+        var m = previo.get(el);
+        if (!m) { m = {}; previo.set(el, m); }
+        if (m[nombre] === valor) return;
+        m[nombre] = valor;
+        cola.push(el, "@prop", [nombre, valor]);
+      }
+      /* Bucle vivo mientras se desplaza.
+         Antes se encolaba un requestAnimationFrame por cada evento de scroll,
+         pero el navegador agrupa esos eventos: el fotograma se calculaba con una
+         posicion ya vieja y el elemento anclado iba siempre un paso por detras.
+         Eso es lo que se percibe como temblor. Aqui, en cuanto hay scroll, el
+         bucle se encadena solo y recalcula en CADA fotograma con la posicion
+         fresca; se apaga tras un momento de quietud para no gastar de mas. */
+      var vivo = false, hastaQuietud = 0;
+      function late() {
+        ciclo();
+        if (Date.now() < hastaQuietud) { requestAnimationFrame(late); }
+        else { vivo = false; }
+      }
+      function pedir() {
+        hastaQuietud = Date.now() + 420;
+        /* Aqui, no en el bucle: esto corre en el mismo evento de scroll, antes de
+           que el navegador pinte, asi que el desenfoque barato ya rige en el
+           primer fotograma del gesto. */
+        quietoDesde = 0;
+        marcaMovimiento(true);
+        if (!vivo) { vivo = true; requestAnimationFrame(late); }
+      }
+
+      /* ---------- mostrar todo (red de seguridad y modo sin medida) ---------- */
+      function mostrarTodo() {
+        for (var i = 0; i < entradas.length; i++) {
+          entradas[i].el.classList.add(opts.claseVisible || "in");
+          if (entradas[i].cb) { try { entradas[i].cb(entradas[i].el); } catch (e) {} }
+        }
+        entradas.length = 0;
+        if (sondeo) { clearInterval(sondeo); sondeo = null; }
+      }
+
+      /* ---------- arranque ---------- */
+      function arrancar() {
+        sincronizarVista();
+        pintarFondo();
+        ajustarMarco();
+
+        /* Saludo al runtime global: al recibir "hummingbird:ready" crea el boton
+           flotante de WhatsApp FUERA del iframe (dentro no puede ser flotante de
+           verdad) y pide la altura. */
+        if (enMarco) {
+          /* El saludo hace que el runtime global cree el boton flotante de
+             WhatsApp. Solo lo mandan los bloques que lo quieren. */
+          if (opts.whatsapp) {
+            try {
+              window.parent.postMessage({ type: "hummingbird:ready",
+                                          whatsappUrl: opts.whatsapp }, "*");
+            } catch (e) {}
+          }
+          window.addEventListener("message", function (ev) {
+            var d = ev && ev.data;
+            if (d && (d.type === "hummingbird:request-height" || d.type === "cpm-divisiones:request-height")) {
+              ultimaAltura = 0;      /* fuerza el reenvio */
+              programarAjuste();
+            }
+          });
+          [300, 900, 2000].forEach(function (ms) {
+            setTimeout(function () { ultimaAltura = 0; programarAjuste(); }, ms);
+          });
+        }
+
+        /* Sin medida fiable o sin movimiento: todo visible, cero scroll. */
+        if (!legible || lento) {
+          mostrarTodo();
+          continuos.length = 0;
+          if (opts.alRendirse) { try { opts.alRendirse(); } catch (e) {} }
+          seguirAltura();
+          diagnostico();
+          return;
+        }
+
+        function liga(w) {
+          try {
+            w.addEventListener("scroll", pedir, { passive: true });
+            w.addEventListener("resize", pedir, { passive: true });
+          } catch (e) {}
+        }
+        liga(window);
+        if (padre) liga(padre);
+
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) { ciclo(); pedir(); }
+        });
+
+        /* Sondeo: cubre el caso de que no llegue ningun evento de scroll.
+           Llama a ciclo() directo porque requestAnimationFrame se congela
+           en pestanas de segundo plano. */
+        sondeo = setInterval(ciclo, 300);
+
+        pedir();
+        [80, 300, 800, 1600, 3000].forEach(function (ms) { setTimeout(pedir, ms); });
+        window.addEventListener("load", pedir);
+        try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(pedir); } catch (e) {}
+        seguirAltura();
+
+        /* Red de seguridad final: nada se queda invisible. */
+        setTimeout(mostrarTodo, opts.limite || 9000);
+        diagnostico();
+      }
+
+      /* La altura cambia con fuentes e imagenes: hay que reajustar el marco. */
+      function seguirAltura() {
+        if (!enMarco) return;
+        try { new ResizeObserver(programarAjuste).observe(root); } catch (e) {}
+        window.addEventListener("load", function () { programarAjuste(); pintarFondo(); });
+        window.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); });
+        if (padre) { try { padre.addEventListener("resize", function () { sincronizarVista(); programarAjuste(); }, { passive: true }); } catch (e) {} }
+        [400, 1200, 2500].forEach(function (ms) { setTimeout(programarAjuste, ms); });
+        Array.prototype.slice.call(root.querySelectorAll("img")).forEach(function (im) {
+          if (!im.complete) im.addEventListener("load", function () { programarAjuste(); pedir(); }, { once: true });
+        });
+      }
+
+      /* Diagnostico. Anadir ?hbdebug=1 a la URL publicada muestra un recuadro
+         con lo que el motor esta midiendo de verdad. Es la forma rapida de
+         saber que hace el bloque dentro del Hostinger real. */
+      /* Diagnostico. Anadir ?hbdebug=1 a la URL publicada muestra un recuadro
+         con lo que el motor esta midiendo de verdad. Es la forma rapida de saber
+         que hace el bloque dentro del Hostinger real. */
+      function diagnostico() {
+        var on = false;
+        try { on = /[?&]hbdebug=1/.test(location.search); } catch (e) {}
+        if (!on) { try { on = /[?&]hbdebug=1/.test(padre.location.search); } catch (e) {} }
+        if (!on || !document.body) return;
+        var caja = document.createElement('div');
+        caja.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:340px;' +
+          'padding:10px 12px;background:#0b0b14;color:#9ecfff;border:1px solid #4466ff;' +
+          'border-radius:9px;font:11px/1.5 monospace;white-space:pre-wrap;pointer-events:none';
+        document.body.appendChild(caja);
+        setInterval(function () {
+          var am = 0, ac = Math.round(root.getBoundingClientRect().height);
+          try { am = marco ? Math.round(marco.getBoundingClientRect().height) : 0; } catch (e) {}
+          var lineas = [
+            'motor hb',
+            'en iframe: ' + enMarco + (enMarco ? (marco ? ' (padre legible)' : ' (padre NO legible)') : ''),
+            'viewport real: ' + Math.round(altoVista()) + 'px',
+            'desfase del iframe: ' + Math.round(desfaseMarco()) + 'px',
+            'alto del contenido: ' + ac + 'px',
+            'alto del iframe: ' + am + 'px' + (am && Math.abs(am - ac) > 40 ? '  << DESAJUSTE' : ''),
+            'pendientes: ' + entradas.length + '   continuos: ' + continuos.length
+          ];
+          caja.textContent = lineas.join(String.fromCharCode(10));
+        }, 500);
+      }
+
+      return {
+        diagnostico: diagnostico,
+        escribe: escribe,
+        escribeProp: escribeProp,
+        alEntrar: alEntrar,
+        continuo: continuo,
+        pedir: pedir,
+        arrancar: arrancar,
+        mostrarTodo: mostrarTodo,
+        altoVista: altoVista,
+        sincronizarVista: sincronizarVista,
+        programarAjuste: programarAjuste,
+        desfase: desfaseMarco,
+        techo: techo,
+        limita: limita,
+        enMarco: enMarco,
+        legible: legible,
+        lento: lento
+      };
+    }
+
+    var M = hbEngine(raiz, {
+      claseVisible: "is-visible",
+      limite: 9000,
+      /* El runtime global de CPM ya reconoce #cpm-divisiones al escanear, y
+         ademas atiende este tipo de mensaje. No se manda el saludo de
+         Hummingbird: ese es el que crea el boton flotante de WhatsApp, y este
+         bloque no lo lleva. */
+      tipoAltura: "cpm-divisiones:height",
+      proyecto: "divisiones"
+    });
+
+    /* =============================================================
+       1. ENLACES QUE SALEN DEL BLOQUE
+       -------------------------------------------------------------
+       El problema original: los enlaces eran relativos (/contacto) y el
+       bloque vive dentro de un iframe. Una ruta relativa se resuelve contra
+       la direccion del documento del iframe, no contra la del sitio, y la
+       navegacion ocurria DENTRO del marco. De ahi el "rechazo la conexion".
+
+       Se arregla en dos pasos:
+         a) La direccion se vuelve absoluta.
+         b) El enlace se abre en la ventana completa (target _top), no en el
+            marco. Con un respaldo por JS por si el target no basta.
+
+       Y para no depender de que las rutas escritas a mano sean las buenas,
+       primero se busca cada destino EN EL MENU REAL del sitio: el documento
+       padre es legible, asi que se lee su navegacion y se enlaza justo donde
+       enlaza el propio sitio. Si no aparece, se usa la ruta de respaldo.
+       ============================================================= */
+    var ORIGEN = "https://www.cpmempresarial.com";
+    safe(function () {
+      /* Mejor el origen real: asi funciona igual en un dominio de pruebas. */
+      var o = window.parent.location.origin;
+      if (o && /^https?:/.test(o)) ORIGEN = o;
+    });
+
+    function sinAcentos(t) {
+      t = (t || "").toLowerCase();
+      try { t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+      return t.replace(/\s+/g, " ").trim();
+    }
+
+    /* Rutas del menu del sitio, indexadas por la palabra que las nombra. */
+    var menu = null;
+    function leeMenu() {
+      if (menu) return menu;
+      menu = {};
+      safe(function () {
+        var docPadre = window.parent.document;
+        var anclas = docPadre.querySelectorAll('a[href]');
+        for (var i = 0; i < anclas.length; i++) {
+          var a = anclas[i];
+          var href = a.getAttribute("href") || "";
+          if (/^(#|mailto:|tel:|javascript:)/i.test(href)) continue;
+          var u;
+          try { u = new URL(href, docPadre.baseURI); } catch (e) { continue; }
+          if (u.origin !== ORIGEN) continue;                 /* nada externo */
+          var ruta = u.pathname.replace(/\/+$/, "");
+          if (!ruta || ruta === "/divisiones") continue;      /* la pagina actual */
+          var texto = sinAcentos(a.textContent);
+          if (!texto || texto.length > 40) continue;
+          /* Paginas de tramite: no son destinos de division y sus nombres se
+             parecen demasiado ("aviso legal" no es la division legal). */
+          if (/aviso|privacidad|terminos|cookies|politica|blog/.test(texto)) continue;
+          /* Se queda con la primera aparicion: el menu principal va antes
+             que el pie, y suele ser el enlace canonico. */
+          if (!menu[texto]) menu[texto] = u.href;
+        }
+      });
+      return menu;
+    }
+
+    /* Busca el destino en el menu. Coincidencia exacta o por el principio del
+       texto; nada de buscar la palabra en cualquier posicion, que es como se
+       acaba enlazando la division legal al aviso legal. */
+    function rutaDelSitio(claves) {
+      var m = leeMenu();
+      for (var i = 0; i < claves.length; i++) {
+        var k = sinAcentos(claves[i]);
+        if (m[k]) return m[k];
+      }
+      for (var j = 0; j < claves.length; j++) {
+        var k2 = sinAcentos(claves[j]);
+        for (var texto in m) {
+          if (Object.prototype.hasOwnProperty.call(m, texto) && texto.indexOf(k2) === 0) return m[texto];
+        }
+      }
+      return null;
+    }
+
+    var externos = [].slice.call(raiz.querySelectorAll("a[data-cpm-destino]"));
+    externos.forEach(function (a) {
+      var claves = (a.getAttribute("data-cpm-destino") || "").split("|");
+      var respaldo = a.getAttribute("data-cpm-respaldo") || "/";
+      var url = rutaDelSitio(claves) || (ORIGEN + respaldo);
+      a.setAttribute("href", url);
+      a.setAttribute("target", "_top");
+      a.setAttribute("rel", "noopener");
+    });
+
+    /* Respaldo: si el navegador ignorase el target (pasa en algunos marcos
+       con sandbox), se navega la ventana completa a mano. */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[target="_top"]') : null;
+        if (!a || ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.button > 0) return;
+        var url = a.getAttribute("href");
+        if (!url || url.charAt(0) === "#") return;
+        ev.preventDefault();
+        try { window.top.location.href = url; }
+        catch (e) { window.open(url, "_blank", "noopener"); }
+      });
+    });
+
+    /* ---------- 2. Portada de entrada ----------
+       Se cierra sola por CSS. Aqui solo el boton de omitir y el corte cuando
+       el bloque ni siquiera esta a la vista al cargar. */
+    var portada = raiz.querySelector("#cpmIntro");
+    safe(function () {
+      var boton = raiz.querySelector(".intro-skip");
+      if (boton && portada) {
+        boton.addEventListener("click", function () {
+          portada.classList.add("is-gone");
+          M.programarAjuste();
+        });
+      }
+      if (portada) {
+        /* Si al cargar ya estas mas abajo, la entrada no tiene sentido. */
+        if (M.techo(portada, M.desfase()) < -80) portada.classList.add("is-gone");
+        portada.addEventListener("animationend", function (ev) {
+          if (ev.animationName === "cpmIntroFuera") {
+            portada.classList.add("is-gone");
+            M.programarAjuste();
+          }
+        });
+      }
+    });
+
+    /* ---------- 3. Capitulo activo y menu ---------- */
+    var enlaces   = [].slice.call(raiz.querySelectorAll("[data-chapter]"));
+    var capitulos = [].slice.call(raiz.querySelectorAll(".chapter[data-theme]"));
+    var actual = "";
+    function activar(id) {
+      if (!id || id === actual) return;
+      actual = id;
+      enlaces.forEach(function (l) { l.classList.toggle("is-active", l.getAttribute("data-chapter") === id); });
+      capitulos.forEach(function (s) { s.classList.toggle("is-active", s.id === id); });
+    }
+    if (capitulos.length) {
+      M.continuo(function (H, S) {
+        var mejor = null, menor = Infinity;
+        for (var i = 0; i < capitulos.length; i++) {
+          var s = capitulos[i];
+          var arriba = M.techo(s, S);
+          var abajo  = arriba + s.getBoundingClientRect().height;
+          var d = Math.abs(arriba - H * 0.38);
+          if (arriba < H * 0.72 && abajo > H * 0.24 && d < menor) { menor = d; mejor = s; }
+        }
+        if (mejor) activar(mejor.id);
+      });
+    }
+
+    /* ---------- 4. Entradas ---------- */
+    [].slice.call(raiz.querySelectorAll(".reveal")).forEach(function (el) { M.alEntrar(el); });
+
+    /* ---------- 5. Enlaces internos del propio bloque ----------
+       scrollIntoView si atraviesa el marco: arrastra el scroll del padre. */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
+        if (!a) return;
+        var destino = raiz.querySelector(a.getAttribute("href"));
+        if (!destino) return;
+        ev.preventDefault();
+        if (portada) portada.classList.add("is-gone");
+        try { destino.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); }
+        catch (e) { try { destino.scrollIntoView(); } catch (e2) {} }
+      });
+    });
+
+    /* ---------- 6. Ano del pie ---------- */
+    safe(function () {
+      var y = raiz.querySelector("#cpmYear");
+      if (y) y.textContent = String(new Date().getFullYear());
+    });
+
+    raiz.setAttribute("data-init", "listo");
+    M.arrancar();
+  }
+})();
+</script>
