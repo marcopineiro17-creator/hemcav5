@@ -139,6 +139,18 @@ def portafolio():
   #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
   #hbp .story-step{min-height:0;background:none;align-content:start;
     grid-template-columns:132px minmax(0,1fr);gap:18px;padding:34px 4px;align-items:start}
+
+  /* La fila NO se atenua en movil.
+     El .42 viene del diseno de escritorio, donde solo importa el caso activo
+     y los demas se apagan a proposito. Aqui la seccion es una lista: se leen
+     los cuatro. Ademas ese .42 se multiplicaba por la opacidad del telefono,
+     asi que la animacion de entrada iba de 0.126 a 0.42 -- invisible antes y
+     despues. Lo unico que se notaba era el clic, que ponia la fila a 1: de
+     ahi el "solo se activan al hacer click".
+     Y en movil nada selecciona un caso al desplazarse (el anclaje del
+     telefono, que es quien lo hacia, no corre aqui), asi que dejar la
+     atenuacion significaba tres filas apagadas de forma permanente. */
+  #hbp .story-step,#hbp .story-step.active{opacity:1;transform:none}
   #hbp .story-step .step-no{grid-column:1;grid-row:1;padding-top:0;text-align:center}
   #hbp .story-step>div{grid-column:2;grid-row:1/3}
   #hbp .story-step h3{font-size:clamp(1.85rem,8vw,2.7rem);max-width:none}
@@ -157,6 +169,17 @@ def portafolio():
   #hbp .story-step.mv-activo::before{transform:scale(1);opacity:1;
     box-shadow:0 0 0 2px rgba(255,255,255,.34),0 22px 46px rgba(0,0,0,.62),
                0 0 34px rgba(90,43,255,.34)}
+
+  /* El texto del caso entra con su telefono, para que al bajar se vea que el
+     caso "se enciende" entero y no solo la miniatura. Cuelga de motion-ready:
+     si el motor no llegara a arrancar, nada de esto se aplica y el contenido
+     nace visible. Y si arranca pero no puede medir, el motor llama igualmente
+     a los avisos de entrada, asi que tampoco puede quedarse a medias. */
+  #hbp.motion-ready .story-step>div,
+  #hbp.motion-ready .story-step .step-no{opacity:.3;transform:translateY(14px);
+    transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  #hbp.motion-ready .story-step.mv-activo>div,
+  #hbp.motion-ready .story-step.mv-activo .step-no{opacity:1;transform:none}
   #hbp .story-step:nth-child(1)::before{background-image:var(--miniatura-1)}
   #hbp .story-step:nth-child(2)::before{background-image:var(--miniatura-2)}
   #hbp .story-step:nth-child(3)::before{background-image:var(--miniatura-3)}
@@ -272,6 +295,25 @@ def portafolio():
    Lo mismo con los cristales de la portada, que quedan muy arriba en cuanto
    se baja: el motor marca .hb-portada-lejos y ahi se apagan. */
 #hbp .mobile-menu:not(.open){backdrop-filter:none;-webkit-backdrop-filter:none}
+/* Los marcos de la portada tampoco desenfocan, y no se pierde nada: cada uno
+   esta tapado por su propia foto a pantalla completa (object-fit:cover sobre
+   el marco entero), asi que el desenfoque del fondo no llega a verse. Lo que
+   si costaba es que ESOS marcos se mueven en cada fotograma: transformar un
+   elemento con backdrop-filter obliga a rehacer el desenfoque y a rasterizar
+   de nuevo toda la capa. Medido en la portada, a 1440x900: 18 fotogramas por
+   segundo tal como estaba; 61 y ninguno lento con esto y con la inclinacion
+   fija (ver el guion). */
+#hbp .hero-frame,#hbp.hb-moviendo .hero-frame{backdrop-filter:none;
+  -webkit-backdrop-filter:none;will-change:transform}
+/* La inclinacion del telefono pasa del propio telefono al escenario, que es
+   el elemento que ya se mueve (el guion la compone con el desplazamiento).
+   Tenerla en un elemento anidado obligaba a rasterizar de nuevo todo el
+   telefono -- esquinas redondeadas, sombras y pantalla recortada -- cada vez
+   que el escenario cambiaba de sitio. Medido en la seccion social, a
+   1440x900: 56 fotogramas por segundo y 21 lentos antes; 67 y 11 despues.
+   Se ve igual: la inclinacion no desaparece, cambia de sitio. */
+#hbp .phone{transform:none}
+#hbp .phone-stage{transform:perspective(900px) rotateY(-4deg) rotateX(1deg)}
 #hbp.hb-portada-lejos .hero-frame,#hbp.hb-portada-lejos .glass-stamp,
 #hbp.hb-portada-lejos .division-pill,#hbp.hb-portada-lejos .nav,
 #hbp.hb-moviendo.hb-portada-lejos .nav{

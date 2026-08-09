@@ -57,8 +57,11 @@
       }
     }
 
+    /* Medidas cacheadas: dentro del iframe el documento no hace scroll, asi
+       que estas alturas son constantes. Leerlas en cada fotograma obligaba a
+       recalcular la maquetacion del bloque entero. */
     function recorrido() {
-      return Math.max(1, bloque.offsetHeight - escenario.offsetHeight);
+      return Math.max(1, M.alto(bloque) - M.alto(escenario));
     }
 
     if (bloque && escenario && fichas.length) {

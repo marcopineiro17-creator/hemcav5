@@ -604,6 +604,7 @@
            asi que solo se atiende un cambio de orientacion o similar. */
         if (Math.abs(H - ultimaVista) < 80) return;
         ultimaVista = H;
+        invalidarGeo();
         try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
       }
 
@@ -672,7 +673,7 @@
       function programarAjuste() {
         if (ajustePedido) return;
         ajustePedido = true;
-        requestAnimationFrame(function () { ajustePedido = false; ajustarMarco(); });
+        requestAnimationFrame(function () { ajustePedido = false; invalidarGeo(); ajustarMarco(); });
       }
 
       /* ---------- geometria real ---------- */
@@ -684,9 +685,66 @@
         if (!marco) return 0;
         try { return marco.getBoundingClientRect().top; } catch (e) { return 0; }
       }
+      /* ---------- geometria cacheada ----------
+         Medido: con el motor parado, cero fotogramas perdidos; con el motor en
+         marcha, veintitantos. El coste no estaba en pintar sino en MEDIR. Cada
+         fotograma habia unas veinticinco llamadas a getBoundingClientRect, y como
+         el fotograma anterior habia escrito estilos, la primera lectura obliga a
+         recalcular estilo y maquetacion de un documento de 15000px. Eso es lo que
+         se sentia como arrastre.
+
+         La cura se apoya en una propiedad del sitio: al fijarle al iframe la
+         altura de su contenido, el documento del iframe NO hace scroll. Su
+         scroll siempre vale cero, asi que la posicion que devuelve
+         getBoundingClientRect DENTRO del iframe es constante: no depende de por
+         donde vaya el visitante. Se puede medir una vez y reutilizar.
+         La posicion en la pantalla real es esa medida fija mas el desplazamiento
+         del iframe, que se lee del documento PADRE. Dentro del iframe no queda
+         ninguna lectura por fotograma, y sin lecturas no hay maquetacion forzada:
+         eso es lo que devuelve los fotogramas, no ahorrar llamadas.
+
+         Se mide con offsetTop en vez de getBoundingClientRect a proposito:
+         getBoundingClientRect incluye los transform, y las entradas animan
+         translateY. Una medida tomada a mitad de la animacion quedaria desviada.
+         offsetTop no ve los transform, asi que el valor cacheado es el bueno
+         desde el primer momento.
+
+         Fuera de un iframe la posicion si cambia con el scroll, asi que ahi se
+         lee en vivo: no hay iframe que dimensionar y el coste no es problema. */
+      var geo = new WeakMap(), sello = 0;
+      function invalidarGeo() { sello++; }
+      function cajaDe(el) {
+        var c = geo.get(el);
+        if (c && c.s === sello) return c;
+        var t = 0, h = 0;
+        try {
+          var n = el;
+          while (n && n !== root && n.offsetParent) { t += n.offsetTop; n = n.offsetParent; }
+          /* Y del contenedor a la ventana del iframe. Es constante mientras la
+             maquetacion no cambie, asi que tambien se cachea. */
+          t += techoDelBloque();
+          h = el.offsetHeight;
+        } catch (e) {}
+        c = { s: sello, t: t, h: h };
+        geo.set(el, c);
+        return c;
+      }
+      var selloRaiz = -1, topRaiz = 0;
+      function techoDelBloque() {
+        if (selloRaiz === sello) return topRaiz;
+        selloRaiz = sello;
+        try { topRaiz = root.getBoundingClientRect().top; } catch (e) { topRaiz = 0; }
+        return topRaiz;
+      }
       /* Posicion del elemento en el viewport REAL. */
       function techo(el, S) {
-        try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; }
+        if (!marco) { try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; } }
+        return cajaDe(el).t + S;
+      }
+      /* Alto del elemento, de la misma medida cacheada. */
+      function alto(el) {
+        if (!marco) { try { return el.getBoundingClientRect().height; } catch (e) { return 0; } }
+        return cajaDe(el).h;
       }
       function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
@@ -945,6 +1003,8 @@
         programarAjuste: programarAjuste,
         desfase: desfaseMarco,
         techo: techo,
+        alto: alto,
+        invalidarGeo: invalidarGeo,
         limita: limita,
         enMarco: enMarco,
         legible: legible,
@@ -1106,7 +1166,7 @@
         for (var i = 0; i < capitulos.length; i++) {
           var s = capitulos[i];
           var arriba = M.techo(s, S);
-          var abajo  = arriba + s.getBoundingClientRect().height;
+          var abajo  = arriba + M.alto(s);
           var d = Math.abs(arriba - H * 0.38);
           if (arriba < H * 0.72 && abajo > H * 0.24 && d < menor) { menor = d; mejor = s; }
         }

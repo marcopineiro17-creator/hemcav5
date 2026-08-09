@@ -571,6 +571,18 @@
   #hbp .story-steps{padding-top:0!important;position:relative;z-index:2}
   #hbp .story-step{min-height:0;background:none;align-content:start;
     grid-template-columns:132px minmax(0,1fr);gap:18px;padding:34px 4px;align-items:start}
+
+  /* La fila NO se atenua en movil.
+     El .42 viene del diseno de escritorio, donde solo importa el caso activo
+     y los demas se apagan a proposito. Aqui la seccion es una lista: se leen
+     los cuatro. Ademas ese .42 se multiplicaba por la opacidad del telefono,
+     asi que la animacion de entrada iba de 0.126 a 0.42 -- invisible antes y
+     despues. Lo unico que se notaba era el clic, que ponia la fila a 1: de
+     ahi el "solo se activan al hacer click".
+     Y en movil nada selecciona un caso al desplazarse (el anclaje del
+     telefono, que es quien lo hacia, no corre aqui), asi que dejar la
+     atenuacion significaba tres filas apagadas de forma permanente. */
+  #hbp .story-step,#hbp .story-step.active{opacity:1;transform:none}
   #hbp .story-step .step-no{grid-column:1;grid-row:1;padding-top:0;text-align:center}
   #hbp .story-step>div{grid-column:2;grid-row:1/3}
   #hbp .story-step h3{font-size:clamp(1.85rem,8vw,2.7rem);max-width:none}
@@ -589,6 +601,17 @@
   #hbp .story-step.mv-activo::before{transform:scale(1);opacity:1;
     box-shadow:0 0 0 2px rgba(255,255,255,.34),0 22px 46px rgba(0,0,0,.62),
                0 0 34px rgba(90,43,255,.34)}
+
+  /* El texto del caso entra con su telefono, para que al bajar se vea que el
+     caso "se enciende" entero y no solo la miniatura. Cuelga de motion-ready:
+     si el motor no llegara a arrancar, nada de esto se aplica y el contenido
+     nace visible. Y si arranca pero no puede medir, el motor llama igualmente
+     a los avisos de entrada, asi que tampoco puede quedarse a medias. */
+  #hbp.motion-ready .story-step>div,
+  #hbp.motion-ready .story-step .step-no{opacity:.3;transform:translateY(14px);
+    transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  #hbp.motion-ready .story-step.mv-activo>div,
+  #hbp.motion-ready .story-step.mv-activo .step-no{opacity:1;transform:none}
   #hbp .story-step:nth-child(1)::before{background-image:var(--miniatura-1)}
   #hbp .story-step:nth-child(2)::before{background-image:var(--miniatura-2)}
   #hbp .story-step:nth-child(3)::before{background-image:var(--miniatura-3)}
@@ -693,6 +716,25 @@
    Lo mismo con los cristales de la portada, que quedan muy arriba en cuanto
    se baja: el motor marca .hb-portada-lejos y ahi se apagan. */
 #hbp .mobile-menu:not(.open){backdrop-filter:none;-webkit-backdrop-filter:none}
+/* Los marcos de la portada tampoco desenfocan, y no se pierde nada: cada uno
+   esta tapado por su propia foto a pantalla completa (object-fit:cover sobre
+   el marco entero), asi que el desenfoque del fondo no llega a verse. Lo que
+   si costaba es que ESOS marcos se mueven en cada fotograma: transformar un
+   elemento con backdrop-filter obliga a rehacer el desenfoque y a rasterizar
+   de nuevo toda la capa. Medido en la portada, a 1440x900: 18 fotogramas por
+   segundo tal como estaba; 61 y ninguno lento con esto y con la inclinacion
+   fija (ver el guion). */
+#hbp .hero-frame,#hbp.hb-moviendo .hero-frame{backdrop-filter:none;
+  -webkit-backdrop-filter:none;will-change:transform}
+/* La inclinacion del telefono pasa del propio telefono al escenario, que es
+   el elemento que ya se mueve (el guion la compone con el desplazamiento).
+   Tenerla en un elemento anidado obligaba a rasterizar de nuevo todo el
+   telefono -- esquinas redondeadas, sombras y pantalla recortada -- cada vez
+   que el escenario cambiaba de sitio. Medido en la seccion social, a
+   1440x900: 56 fotogramas por segundo y 21 lentos antes; 67 y 11 despues.
+   Se ve igual: la inclinacion no desaparece, cambia de sitio. */
+#hbp .phone{transform:none}
+#hbp .phone-stage{transform:perspective(900px) rotateY(-4deg) rotateX(1deg)}
 #hbp.hb-portada-lejos .hero-frame,#hbp.hb-portada-lejos .glass-stamp,
 #hbp.hb-portada-lejos .division-pill,#hbp.hb-portada-lejos .nav,
 #hbp.hb-moviendo.hb-portada-lejos .nav{
@@ -801,6 +843,7 @@
            asi que solo se atiende un cambio de orientacion o similar. */
         if (Math.abs(H - ultimaVista) < 80) return;
         ultimaVista = H;
+        invalidarGeo();
         try { root.style.setProperty("--vh-real", H + "px"); } catch (e) {}
       }
 
@@ -869,7 +912,7 @@
       function programarAjuste() {
         if (ajustePedido) return;
         ajustePedido = true;
-        requestAnimationFrame(function () { ajustePedido = false; ajustarMarco(); });
+        requestAnimationFrame(function () { ajustePedido = false; invalidarGeo(); ajustarMarco(); });
       }
 
       /* ---------- geometria real ---------- */
@@ -881,9 +924,66 @@
         if (!marco) return 0;
         try { return marco.getBoundingClientRect().top; } catch (e) { return 0; }
       }
+      /* ---------- geometria cacheada ----------
+         Medido: con el motor parado, cero fotogramas perdidos; con el motor en
+         marcha, veintitantos. El coste no estaba en pintar sino en MEDIR. Cada
+         fotograma habia unas veinticinco llamadas a getBoundingClientRect, y como
+         el fotograma anterior habia escrito estilos, la primera lectura obliga a
+         recalcular estilo y maquetacion de un documento de 15000px. Eso es lo que
+         se sentia como arrastre.
+
+         La cura se apoya en una propiedad del sitio: al fijarle al iframe la
+         altura de su contenido, el documento del iframe NO hace scroll. Su
+         scroll siempre vale cero, asi que la posicion que devuelve
+         getBoundingClientRect DENTRO del iframe es constante: no depende de por
+         donde vaya el visitante. Se puede medir una vez y reutilizar.
+         La posicion en la pantalla real es esa medida fija mas el desplazamiento
+         del iframe, que se lee del documento PADRE. Dentro del iframe no queda
+         ninguna lectura por fotograma, y sin lecturas no hay maquetacion forzada:
+         eso es lo que devuelve los fotogramas, no ahorrar llamadas.
+
+         Se mide con offsetTop en vez de getBoundingClientRect a proposito:
+         getBoundingClientRect incluye los transform, y las entradas animan
+         translateY. Una medida tomada a mitad de la animacion quedaria desviada.
+         offsetTop no ve los transform, asi que el valor cacheado es el bueno
+         desde el primer momento.
+
+         Fuera de un iframe la posicion si cambia con el scroll, asi que ahi se
+         lee en vivo: no hay iframe que dimensionar y el coste no es problema. */
+      var geo = new WeakMap(), sello = 0;
+      function invalidarGeo() { sello++; }
+      function cajaDe(el) {
+        var c = geo.get(el);
+        if (c && c.s === sello) return c;
+        var t = 0, h = 0;
+        try {
+          var n = el;
+          while (n && n !== root && n.offsetParent) { t += n.offsetTop; n = n.offsetParent; }
+          /* Y del contenedor a la ventana del iframe. Es constante mientras la
+             maquetacion no cambie, asi que tambien se cachea. */
+          t += techoDelBloque();
+          h = el.offsetHeight;
+        } catch (e) {}
+        c = { s: sello, t: t, h: h };
+        geo.set(el, c);
+        return c;
+      }
+      var selloRaiz = -1, topRaiz = 0;
+      function techoDelBloque() {
+        if (selloRaiz === sello) return topRaiz;
+        selloRaiz = sello;
+        try { topRaiz = root.getBoundingClientRect().top; } catch (e) { topRaiz = 0; }
+        return topRaiz;
+      }
       /* Posicion del elemento en el viewport REAL. */
       function techo(el, S) {
-        try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; }
+        if (!marco) { try { return el.getBoundingClientRect().top + S; } catch (e) { return 0; } }
+        return cajaDe(el).t + S;
+      }
+      /* Alto del elemento, de la misma medida cacheada. */
+      function alto(el) {
+        if (!marco) { try { return el.getBoundingClientRect().height; } catch (e) { return 0; } }
+        return cajaDe(el).h;
       }
       function limita(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 
@@ -1142,6 +1242,8 @@
         programarAjuste: programarAjuste,
         desfase: desfaseMarco,
         techo: techo,
+        alto: alto,
+        invalidarGeo: invalidarGeo,
         limita: limita,
         enMarco: enMarco,
         legible: legible,
@@ -1230,8 +1332,7 @@
     var anclas = ['hbp-work', 'hbp-social', 'hbp-method'].map(function (id) { return document.getElementById(id); });
     var portada = one('.hero');
     M.continuo(function (H, S) {
-      var r = root.getBoundingClientRect();
-      var top = r.top + S, total = Math.max(1, r.height - H);
+      var top = M.techo(root, S), total = Math.max(1, M.alto(root) - H);
       var p = M.limita(-top / total);
       if (progress) M.escribe(progress, 'transform', 'scaleX(' + p.toFixed(3) + ')');
       if (nav) nav.classList.toggle('scrolled', top < -35);
@@ -1246,7 +1347,7 @@
          volver arriba reaparece. Se aprovecha esta misma pasada, que ya tiene
          las medidas leidas: no anade ni una lectura de geometria. */
       if (portada) {
-        var fuera = (portada.getBoundingClientRect().bottom + S) < -H;
+        var fuera = (M.techo(portada, S) + M.alto(portada)) < -H;
         root.classList.toggle('hb-portada-lejos', fuera);
       }
     });
@@ -1275,14 +1376,12 @@
     q('.media').forEach(function (el) {
       var amount = numAttr(el, 'data-parallax', 0);
       M.continuo(function (H, S) {
-        var r;
-        try { r = el.getBoundingClientRect(); } catch (e) { return; }
-        var arriba = r.top + S;
+        var arriba = M.techo(el, S), altoEl = M.alto(el);
         /* Lo que esta lejos de la pantalla no se toca. Con veinte marcos, la
            mayoria esta fuera en cada fotograma: saltarlos es lo que hace que
            el resto vaya fluido. */
-        if (arriba > H + 300 || arriba + r.height < -300) return;
-        var p = M.limita((H - arriba) / (H + r.height));
+        if (arriba > H + 300 || arriba + altoEl < -300) return;
+        var p = M.limita((H - arriba) / (H + altoEl));
         var e = 1 - M.limita((H * 0.95 - arriba) / (H * 0.57));
         /* Se cuantiza en pasos. clip-path sobre imagenes grandes obliga a
            rasterizar de nuevo, y hacerlo en cada fotograma era lo que
@@ -1310,22 +1409,28 @@
       var stage = one('.hero-stage');
       var frames = q('.hero-frame');
       if (stage && frames.length) {
+        /* La inclinacion de cada marco es FIJA; solo se anima el
+           desplazamiento. Medido en la portada, a 1440x900: animando tambien
+           la rotacion la pagina daba 18 fotogramas por segundo; con la
+           inclinacion fija y sin el desenfoque de los marcos (ver el CSS),
+           61 y ninguno lento. Rotar obliga a rasterizar de nuevo una imagen
+           grande en cada fotograma; desplazarla no. El movimiento se sigue
+           viendo, que era lo que aportaba el efecto. */
+        var INCLINA = ['rotateX(2deg)', 'rotate(-7deg)', 'rotate(8deg)'];
         M.continuo(function (H, S) {
-          var r = stage.getBoundingClientRect();
-          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          var p = M.limita((H - M.techo(stage, S)) / (H + M.alto(stage)));
           frames.forEach(function (el, i) {
             var pq = Math.round(p * 60) / 60;
             var y = ((i + 1) * -9) * (pq - 0.5) * 2;
-            var rot = (i === 1 ? -9 : i === 2 ? 10 : 0) * (pq - 0.5) * 2;
-            M.escribe(el, 'transform', 'translateY(' + y.toFixed(1) + '%) rotate(' + rot.toFixed(1) + 'deg)');
+            M.escribe(el, 'transform',
+              'translate3d(0,' + y.toFixed(1) + '%,0) ' + (INCLINA[i] || ''));
           });
         });
       }
       var ticker = one('#hbpTicker'), tBox = one('.client-ticker');
       if (ticker && tBox) {
         M.continuo(function (H, S) {
-          var r = tBox.getBoundingClientRect();
-          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          var p = M.limita((H - M.techo(tBox, S)) / (H + M.alto(tBox)));
           M.escribe(ticker, 'transform', 'translateX(' + (-(Math.round(p * 60) / 60) * 22).toFixed(2) + '%)');
         });
       }
@@ -1340,6 +1445,7 @@
        scroll propio, así que el sticky no puede funcionar: el anclaje se
        calcula con translateY sobre coordenadas del viewport real. */
     (function () {
+      var INCLINA_TEL = 'perspective(900px) rotateY(-4deg) rotateX(1deg)';
       var layout = one('#hbpStoryLayout'), stage = one('#hbpPhoneStage');
       var rail = one('#hbpPhoneRail') || layout;
       if (!layout || !stage) return;
@@ -1355,9 +1461,9 @@
         /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
            la rejilla completa: con la rejilla el recorrido no coincidía y el
            teléfono se iba quedando abajo. */
-        var arriba = rail.getBoundingClientRect().top + S;
-        var altoEsc = stage.offsetHeight;
-        var rec = Math.max(0, rail.offsetHeight - altoEsc);
+        var arriba = M.techo(rail, S);
+        var altoEsc = M.alto(stage);
+        var rec = Math.max(0, M.alto(rail) - altoEsc);
         /* Centrado vertical en pantalla mientras está anclado. */
         /* En movil el telefono va en la banda superior; en escritorio,
            centrado en pantalla. */
@@ -1367,7 +1473,15 @@
         /* Redondeo a medio píxel: los valores fraccionarios hacían temblar
            el render en algunos navegadores. */
         y = Math.round(y * 2) / 2;
-        M.escribe(stage, 'transform', 'translate3d(0,' + y + 'px,0)');
+        /* La inclinacion del telefono viaja en ESTE mismo transform, no en un
+           elemento anidado. Medido en la seccion social, a 1440x900: con la
+           inclinacion en el propio telefono (un elemento transformado dentro
+           de otro que se mueve) la pagina daba 56 fotogramas por segundo y 21
+           lentos; compuesta aqui, 67 y 11. Un subarbol transformado hay que
+           rasterizarlo de nuevo cada vez que cambia de sitio en pantalla; uno
+           sin transform propio se puede componer tal cual. El aspecto es el
+           mismo: la inclinacion sigue ahi. */
+        M.escribe(stage, 'transform', 'translate3d(0,' + y + 'px,0) ' + INCLINA_TEL);
         /* El caso activo es el paso más cercano al centro de la pantalla.
            Con zona muerta: sólo cambia si el nuevo candidato está
            claramente más cerca. Sin esto, dos pasos a distancia parecida
@@ -1375,8 +1489,8 @@
         if (steps.length) {
           var mejor = 0, dist = Infinity, distActual = Infinity;
           for (var i = 0; i < steps.length; i++) {
-            var sr = steps[i].getBoundingClientRect();
-            var d = Math.abs((sr.top + sr.bottom) / 2 + S - H * 0.5);
+            var arribaP = M.techo(steps[i], S);
+            var d = Math.abs(arribaP + M.alto(steps[i]) / 2 - H * 0.5);
             if (i === activeSlide) distActual = d;
             if (d < dist) { dist = d; mejor = i; }
           }

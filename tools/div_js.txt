@@ -177,7 +177,7 @@
         for (var i = 0; i < capitulos.length; i++) {
           var s = capitulos[i];
           var arriba = M.techo(s, S);
-          var abajo  = arriba + s.getBoundingClientRect().height;
+          var abajo  = arriba + M.alto(s);
           var d = Math.abs(arriba - H * 0.38);
           if (arriba < H * 0.72 && abajo > H * 0.24 && d < menor) { menor = d; mejor = s; }
         }

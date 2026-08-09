@@ -107,8 +107,7 @@
     var anclas = ['hbp-work', 'hbp-social', 'hbp-method'].map(function (id) { return document.getElementById(id); });
     var portada = one('.hero');
     M.continuo(function (H, S) {
-      var r = root.getBoundingClientRect();
-      var top = r.top + S, total = Math.max(1, r.height - H);
+      var top = M.techo(root, S), total = Math.max(1, M.alto(root) - H);
       var p = M.limita(-top / total);
       if (progress) M.escribe(progress, 'transform', 'scaleX(' + p.toFixed(3) + ')');
       if (nav) nav.classList.toggle('scrolled', top < -35);
@@ -123,7 +122,7 @@
          volver arriba reaparece. Se aprovecha esta misma pasada, que ya tiene
          las medidas leidas: no anade ni una lectura de geometria. */
       if (portada) {
-        var fuera = (portada.getBoundingClientRect().bottom + S) < -H;
+        var fuera = (M.techo(portada, S) + M.alto(portada)) < -H;
         root.classList.toggle('hb-portada-lejos', fuera);
       }
     });
@@ -152,14 +151,12 @@
     q('.media').forEach(function (el) {
       var amount = numAttr(el, 'data-parallax', 0);
       M.continuo(function (H, S) {
-        var r;
-        try { r = el.getBoundingClientRect(); } catch (e) { return; }
-        var arriba = r.top + S;
+        var arriba = M.techo(el, S), altoEl = M.alto(el);
         /* Lo que esta lejos de la pantalla no se toca. Con veinte marcos, la
            mayoria esta fuera en cada fotograma: saltarlos es lo que hace que
            el resto vaya fluido. */
-        if (arriba > H + 300 || arriba + r.height < -300) return;
-        var p = M.limita((H - arriba) / (H + r.height));
+        if (arriba > H + 300 || arriba + altoEl < -300) return;
+        var p = M.limita((H - arriba) / (H + altoEl));
         var e = 1 - M.limita((H * 0.95 - arriba) / (H * 0.57));
         /* Se cuantiza en pasos. clip-path sobre imagenes grandes obliga a
            rasterizar de nuevo, y hacerlo en cada fotograma era lo que
@@ -187,22 +184,28 @@
       var stage = one('.hero-stage');
       var frames = q('.hero-frame');
       if (stage && frames.length) {
+        /* La inclinacion de cada marco es FIJA; solo se anima el
+           desplazamiento. Medido en la portada, a 1440x900: animando tambien
+           la rotacion la pagina daba 18 fotogramas por segundo; con la
+           inclinacion fija y sin el desenfoque de los marcos (ver el CSS),
+           61 y ninguno lento. Rotar obliga a rasterizar de nuevo una imagen
+           grande en cada fotograma; desplazarla no. El movimiento se sigue
+           viendo, que era lo que aportaba el efecto. */
+        var INCLINA = ['rotateX(2deg)', 'rotate(-7deg)', 'rotate(8deg)'];
         M.continuo(function (H, S) {
-          var r = stage.getBoundingClientRect();
-          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          var p = M.limita((H - M.techo(stage, S)) / (H + M.alto(stage)));
           frames.forEach(function (el, i) {
             var pq = Math.round(p * 60) / 60;
             var y = ((i + 1) * -9) * (pq - 0.5) * 2;
-            var rot = (i === 1 ? -9 : i === 2 ? 10 : 0) * (pq - 0.5) * 2;
-            M.escribe(el, 'transform', 'translateY(' + y.toFixed(1) + '%) rotate(' + rot.toFixed(1) + 'deg)');
+            M.escribe(el, 'transform',
+              'translate3d(0,' + y.toFixed(1) + '%,0) ' + (INCLINA[i] || ''));
           });
         });
       }
       var ticker = one('#hbpTicker'), tBox = one('.client-ticker');
       if (ticker && tBox) {
         M.continuo(function (H, S) {
-          var r = tBox.getBoundingClientRect();
-          var p = M.limita((H - (r.top + S)) / (H + r.height));
+          var p = M.limita((H - M.techo(tBox, S)) / (H + M.alto(tBox)));
           M.escribe(ticker, 'transform', 'translateX(' + (-(Math.round(p * 60) / 60) * 22).toFixed(2) + '%)');
         });
       }
@@ -217,6 +220,7 @@
        scroll propio, así que el sticky no puede funcionar: el anclaje se
        calcula con translateY sobre coordenadas del viewport real. */
     (function () {
+      var INCLINA_TEL = 'perspective(900px) rotateY(-4deg) rotateX(1deg)';
       var layout = one('#hbpStoryLayout'), stage = one('#hbpPhoneStage');
       var rail = one('#hbpPhoneRail') || layout;
       if (!layout || !stage) return;
@@ -232,9 +236,9 @@
         /* Se mide sobre el CARRIL, que es donde vive el teléfono, no sobre
            la rejilla completa: con la rejilla el recorrido no coincidía y el
            teléfono se iba quedando abajo. */
-        var arriba = rail.getBoundingClientRect().top + S;
-        var altoEsc = stage.offsetHeight;
-        var rec = Math.max(0, rail.offsetHeight - altoEsc);
+        var arriba = M.techo(rail, S);
+        var altoEsc = M.alto(stage);
+        var rec = Math.max(0, M.alto(rail) - altoEsc);
         /* Centrado vertical en pantalla mientras está anclado. */
         /* En movil el telefono va en la banda superior; en escritorio,
            centrado en pantalla. */
@@ -244,7 +248,15 @@
         /* Redondeo a medio píxel: los valores fraccionarios hacían temblar
            el render en algunos navegadores. */
         y = Math.round(y * 2) / 2;
-        M.escribe(stage, 'transform', 'translate3d(0,' + y + 'px,0)');
+        /* La inclinacion del telefono viaja en ESTE mismo transform, no en un
+           elemento anidado. Medido en la seccion social, a 1440x900: con la
+           inclinacion en el propio telefono (un elemento transformado dentro
+           de otro que se mueve) la pagina daba 56 fotogramas por segundo y 21
+           lentos; compuesta aqui, 67 y 11. Un subarbol transformado hay que
+           rasterizarlo de nuevo cada vez que cambia de sitio en pantalla; uno
+           sin transform propio se puede componer tal cual. El aspecto es el
+           mismo: la inclinacion sigue ahi. */
+        M.escribe(stage, 'transform', 'translate3d(0,' + y + 'px,0) ' + INCLINA_TEL);
         /* El caso activo es el paso más cercano al centro de la pantalla.
            Con zona muerta: sólo cambia si el nuevo candidato está
            claramente más cerca. Sin esto, dos pasos a distancia parecida
@@ -252,8 +264,8 @@
         if (steps.length) {
           var mejor = 0, dist = Infinity, distActual = Infinity;
           for (var i = 0; i < steps.length; i++) {
-            var sr = steps[i].getBoundingClientRect();
-            var d = Math.abs((sr.top + sr.bottom) / 2 + S - H * 0.5);
+            var arribaP = M.techo(steps[i], S);
+            var d = Math.abs(arribaP + M.alto(steps[i]) / 2 - H * 0.5);
             if (i === activeSlide) distActual = d;
             if (d < dist) { dist = d; mejor = i; }
           }
