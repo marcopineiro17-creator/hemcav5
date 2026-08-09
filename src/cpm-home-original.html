@@ -1,0 +1,703 @@
+<!-- ============================================================
+     CORPORATIVO PIÑEIRO-MEDINA · LANDING PRINCIPAL
+     Pega TODO este bloque en un campo "Codigo personalizado" (HTML)
+     de Hostinger, en la pagina de Inicio.
+     ------------------------------------------------------------
+     SIN cabecera ni pie: los pone Hostinger. Este bloque va entre
+     los dos.
+
+     TOMADO DEL SITIO REAL (no inventado):
+       Tipografias  Space Grotesk (titulos) + DM Sans (texto)
+       Paleta       navy #192c41 · #263959 · oro #c0a043 · #eceeef
+       Fotos        las que ya tienes en el CDN de Hostinger
+       Copia        la de la pagina actual, palabra por palabra
+       Enlaces      /servicios-inmobiliarios /division-legal /marketing
+                    /construccion-desarrollo /catalogo-de-propiedades
+                    /contacto /divisiones
+
+     MOVIMIENTO
+       Motor propio, sin librerias. Solo LEE posiciones, nunca escribe
+       scroll. Funciona igual dentro o fuera del iframe de Hostinger.
+       Efecto liquid glass con backdrop-filter y luz especular.
+
+     A PRUEBA DE FALLOS
+       Sin JS -> todo visible. Con error de JS -> se quita la clase que
+       oculta y todo aparece. Sin eventos de scroll -> sondeo cada
+       300 ms. En ningun caso queda contenido invisible.
+       prefers-reduced-motion -> cero animacion.
+
+     SEO: las 6 tarjetas y las imágenes están escritas como HTML estático;
+     no dependen de JavaScript para que los rastreadores puedan leerlas.
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet"/>
+
+<div id="cpm-home">
+
+<!-- Pre-estado. Solo oculta si hay JS; si el script no toma el control
+     en 3 s, se quita la clase y todo queda visible. -->
+<script>
+(function(){var r=document.getElementById('cpm-home');if(!r)return;
+try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;}catch(e){}
+r.className+=' anim';
+setTimeout(function(){if(r.getAttribute('data-on'))return;
+r.className=r.className.replace(/\banim\b/g,'');},3000);})();
+</script>
+
+<style>
+/* ══════════════ IDENTIDAD CPM (tomada del sitio) ══════════════ */
+#cpm-home{
+  --navy:#192c41;
+  --navy2:#263959;
+  --navy3:#0f1d2e;
+  --oro:#c0a043;
+  --oro-cl:#e0c777;
+  --tinta:#1d1e20;
+  --gris:#475569;
+  --humo:#eceeef;
+  --papel:#f6f7f8;
+  --blanco:#fff;
+  --tt:'Montserrat',system-ui,sans-serif;   /* titulos */
+  --tx:'DM Sans',system-ui,sans-serif;         /* texto */
+  --ease:cubic-bezier(.16,1,.3,1);
+  --r:20px;
+  position:relative; width:100%;
+  font-family:var(--tx); color:var(--tinta);
+  background:var(--papel);
+  line-height:1.6; font-size:16px;
+  -webkit-font-smoothing:antialiased;
+  overflow-anchor:none;   /* evita que el navegador reancle el scroll al animar */
+}
+#cpm-home,#cpm-home *,#cpm-home *::before,#cpm-home *::after{box-sizing:border-box;margin:0;padding:0}
+#cpm-home img{max-width:100%;display:block}
+#cpm-home a{text-decoration:none;color:inherit}
+#cpm-home h1,#cpm-home h2,#cpm-home h3{font-family:var(--tt);font-weight:600;letter-spacing:-.02em;line-height:1.08}
+
+/* ══════════════ MOTOR DE ANIMACION ══════════════
+   .rv        elemento que entra al hacer scroll
+   .anim      la agrega el JS: SOLO entonces se oculta algo
+   .in        la agrega el motor cuando entra a vista
+   --py       desplazamiento de parallax; se escribe con la propiedad
+              `translate`, no con `transform`, para no chocar con las
+              transiciones de entrada
+   ══════════════════════════════════════════════ */
+#cpm-home .rv{transition:opacity .9s var(--ease),transform .9s var(--ease)}
+#cpm-home.anim .rv{opacity:0;transform:translate3d(0,30px,0)}
+#cpm-home.anim .rv.in{opacity:1;transform:none}
+#cpm-home.anim .rv.d1{transition-delay:.08s}
+#cpm-home.anim .rv.d2{transition-delay:.16s}
+#cpm-home.anim .rv.d3{transition-delay:.24s}
+#cpm-home.anim .rv.d4{transition-delay:.32s}
+#cpm-home.anim .rv.d5{transition-delay:.40s}
+@media(prefers-reduced-motion:reduce){
+  #cpm-home .rv{opacity:1!important;transform:none!important;transition:none!important}
+  #cpm-home *{animation:none!important}
+}
+
+/* ══════════════ LIQUID GLASS ══════════════
+   Vidrio de Apple: capa translucida + desenfoque + saturacion,
+   filo superior de luz (inset) y un brillo especular diagonal.
+   El backdrop-filter solo se nota si hay algo detras: por eso cada
+   seccion lleva manchas de color de fondo. */
+#cpm-home .glass{
+  position:relative; isolation:isolate;
+  background:linear-gradient(150deg,rgba(255,255,255,.78),rgba(255,255,255,.42));
+  -webkit-backdrop-filter:blur(26px) saturate(180%);
+  backdrop-filter:blur(26px) saturate(180%);
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:var(--r);
+  box-shadow:0 1px 1px rgba(25,44,65,.04),0 10px 30px rgba(25,44,65,.07),
+             inset 0 1px 0 rgba(255,255,255,.95);
+}
+#cpm-home .glass::after{   /* brillo especular */
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(115deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 34%);
+  opacity:.7;
+}
+#cpm-home .glass-dark{
+  position:relative; isolation:isolate;
+  background:linear-gradient(150deg,rgba(255,255,255,.13),rgba(255,255,255,.045));
+  -webkit-backdrop-filter:blur(24px) saturate(170%);
+  backdrop-filter:blur(24px) saturate(170%);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:var(--r);
+  box-shadow:0 18px 44px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.28);
+}
+#cpm-home .glass-dark::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,0) 40%);
+}
+
+/* ══════════════ UTILIDADES ══════════════ */
+#cpm-home .wrap{width:100%;max-width:1200px;margin:0 auto;padding:0 clamp(18px,4vw,40px);position:relative;z-index:2}
+#cpm-home .sec{padding:clamp(64px,9vw,120px) 0;position:relative;overflow:hidden}
+#cpm-home .kicker{
+  font-family:var(--tx);font-size:11px;font-weight:700;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--oro);display:inline-block;margin-bottom:18px;
+}
+#cpm-home .sec-t{font-size:clamp(1.85rem,4.4vw,3.1rem);margin-bottom:16px}
+#cpm-home .sec-s{color:var(--gris);font-size:clamp(.98rem,1.4vw,1.08rem);max-width:62ch}
+#cpm-home .oro{color:var(--oro)}
+/* manchas de color que dan de que agarrarse al vidrio */
+#cpm-home .mancha{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+
+/* botones */
+#cpm-home .btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--tx);font-size:14px;font-weight:700;letter-spacing:.02em;
+  padding:15px 30px;border-radius:999px;transition:transform .3s var(--ease),box-shadow .3s,background .3s;
+}
+#cpm-home .btn svg{width:16px;height:16px;transition:transform .3s var(--ease)}
+#cpm-home .btn:hover svg{transform:translateX(4px)}
+#cpm-home .btn-oro{
+  background:linear-gradient(135deg,#d4b65a,var(--oro) 55%,#a8882f);color:#231c04;
+  box-shadow:0 8px 22px rgba(192,160,67,.34),inset 0 1px 0 rgba(255,255,255,.5);
+}
+#cpm-home .btn-oro:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(192,160,67,.44),inset 0 1px 0 rgba(255,255,255,.5)}
+#cpm-home .btn-vidrio{
+  background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+#cpm-home .btn-vidrio:hover{background:rgba(255,255,255,.2);transform:translateY(-3px)}
+#cpm-home .btn-navy{background:var(--navy);color:#fff}
+#cpm-home .btn-navy:hover{background:var(--navy2);transform:translateY(-3px)}
+
+/* ══════════════ HERO ══════════════ */
+#cpm-home .hero{
+  background:
+    radial-gradient(1100px 560px at 78% -10%,rgba(192,160,67,.20),transparent 62%),
+    radial-gradient(900px 520px at 6% 108%,rgba(90,149,204,.20),transparent 60%),
+    linear-gradient(150deg,var(--navy3) 0%,var(--navy) 46%,var(--navy2) 100%);
+  color:#fff; padding:clamp(56px,8vw,110px) 0 clamp(64px,9vw,120px);
+}
+#cpm-home .hero .sec-s{color:rgba(255,255,255,.72)}
+#cpm-home .hero-grid{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,64px);align-items:center;
+}
+#cpm-home .hero-grid>*{min-width:0}
+#cpm-home .hero h1{
+  font-size:clamp(2.3rem,5.6vw,4.05rem);font-weight:600;color:#fff;
+  margin-bottom:22px;max-width:15ch;
+}
+#cpm-home .hero h1 .w{display:inline-block}
+#cpm-home.anim .hero h1[data-split] .w{opacity:0}
+#cpm-home.anim .hero h1[data-split].in .w{
+  opacity:1;animation:cpmPal .85s var(--ease) both;
+  animation-delay:calc(var(--i,0) * .05s + .15s);
+}
+@keyframes cpmPal{from{opacity:0;transform:translateY(26px) rotateX(-48deg)}to{opacity:1;transform:none}}
+#cpm-home .hero-lead{color:rgba(255,255,255,.74);font-size:clamp(1rem,1.5vw,1.12rem);max-width:48ch;margin-bottom:32px}
+#cpm-home .hero-btns{display:flex;gap:13px;flex-wrap:wrap}
+/* marco de la foto */
+#cpm-home .hero-foto{
+  position:relative;border-radius:24px;overflow:hidden;aspect-ratio:16/11;
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 30px 70px rgba(0,0,0,.42);
+}
+#cpm-home .hero-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cpm-home .hero-foto .velo{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(to top,rgba(15,29,46,.6),rgba(15,29,46,0) 55%);
+}
+/* chip de vidrio flotante sobre la foto */
+#cpm-home .chip-foto{
+  position:absolute;left:16px;right:16px;bottom:16px;z-index:2;
+  padding:14px 18px;border-radius:16px;display:flex;align-items:center;gap:14px;
+}
+#cpm-home .chip-foto b{font-family:var(--tt);font-size:1.55rem;font-weight:600;color:#fff;line-height:1}
+#cpm-home .chip-foto span{font-size:11.5px;color:rgba(255,255,255,.72);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+#cpm-home .chip-foto i{width:1px;align-self:stretch;background:rgba(255,255,255,.22);flex:0 0 1px}
+
+/* ══════════════ ECOSISTEMA ══════════════ */
+#cpm-home .eco{background:var(--papel)}
+#cpm-home .eco .mancha.a{top:6%;left:-6%;width:38%;padding-bottom:38%;background:rgba(192,160,67,.20)}
+#cpm-home .eco .mancha.b{bottom:2%;right:-8%;width:42%;padding-bottom:42%;background:rgba(38,57,89,.16)}
+#cpm-home .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,1.7vw,22px);margin-top:clamp(34px,5vw,56px)}
+#cpm-home .cards>*{min-width:0}
+#cpm-home .card{
+  display:flex;flex-direction:column;padding:clamp(22px,2.4vw,30px);
+  transition:transform .4s var(--ease),box-shadow .4s,border-color .4s;
+}
+#cpm-home .card:hover{
+  transform:translateY(-7px);
+  border-color:rgba(192,160,67,.55);
+  box-shadow:0 2px 4px rgba(25,44,65,.05),0 22px 50px rgba(25,44,65,.14),inset 0 1px 0 rgba(255,255,255,.95);
+}
+#cpm-home .card .num{
+  position:relative;z-index:2;font-family:var(--tt);font-size:11px;font-weight:500;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gris);margin-bottom:16px;display:flex;align-items:center;gap:9px;
+}
+#cpm-home .card .num s{width:18px;height:1px;background:var(--oro);flex:0 0 18px;text-decoration:none;display:block}
+#cpm-home .card h3{position:relative;z-index:2;font-size:1.34rem;margin-bottom:11px;color:var(--navy)}
+#cpm-home .card p{position:relative;z-index:2;color:var(--gris);font-size:.95rem;flex:1;line-height:1.65}
+#cpm-home .card .ir{
+  position:relative;z-index:2;margin-top:20px;display:inline-flex;align-items:center;gap:8px;
+  font-size:12.5px;font-weight:700;letter-spacing:.05em;color:var(--navy);
+  transition:gap .3s var(--ease),color .3s;
+}
+#cpm-home .card:hover .ir{gap:14px;color:var(--oro)}
+#cpm-home .card .ir svg{width:15px;height:15px}
+#cpm-home .eco-cta{display:flex;justify-content:center;margin-top:clamp(30px,4vw,46px)}
+
+/* ══════════════ RESULTADOS ══════════════ */
+#cpm-home .res{
+  background:
+    radial-gradient(900px 460px at 85% 0%,rgba(192,160,67,.18),transparent 60%),
+    linear-gradient(140deg,var(--navy) 0%,var(--navy3) 100%);
+  color:#fff;text-align:center;
+}
+#cpm-home .res h2{color:#fff}
+#cpm-home .cifras{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.4vw,18px);
+  margin-top:clamp(36px,5vw,58px);
+}
+#cpm-home .cifras>*{min-width:0}
+#cpm-home .cifra{padding:clamp(22px,2.6vw,32px) 14px;text-align:center}
+#cpm-home .cifra b{
+  display:block;font-family:var(--tt);font-weight:600;
+  font-size:clamp(2.1rem,4.6vw,3.4rem);line-height:1;color:var(--oro-cl);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+#cpm-home .cifra span{
+  position:relative;z-index:2;display:block;margin-top:12px;font-size:10.5px;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.62);line-height:1.5;
+}
+
+/* ══════════════ CARTERA ══════════════ */
+#cpm-home .cart{background:var(--humo)}
+#cpm-home .cart .mancha.a{top:-8%;right:4%;width:36%;padding-bottom:36%;background:rgba(192,160,67,.22)}
+#cpm-home .cart .mancha.b{bottom:-10%;left:-4%;width:34%;padding-bottom:34%;background:rgba(38,57,89,.14)}
+#cpm-home .cart-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(28px,4.5vw,60px);align-items:center}
+#cpm-home .cart-grid>*{min-width:0}
+#cpm-home .mosaico{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+#cpm-home .mosaico figure{
+  position:relative;overflow:hidden;border-radius:14px;aspect-ratio:1/1;
+  background:#dfe4e9;box-shadow:0 8px 24px rgba(25,44,65,.13);
+}
+#cpm-home .mosaico figure:nth-child(1){grid-column:span 2;aspect-ratio:2/1}
+#cpm-home .mosaico figure:nth-child(6){grid-column:span 2;aspect-ratio:2/1}
+#cpm-home .mosaico img{
+  position:absolute;top:-6%;left:0;width:100%;height:112%;object-fit:cover;
+  transition:transform .7s var(--ease);
+}
+#cpm-home .mosaico figure:hover img{transform:scale(1.06)}
+#cpm-home .cart-panel{padding:clamp(26px,3.2vw,40px)}
+#cpm-home .cart-panel h2{position:relative;z-index:2;color:var(--navy)}
+#cpm-home .cart-panel .sec-s{position:relative;z-index:2;margin-bottom:26px}
+#cpm-home .cart-panel .btn{position:relative;z-index:2}
+
+/* ══════════════ CIERRE ══════════════ */
+#cpm-home .cierre{
+  background:linear-gradient(140deg,var(--navy3),var(--navy2));color:#fff;text-align:center;
+}
+#cpm-home .cierre .mancha.a{top:-20%;left:50%;width:46%;padding-bottom:46%;background:rgba(192,160,67,.20);transform:translateX(-50%)}
+#cpm-home .cierre-caja{max-width:760px;margin:0 auto;padding:clamp(30px,4.4vw,54px)}
+#cpm-home .cierre h2{position:relative;z-index:2;color:#fff;margin-bottom:14px}
+#cpm-home .cierre p{position:relative;z-index:2;color:rgba(255,255,255,.72);margin-bottom:28px;font-size:1.03rem}
+#cpm-home .cierre .btn{position:relative;z-index:2}
+#cpm-home .logo-cierre{position:relative;z-index:2;height:34px;width:auto;margin:0 auto 22px;opacity:.9}
+
+/* ══════════════ RESPONSIVE ══════════════ */
+@media(max-width:960px){
+  #cpm-home .hero-grid,#cpm-home .cart-grid{grid-template-columns:1fr;gap:34px}
+  #cpm-home .cards{grid-template-columns:1fr 1fr}
+  #cpm-home .cifras{grid-template-columns:1fr 1fr}
+  #cpm-home .hero h1{max-width:none}
+}
+@media(max-width:620px){
+  #cpm-home .cards{grid-template-columns:1fr}
+  #cpm-home .hero-btns .btn{width:100%}
+  #cpm-home .mosaico{gap:8px}
+  #cpm-home .chip-foto{flex-wrap:wrap;gap:10px}
+}
+</style>
+
+<!-- ─────────────── HERO ─────────────── -->
+<section class="sec hero" aria-labelledby="cpm-titulo">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="kicker rv">Corporativo Piñeiro-Medina</span>
+        <h1 id="cpm-titulo" class="rv" data-split>Bienes raíces, construcción y <span class="oro">servicios legales en Yucatán.</span></h1>
+        <p class="hero-lead rv d2">Corporativo Piñeiro-Medina es el socio corporativo que tu empresa o inversión necesita. Desde la tierra hasta la escritura, cubrimos cada etapa con expertise, integridad y resultados.</p>
+        <div class="hero-btns rv d3">
+          <a class="btn btn-oro" href="/divisiones">Ver divisiones
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+          <a class="btn btn-vidrio" href="/catalogo-de-propiedades">Ver propiedades</a>
+        </div>
+      </div>
+      <div class="rv d2" data-par="-16">
+        <figure class="hero-foto" data-clip>
+          <!-- Esta va arriba del pliegue: carga inmediata y prioritaria.
+               Con loading="lazy" el hero se veria vacio al abrir. -->
+          <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=1200,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-11-at-16.25.17-irMpnQQwsNNxCt3b.jpeg" alt="Terrenos y desarrollos de Corporativo Piñeiro-Medina en Yucatán" width="1200" height="825" loading="eager" fetchpriority="high" decoding="async" data-clip-img/>
+          <span class="velo"></span>
+          <div class="chip-foto glass-dark">
+            <div><b class="n" data-a="80" data-pre="+">+80</b><span>Propiedades</span></div>
+            <i></i>
+            <div><b class="n" data-a="5" data-pre="+">+5</b><span>Estados</span></div>
+            <i></i>
+            <div><b>10+</b><span>Años</span></div>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── ECOSISTEMA ─────────────── -->
+<section class="sec eco" id="unidades" aria-labelledby="cpm-unidades-titulo">
+  <div class="mancha a" data-par="10"></div>
+  <div class="mancha b" data-par="-12"></div>
+  <div class="wrap">
+    <div style="max-width:680px">
+      <span class="kicker rv">Nuestro ecosistema</span>
+      <h2 id="cpm-unidades-titulo" class="sec-t rv d1">Unidades de negocio <span class="oro">integradas</span></h2>
+      <p class="sec-s rv d2">Un ecosistema completo de soluciones para inversiones inmobiliarias, desarrollo empresarial y protección patrimonial.</p>
+    </div>
+    <div class="cards" id="cpmCards">
+      <a class="card glass rv d1" href="/servicios-inmobiliarios" aria-label="Conocer servicios de venta y promoción inmobiliaria">
+        <div class="num"><s></s>01 / Bienes raíces</div>
+        <h3>Venta y promoción inmobiliaria</h3>
+        <p>Comercializamos propiedades residenciales, comerciales y rurales en Yucatán. También vendemos tu propiedad con estrategia de mercado y una red de compradores activos.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card glass rv d2" href="/division-legal" aria-label="Conocer los servicios legales del corporativo">
+        <div class="num"><s></s>02 / Legal</div>
+        <h3>Servicios legales</h3>
+        <p>Protección legal integral para personas físicas y morales: contratos, regularización de propiedades, litigios civiles y acompañamiento jurídico empresarial.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card glass rv d3" href="/marketing" aria-label="Conocer los servicios de marketing inmobiliario y empresarial">
+        <div class="num"><s></s>03 / Mercadotecnia</div>
+        <h3>Marketing inmobiliario y empresarial</h3>
+        <p>Desarrollamos estrategias de branding, campañas digitales, gestión de redes sociales, publicidad pagada y posicionamiento de marca.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card glass rv d1" href="/construccion-desarrollo" aria-label="Conocer los servicios de construcción y remodelación">
+        <div class="num"><s></s>04 / Desarrollo</div>
+        <h3>Construcción y remodelación</h3>
+        <p>Ejecutamos casas, locales, bodegas, desarrollos habitacionales y remodelaciones con supervisión técnica y control de calidad.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card glass rv d2" href="/construccion-desarrollo" aria-label="Conocer los servicios de desarrollo inmobiliario">
+        <div class="num"><s></s>05 / Desarrollo inmobiliario</div>
+        <h3>Desarrollo, ejecución y venta</h3>
+        <p>Gestionamos proyectos desde la adquisición del terreno y el diseño urbano hasta los permisos y la comercialización del desarrollo.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card glass rv d3" href="/division-legal" aria-label="Conocer los servicios de avalúo, escrituración y permisos">
+        <div class="num"><s></s>06 / Escrituración y permisos</div>
+        <h3>Avalúo y escrituración</h3>
+        <p>Realizamos avalúos certificados, escrituración, regularización de predios y gestión notarial para compraventa, crédito o trámites fiscales.</p>
+        <span class="ir">Conocer más <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+    <div class="eco-cta rv"><a class="btn btn-navy" href="/contacto">Solicitar información
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a></div>
+  </div>
+</section>
+
+<!-- ─────────────── RESULTADOS ─────────────── -->
+<section class="sec res" aria-labelledby="cpm-resultados-titulo">
+  <div class="wrap">
+    <span class="kicker rv">Resultados que hablan</span>
+    <h2 id="cpm-resultados-titulo" class="sec-t rv d1" style="max-width:16ch;margin-left:auto;margin-right:auto">Más de una década construyendo <span class="oro">confianza</span></h2>
+    <div class="cifras">
+      <div class="cifra glass-dark rv d1"><b class="n" data-a="80" data-pre="+">+80</b><span>Propiedades en cartera</span></div>
+      <div class="cifra glass-dark rv d2"><b class="n" data-a="6">6</b><span>Líneas de servicio</span></div>
+      <div class="cifra glass-dark rv d3"><b class="n" data-a="5" data-pre="+">+5</b><span>Estados atendidos</span></div>
+      <div class="cifra glass-dark rv d4"><b class="n" data-a="100" data-suf="%">100%</b><span>Compromiso con el cliente</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── CARTERA ─────────────── -->
+<section class="sec cart" aria-labelledby="cpm-cartera-titulo">
+  <div class="mancha a" data-par="-14"></div>
+  <div class="mancha b" data-par="12"></div>
+  <div class="wrap">
+    <div class="cart-grid">
+      <div class="cart-panel glass rv">
+        <span class="kicker">Cartera activa</span>
+        <h2 id="cpm-cartera-titulo" class="sec-t"><span class="oro">+80</span> propiedades en Yucatán y Quintana Roo</h2>
+        <p class="sec-s">Terrenos, macrolotes, casas, ranchos, casas coloniales y más. Actualizado en tiempo real.</p>
+        <a class="btn btn-oro" href="/catalogo-de-propiedades">Ver portafolio completo
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="mosaico rv d2" id="cpmMosaico" aria-label="Muestra de propiedades disponibles">
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-11-at-16.23.37-7FYaMcUzNZUVjmNv.jpeg" alt="Terreno disponible en la cartera inmobiliaria de CPM en Yucatán" width="700" height="700" loading="lazy" decoding="async"></figure>
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-09-at-12.12.27-iSC4Bi7KvoeeyyuM.jpeg" alt="Propiedad residencial promovida por Corporativo Piñeiro Medina" width="700" height="700" loading="lazy" decoding="async"></figure>
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-04-at-16.55.20-sfW7FoskAJSvRfIP.jpeg" alt="Proyecto inmobiliario disponible en la península de Yucatán" width="700" height="700" loading="lazy" decoding="async"></figure>
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-09-at-21.09.13-iyG9cifcJxOCU7bP.jpeg" alt="Inmueble de la cartera de Corporativo Piñeiro Medina" width="700" height="700" loading="lazy" decoding="async"></figure>
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-04-at-16.50.43-yVRoYIYsFbXEIxoc.jpeg" alt="Terreno y desarrollo inmobiliario comercializado por CPM" width="700" height="700" loading="lazy" decoding="async"></figure>
+        <figure><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=700,fit=crop/5MikVliRfr5rWuzU/whatsapp-image-2025-12-11-at-16.25.17-irMpnQQwsNNxCt3b.jpeg" alt="Terrenos y desarrollos de Corporativo Piñeiro Medina en Yucatán" width="700" height="700" loading="lazy" decoding="async"></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── CIERRE ─────────────── -->
+<section class="sec cierre" aria-labelledby="cpm-contacto-titulo">
+  <div class="mancha a" data-par="8"></div>
+  <div class="wrap">
+    <div class="cierre-caja glass-dark rv">
+      <img class="logo-cierre" width="420" height="100" src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=420,fit=crop/5MikVliRfr5rWuzU/mesa-de-trabajo-1-Eu7SPKSqRsqclzcY.png" alt="Corporativo Piñeiro-Medina" loading="lazy"/>
+      <h2 id="cpm-contacto-titulo" class="sec-t">Certeza operativa y <span class="oro">solidez jurídica</span></h2>
+      <p>Cuéntanos qué necesitas y te conectamos con la división correcta. Respuesta en menos de 24 horas.</p>
+      <a class="btn btn-oro" href="/contacto">Hablar con el corporativo
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+var root=document.getElementById('cpm-home');
+if(!root) return;
+root.setAttribute('data-on','1');
+/* Si algo falla mas abajo, se quita la clase y todo queda visible */
+function panico(e){
+  try{ root.className=root.className.replace(/\banim\b/g,''); }catch(_){}
+  try{ if(window.console&&console.warn) console.warn('[CPM home]',e); }catch(_){}
+}
+try{ principal(); }catch(e){ panico(e); }
+
+function principal(){
+
+/* ═══════════ A DÓNDE ABREN LOS ENLACES ═══════════
+   Hostinger mete este bloque en un IFRAME. Un enlace normal intenta
+   cargar la página DENTRO del iframe, y el sitio se niega a mostrarse
+   dentro de sí mismo: sale "[www.cpmempresarial.com](https://www.cpmempresarial.com) rechazó la conexión".
+   Por eso hay que decirle explícitamente a dónde abrir:
+
+     '_top'   -> sale del iframe y navega la pestaña actual.
+                 Es como se comporta un enlace normal del sitio.
+     '_blank' -> abre en una pestaña nueva.
+
+   Cambia solo esta palabra. */
+var DESTINO = '_top';
+/* ═════════════════════════════════════════ */
+
+var q=function(s,c){ return Array.prototype.slice.call((c||root).querySelectorAll(s)); };
+var one=function(s,c){ return (c||root).querySelector(s); };
+var num=function(v,d){ v=parseFloat(v); return isNaN(v)?d:v; };
+var clamp=function(v){ return v<0?0:(v>1?1:v); };
+var reduce=false;
+try{ reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+
+/* Abrir enlaces fuera del iframe de Hostinger. */
+q('a[href]').forEach(function(a){
+  var h=a.getAttribute('href')||'';
+  if(/^(#|mailto:|tel:|javascript:)/i.test(h)) return;   /* anclas y contactos se quedan igual */
+  a.setAttribute('target',DESTINO);
+  if(DESTINO==='_blank') a.setAttribute('rel','noopener');
+});
+
+/* ═══════════ ¿ESTAMOS EN UN IFRAME? ═══════════
+   Hostinger a veces mete el bloque en un iframe. Ahi el scroll ocurre en
+   la pagina padre; se lee su geometria para saber que esta a la vista.
+   Nunca se escribe el scroll de nadie. */
+var MARCO={el:null,win:null};
+(function(){
+  var dentro=false;
+  try{ dentro=(window.self!==window.top); }catch(e){ dentro=true; }
+  if(!dentro) return;
+  try{
+    var fe=window.frameElement;
+    if(fe && typeof window.parent.innerHeight==='number'){ MARCO.el=fe; MARCO.win=window.parent; }
+  }catch(e){ MARCO.el=null; MARCO.win=null; }
+})();
+function altoVista(){
+  if(MARCO.win){ try{ return MARCO.win.innerHeight||window.innerHeight; }catch(e){} }
+  return window.innerHeight||800;
+}
+function desfase(){
+  if(!MARCO.el) return 0;
+  try{ return MARCO.el.getBoundingClientRect().top; }catch(e){ return 0; }
+}
+
+/* ── Desbloquear el contenedor de Hostinger y ajustar el alto del iframe ── */
+function liberar(){
+  var el=root.parentElement,n=0;
+  while(el && el!==document.body && n<8){
+    var s=el.style;
+    /* Solo se quitan restricciones. NO poner width:'100%': si el contenedor
+       trae padding con content-box, width:100%+padding desborda a la
+       derecha y toda la pagina se recorre de lado. */
+    s.maxWidth='none'; s.boxSizing='border-box';
+    s.height='auto'; s.minHeight='0'; s.maxHeight='none'; s.overflow='visible';
+    el=el.parentElement; n++;
+  }
+  ajustarAlto();
+}
+function ajustarAlto(){
+  if(!MARCO.el) return;
+  try{
+    var alto=Math.ceil(root.getBoundingClientRect().height);
+    if(alto<40) return;
+    if(Math.abs((parseFloat(MARCO.el.style.height)||0)-alto)>2){
+      MARCO.el.style.height=alto+'px'; MARCO.el.style.minHeight='0';
+    }
+    var el=MARCO.el.parentElement,n=0;
+    while(el && el.tagName!=='BODY' && n<6){
+      var s=el.style; s.height='auto'; s.minHeight='0'; s.maxHeight='none'; s.overflow='visible';
+      el=el.parentElement; n++;
+    }
+  }catch(e){}
+}
+liberar();
+window.addEventListener('load',liberar);
+window.addEventListener('resize',liberar,{passive:true});
+[250,700,1500,2500].forEach(function(t){ setTimeout(liberar,t); });
+setInterval(ajustarAlto,800);
+
+if(reduce){ root.className=root.className.replace(/\banim\b/g,''); return; }
+
+/* ═══════════ MOTOR DE SCROLL ═══════════
+   entradas: se les pone .in una sola vez
+   scrubs  : funciones que se recalculan al hacer scroll
+   Nunca escribe la posicion de scroll. */
+var entradas=[], scrubs=[], sondeo=null, k=1;
+var INDIV=false;
+try{ INDIV=!!(window.CSS&&CSS.supports&&CSS.supports('translate','0px 1px')); }catch(e){}
+
+function tic(){
+  var H=altoVista(), S=desfase();
+  for(var i=entradas.length-1;i>=0;i--){
+    var it=entradas[i], r;
+    try{ r=it.el.getBoundingClientRect(); }catch(e){ entradas.splice(i,1); continue; }
+    if(r.top+S < H*0.92){
+      it.el.classList.add('in');
+      if(it.cb){ try{ it.cb(it.el); }catch(e){} }
+      entradas.splice(i,1);
+    }
+  }
+  if(!entradas.length && sondeo){ clearInterval(sondeo); sondeo=null; }
+  for(var j=0;j<scrubs.length;j++){ try{ scrubs[j](H,S); }catch(e){} }
+}
+var pend=false;
+function ping(){ if(!pend){ pend=true; requestAnimationFrame(function(){ pend=false; tic(); }); } }
+
+/* 1) Entradas */
+q('.rv').forEach(function(el){ entradas.push({el:el}); });
+
+/* 2) H1 palabra por palabra */
+(function(){
+  var h1=one('.hero h1[data-split]');
+  if(!h1) return;
+  var pal=[];
+  (function anda(nodo){
+    Array.prototype.slice.call(nodo.childNodes).forEach(function(n){
+      if(n.nodeType===3){
+        var partes=n.nodeValue.split(/(\s+)/), frag=document.createDocumentFragment();
+        partes.forEach(function(p){
+          if(!p) return;
+          if(/^\s+$/.test(p)){ frag.appendChild(document.createTextNode(' ')); return; }
+          var s=document.createElement('span'); s.className='w'; s.textContent=p;
+          frag.appendChild(s); pal.push(s);
+        });
+        nodo.replaceChild(frag,n);
+      } else if(n.nodeType===1){ anda(n); }
+    });
+  })(h1);
+  pal.forEach(function(s,i){ s.style.setProperty('--i',i); });
+  if(pal.length) h1.setAttribute('data-split','1');
+})();
+
+/* 3) Parallax con la propiedad `translate` (no choca con transform) */
+if(INDIV){
+  q('[data-par]').forEach(function(el){
+    var amt=num(el.getAttribute('data-par'),10);
+    var trig=(el.closest&&el.closest('.sec'))||el.parentNode||el;
+    scrubs.push(function(H,S){
+      var r=trig.getBoundingClientRect(), t=r.top+S;
+      var p=clamp((H-t)/(H+r.height));
+      el.style.translate='0 '+(((p-0.5)*2*amt)*k).toFixed(2)+'%';
+    });
+  });
+}
+
+/* 4) La foto del hero se abre al hacer scroll */
+(function(){
+  var fig=one('[data-clip]'), img=one('[data-clip-img]');
+  if(!fig) return;
+  scrubs.push(function(H,S){
+    var r=fig.getBoundingClientRect(), t=r.top+S;
+    var p=clamp((H*0.95-t)/(H*0.6)), e=1-p;
+    var kk=(window.innerWidth>=960)?1:.6;
+    var iy=(6*kk*e).toFixed(2), ix=(9*kk*e).toFixed(2);
+    var cp='inset('+iy+'% '+ix+'% '+iy+'% '+ix+'% round '+(24+14*e).toFixed(1)+'px)';
+    fig.style.clipPath=cp; fig.style.webkitClipPath=cp;
+    if(img && INDIV) img.style.scale=(1+0.10*e).toFixed(4);
+  });
+})();
+
+/* 5) Deriva de las fotos del mosaico */
+if(INDIV){
+  q('#cpmMosaico figure').forEach(function(fg,i){
+    var im=one('img',fg); if(!im) return;
+    var amt=3+(i%3);
+    scrubs.push(function(H,S){
+      var r=fg.getBoundingClientRect(), t=r.top+S;
+      var p=clamp((H-t)/(H+r.height));
+      im.style.translate='0 '+(((0.5-p)*2*amt)*k).toFixed(2)+'%';
+    });
+  });
+}
+
+/* 6) Contadores */
+q('.n[data-a]').forEach(function(el){
+  entradas.push({el:el, cb:function(){
+    if(el.getAttribute('data-hecho')) return;
+    el.setAttribute('data-hecho','1');
+    var a=num(el.getAttribute('data-a'),0);
+    var pre=el.getAttribute('data-pre')||'', suf=el.getAttribute('data-suf')||'';
+    var t0=null, dur=1500;
+    function paso(ts){
+      if(t0===null) t0=ts;
+      var p=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-p,3);
+      el.textContent=pre+Math.round(a*e)+suf;
+      if(p<1) requestAnimationFrame(paso); else el.textContent=pre+a+suf;
+    }
+    requestAnimationFrame(paso);
+  }});
+});
+
+/* ── Arranque ── */
+function medirK(){ k=(window.innerWidth>=960)?1:.55; }
+medirK();
+function conectar(w){
+  try{
+    w.addEventListener('scroll',ping,{passive:true});
+    w.addEventListener('resize',function(){ medirK(); ping(); },{passive:true});
+  }catch(e){}
+}
+conectar(window);
+if(MARCO.win) conectar(MARCO.win);
+document.addEventListener('visibilitychange',function(){ if(!document.hidden){ tic(); ping(); } });
+
+/* Sondeo directo (no via requestAnimationFrame): en una pestaña en
+   segundo plano rAF se congela y las entradas nunca se dispararian. */
+sondeo=setInterval(tic,300);
+
+tic();
+[80,300,800,1600,3000].forEach(function(t){ setTimeout(tic,t); });
+window.addEventListener('load',tic);
+try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ tic(); ajustarAlto(); }); }catch(e){}
+q('img').forEach(function(im){ if(!im.complete) im.addEventListener('load',function(){ tic(); ajustarAlto(); },{once:true}); });
+
+/* Red de seguridad: a los 12 s, lo que siga pendiente se muestra */
+setTimeout(function(){
+  if(!entradas.length) return;
+  entradas.forEach(function(it){ it.el.classList.add('in'); if(it.cb){ try{ it.cb(it.el); }catch(e){} } });
+  entradas.length=0;
+  if(sondeo){ clearInterval(sondeo); sondeo=null; }
+},12000);
+
+}
+})();
+</script>
+</div>
+<!-- ===== FIN LANDING PRINCIPAL CPM ===== -->

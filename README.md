@@ -51,28 +51,45 @@ de scripts.
 | `hemca-embed-hostinger.html` | la página de HEMCA | `.hemca` |
 | `portafolio-hms-embed.html` | el portafolio de Hummingbird | `#hbp` |
 | `divisiones-embed-hostinger.html` | `/divisiones` | `#cpm-divisiones` |
+| `inicio-embed-hostinger.html` | la portada | `#cpm-home` |
 
-Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `build.py`); no se
-editan a mano, porque el guion vuelve a generarlos desde el original.
+Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `home_prep.py`,
+`build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
+original. Los originales de partida están en `src/`.
 
-### Destinos de los enlaces en Divisiones
+### Destinos de los enlaces
 
-El bloque de divisiones enlaza al resto del sitio. Para no depender de rutas
-escritas a mano, **busca cada destino en el menú real del sitio** y enlaza
-donde enlaza tu propia navegación; sólo si no lo encuentra usa una ruta de
-respaldo. Las rutas de respaldo están en una sola tabla, `DESTINOS`, dentro de
-`tools/build.py`:
+Los bloques de **Divisiones** y de la **portada** enlazan al resto del sitio.
+Para no depender de rutas escritas a mano —que se quedan viejas en cuanto una
+página cambia de sitio— **buscan cada destino en el menú real del sitio** y
+enlazan donde enlaza tu propia navegación; sólo si no lo encuentran usan una
+ruta de respaldo. Todos abren en la ventana completa (`target="_top"`), no
+dentro del iframe.
 
-| Destino | Se busca en el menú como | Respaldo |
+Las tablas de respaldo son el único sitio que hay que tocar si una dirección
+cambia: `DESTINOS` en `tools/build.py` (divisiones) y en `tools/home_prep.py`
+(portada).
+
+Portada:
+
+| Tarjeta | Se busca en el menú como | Respaldo |
 | --- | --- | --- |
-| Construcción | construcción / construcción y desarrollo | `/construccion` |
-| Inmobiliaria | inmobiliaria / servicios inmobiliarios | `/servicios-inmobiliarios` |
-| Legal | legal / división legal / jurídico | `/division-legal` |
-| Marketing | marketing / hummingbird | `/marketing` |
-| Contacto | contacto / contáctanos | `/contacto` |
-| Propiedades | propiedades / inmuebles | `/catalogo-de-propiedades` |
+| Venta y promoción inmobiliaria | servicios inmobiliarios / inmobiliaria | `/servicios-inmobiliarios` |
+| Servicios legales | legal / división legal / jurídico | `/division-legal` |
+| Marketing inmobiliario y empresarial | hms / hummingbird | `/hms` |
+| Construcción y remodelación | hemca | `/hemca` |
+| Desarrollo, ejecución y venta | servicios inmobiliarios / inmobiliaria | `/servicios-inmobiliarios` |
+| Avalúo y escrituración | regularización / regularización de predios | `/regularizacion-predios` |
 
-Todos abren en la ventana completa (`target="_top"`), no dentro del iframe.
+Las claves de HEMCA y HMS son a propósito estrechas: si incluyeran
+«construcción» o «marketing», el menú podría devolver esas otras páginas y el
+enlace acabaría donde no se pidió.
+
+Las dos tarjetas que van a servicios inmobiliarios apuntan además **al
+apartado que les corresponde**. Como los identificadores de esa página no se
+pueden saber de antemano, se miran cuando hacen falta: al pasar el puntero por
+la tarjeta se pide la página una vez, se busca el título que corresponde y se
+añade su ancla. Si falla algo, el enlace se queda apuntando a la página.
 
 ## Pendiente
 
