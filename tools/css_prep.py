@@ -143,6 +143,73 @@ acotado += """
     }
 """
 
+# --------------------------------------------- 3b. Movil: etapas en columna
+# En escritorio las cuatro etapas comparten una pantalla anclada y se turnan
+# segun el scroll. En movil eso obliga a reservar cuatro pantallas de recorrido
+# y a superponer texto sobre la foto, que es donde se rompia. Aqui pasan a ser
+# cuatro filas normales, una debajo de otra, cada una con SU foto, y la unica
+# animacion es que se encienden al asomar. Es una transicion de CSS disparada
+# por una clase que se pone una sola vez: no se recalcula nada por fotograma,
+# asi que no puede temblar ni arrastrar.
+fotos = re.findall(r'data-story-image="\d" src="([^"]+)"',
+                   open(FUENTE, encoding='utf-8').read())
+if len(fotos) != 4:
+    sys.exit('se esperaban 4 imagenes de etapa, se encontraron %d' % len(fotos))
+
+acotado += """
+    @media (max-width: 760px) {
+      .hemca { __VARS__ }
+
+      /* El bloque deja de reservar recorrido y el escenario deja de anclarse. */
+      .hemca .story-layout { height: auto; }
+      .hemca .story-stage { position: relative; top: auto; left: auto; height: auto;
+        overflow: visible; contain: none; will-change: auto; transform: none !important; }
+      .hemca .story-media, .hemca .story-chapters { display: none; }
+      .hemca .story-panel { position: relative; inset: auto; display: block; align-items: stretch; pointer-events: auto; }
+      .hemca .story-panel .shell { height: auto; }
+
+      /* Cada etapa es una fila: foto arriba, texto debajo. */
+      .hemca .story-card, .hemca .story-card.active {
+        position: relative; top: auto; left: auto; width: 100%; max-width: none;
+        padding: 0 0 44px; opacity: 1; transform: none; }
+      .hemca .story-card:last-child { padding-bottom: 8px; }
+      .hemca .story-card p { max-width: none; }
+
+      /* La foto de la etapa: crece y toma color al entrar en pantalla. */
+      .hemca .story-card::before { content: ""; display: block; width: 100%;
+        height: clamp(190px, 52vw, 290px); margin-bottom: 24px; border-radius: 14px;
+        background-color: #0d2031; background-size: cover; background-position: center;
+        background-repeat: no-repeat;
+        box-shadow: 0 16px 34px rgba(0, 0, 0, .45);
+        transform: scale(.9); opacity: .28;
+        transition: transform .8s cubic-bezier(.16, 1, .3, 1), opacity .6s ease, box-shadow .8s ease; }
+      .hemca .story-card.mv-activo::before { transform: none; opacity: 1;
+        box-shadow: 0 22px 46px rgba(0, 0, 0, .55), 0 0 30px rgba(242, 100, 34, .22); }
+      .hemca .story-card:nth-child(1)::before { background-image: var(--etapa-1); }
+      .hemca .story-card:nth-child(2)::before { background-image: var(--etapa-2); }
+      .hemca .story-card:nth-child(3)::before { background-image: var(--etapa-3); }
+      .hemca .story-card:nth-child(4)::before { background-image: var(--etapa-4); }
+
+      /* El texto acompana a la foto. Se atenua el CONTENIDO, no la fila: si se
+         atenuara la fila, su opacidad multiplicaria la de la foto y la entrada
+         iria de casi nada a casi nada -- invisible en los dos extremos.
+         Cuelga de .js-on, asi que sin JS todo nace visible. */
+      .hemca.js-on .story-card .story-number,
+      .hemca.js-on .story-card h3,
+      .hemca.js-on .story-card p { opacity: .3; transform: translateY(16px);
+        transition: opacity .7s ease, transform .7s cubic-bezier(.16, 1, .3, 1); }
+      .hemca.js-on .story-card.mv-activo .story-number,
+      .hemca.js-on .story-card.mv-activo h3,
+      .hemca.js-on .story-card.mv-activo p { opacity: 1; transform: none; }
+    }
+    @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+      .hemca .story-card::before { transform: none; opacity: 1; }
+      .hemca.js-on .story-card .story-number,
+      .hemca.js-on .story-card h3,
+      .hemca.js-on .story-card p { opacity: 1; transform: none; }
+    }
+""".replace('__VARS__', ' '.join('--etapa-%d: url(%s);' % (i + 1, u) for i, u in enumerate(fotos)))
+
 # ------------------------------------------------------------- 4. Verificacion
 fallos = []
 def revisa(bloque, dentro_de_at=False):

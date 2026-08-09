@@ -64,9 +64,19 @@
       return Math.max(1, M.alto(bloque) - M.alto(escenario));
     }
 
+    /* En movil las etapas son cuatro filas normales (ver el CSS): no hay nada
+       que anclar y no se reserva recorrido. La unica animacion es que cada
+       una se enciende al asomar, y de eso se encarga el CSS a partir de una
+       clase que se pone una sola vez. */
+    function enMovil() { return window.innerWidth <= 760; }
+
     if (bloque && escenario && fichas.length) {
       raiz.classList.add("etapas-scroll");
+      fichas.forEach(function (f) {
+        M.alEntrar(f, function (el) { el.classList.add("mv-activo"); });
+      });
       M.continuo(function (H, S) {
+        if (enMovil()) { M.escribe(escenario, "transform", ""); return; }
         var arriba = M.techo(bloque, S);
         var rec = recorrido();
         /* Mientras el bloque no llega al borde superior el escenario
@@ -79,7 +89,7 @@
       /* Los indicadores llevan el scroll al tramo de su etapa. */
       botones.forEach(function (b, k) {
         b.addEventListener("click", function () {
-          if (!raiz.classList.contains("etapas-scroll")) { mostrarEtapa(k); return; }
+          if (enMovil() || !raiz.classList.contains("etapas-scroll")) { mostrarEtapa(k); return; }
           var rec = recorrido();
           var arribaDoc = bloque.getBoundingClientRect().top + window.pageYOffset;
           var destino = arribaDoc + ((k + 0.5) / fichas.length) * rec;
