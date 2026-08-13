@@ -41,7 +41,7 @@ public_html/
 
 ## Bloques para el contenedor de código de Hostinger
 
-Además de la página suelta de HEMCA, hay tres bloques pensados para pegarse
+Además de la página suelta de HEMCA, hay cinco bloques pensados para pegarse
 en un contenedor de código del constructor. No llevan etiquetas de documento,
 todo su CSS está acotado a su propio contenedor y no dependen de ningún CDN
 de scripts.
