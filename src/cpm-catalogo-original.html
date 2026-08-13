@@ -1,0 +1,1482 @@
+<!-- ============================================================
+     CATALOGO DE PROPIEDADES · CORPORATIVO PIÑEIRO-MEDINA  (v5)
+     Rediseño completo. Pega TODO este bloque en un campo
+     "Codigo personalizado" (HTML) de Hostinger.
+     ------------------------------------------------------------
+     POR QUE LA v4 SE SEGUIA VIENDO MAL  (medido, no supuesto)
+
+     El tema de Hostinger PISABA los estilos. Sus reglas son del tipo
+     `body .contenido button {...}` (especificidad 0,2,1) y las mias eran
+     `.cpm-chip {...}` (0,1,0): gana el tema. Resultado medido sobre los
+     controles: borde 0px, radio 0px, padding 0px, fondo transparente y
+     tipografia Georgia. Las tarjetas se salvaban solo porque son <div>
+     y el tema no estiliza divs. Por eso se veian tarjetas bonitas pero
+     el buscador y los filtros "en crudo".
+
+     EN ESTA VERSION
+     1) TODAS las reglas van ancladas a #cpm-catalogo (o #cpm-portal para
+        los modales). Los controles de formulario ademas llevan
+        !important en las propiedades que los constructores siempre
+        pisan. Es la unica forma fiable dentro de un tema ajeno.
+     2) BARRA STICKY QUE NO SE ESCONDE. Antes se pegaba en top:0 y
+        quedaba DEBAJO de la cabecera fija del sitio. Ahora se mide la
+        cabecera fija en tiempo real y la barra se pega debajo de ella.
+     3) DISEÑO NUEVO con la identidad CPM: navy #132a41, azul #3d7ab5,
+        acento oro #c8a84b, tipografia Montserrat. Portada con logo,
+        tarjetas con proporcion fija, marca de agua CPM cuando no hay
+        foto, ficha rediseñada y esqueletos de carga.
+     4) Se conserva de la v4: busqueda tolerante a errores, ficha
+        centrada en pantalla aunque el bloque este en un iframe,
+        desbloqueo del contenedor de Hostinger y cadena de respaldo.
+
+     ------------------------------------------------------------
+     ⚠ LAS FOTOS NO PUEDEN APARECER SIN CAMBIAR LAS REGLAS DE FIREBASE.
+     Esto NO tiene arreglo por codigo. Comprobado: una lectura sin
+     sesion a la coleccion 'terrenos' devuelve
+         permission-denied :: Missing or insufficient permissions
+     asi que el catalogo publico solo puede mostrar el respaldo
+     incrustado aqui, que no trae fotos.
+
+     Para que se vean fotos y datos reales, en la consola de Firebase >
+     Firestore > Reglas, pega:
+
+         match /terrenos/{id} {
+           allow read, write: if request.auth != null;
+         }
+         match /catalogo_publico/{id} {
+           allow read: if true;
+           allow write: if request.auth != null;
+         }
+
+     y despues entra al portafolio de asesores y aprieta el boton
+     "↻ Sincronizar catálogo". Eso llena 'catalogo_publico' con los
+     campos publicos (sin comision ni comentarios).
+
+     COMPROBAR QUE ESTA PEGADA ESTA VERSION: agrega ?cpmdebug=1 a la URL.
+     Debe aparecer una franja amarilla que dice "CATALOGO v5".
+     ============================================================ -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<div id="cpm-catalogo">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════
+   IDENTIDAD CPM
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-catalogo, #cpm-portal{
+  --navy:#132a41;
+  --navy2:#1d3f5f;
+  --blue:#3d7ab5;
+  --blue-d:#2d5f8f;
+  --blue-l:#5a95cc;
+  --pale:#e8f2fb;
+  --gold:#b4912f;
+  /* Oro metálico: un color plano se ve mostaza. El barrido de 6 paradas
+     (sombra → luz → sombra) es lo que lo hace leer como metal. */
+  --oro-sombra:#7a5c12;
+  --oro-base:#b0892b;
+  --oro-luz:#f2dd9e;
+  --oro-grad:linear-gradient(135deg,#8f6d1a 0%,#c8a53f 18%,#f2dd9e 40%,#e0c46e 54%,#b0892b 76%,#8a681a 100%);
+  --oro-grad-sutil:linear-gradient(135deg,#c9a63f 0%,#eeda98 45%,#b48f2c 100%);
+  --paper:#f7f9fc;
+  --line:#e4eaf1;
+  --ink:#16283a;
+  --ink2:#5a6a7a;
+  --ink3:#93a2b3;
+  --white:#fff;
+  --ff:'Montserrat',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:16px;
+  --r-sm:10px;
+  --sh:0 1px 2px rgba(19,42,65,.05), 0 6px 20px rgba(19,42,65,.06);
+  --sh-h:0 10px 20px rgba(19,42,65,.10), 0 24px 48px rgba(19,42,65,.14);
+  --topbar:0px;   /* alto de la cabecera fija del sitio; lo mide el JS */
+}
+
+/* ── Reset acotado ── */
+#cpm-catalogo, #cpm-catalogo *, #cpm-catalogo *::before, #cpm-catalogo *::after,
+#cpm-portal, #cpm-portal *, #cpm-portal *::before, #cpm-portal *::after{
+  box-sizing:border-box; margin:0; padding:0;
+}
+#cpm-catalogo{
+  font-family:var(--ff); background:var(--paper); color:var(--ink);
+  width:100%; line-height:1.5; font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+#cpm-catalogo img{max-width:100%;display:block}
+#cpm-catalogo svg{display:block}
+#cpm-catalogo a{text-decoration:none;color:inherit}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESET DURO DE CONTROLES
+   Los temas de constructores traen reglas como
+   `body .contenido button{...}` que ganan por especificidad a una
+   sola clase. Anclar al id sube la especificidad, y el !important
+   cubre los casos en que el tema tambien usa !important.
+   Sin esto, el buscador y los filtros salen sin borde ni fondo.
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-catalogo button.cpm-ctl,
+#cpm-catalogo input.cpm-ctl,
+#cpm-catalogo select.cpm-ctl{
+  font-family:var(--ff) !important;
+  font-weight:600 !important;
+  line-height:1.25 !important;
+  margin:0 !important;
+  box-shadow:none !important;
+  text-transform:none !important;
+  letter-spacing:normal !important;
+  text-shadow:none !important;
+  min-height:0 !important;
+  height:auto !important;
+  -webkit-appearance:none !important;
+  -moz-appearance:none !important;
+  appearance:none !important;
+  outline:none !important;
+  cursor:pointer;
+  display:inline-flex !important;
+  align-items:center !important;
+  transition:border-color .18s, background .18s, color .18s, box-shadow .18s;
+}
+#cpm-catalogo input.cpm-ctl{ cursor:text; display:block !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PORTADA
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-catalogo .cpm-hero{
+  background:
+    radial-gradient(1200px 320px at 85% -40%, rgba(90,149,204,.35), transparent 60%),
+    linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  color:#fff; padding:clamp(28px,4vw,44px) 0 clamp(24px,3.4vw,38px);
+  position:relative; overflow:hidden;
+}
+#cpm-catalogo .cpm-hero::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:3px;
+  background:linear-gradient(90deg, var(--gold), rgba(200,168,75,0) 55%);
+}
+#cpm-catalogo .cpm-in{ width:100%; max-width:1240px; margin:0 auto; padding:0 clamp(16px,3vw,28px); }
+#cpm-catalogo .cpm-hero-top{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+#cpm-catalogo .cpm-hero-top img{ height:38px; width:auto; }
+#cpm-catalogo .cpm-hero-top span{
+  font-size:10px; letter-spacing:.28em; text-transform:uppercase;
+  color:rgba(255,255,255,.55); font-weight:600; border-left:1px solid rgba(255,255,255,.22); padding-left:14px;
+}
+#cpm-catalogo .cpm-hero h2{
+  font-family:var(--ff); font-weight:800; font-size:clamp(1.5rem,3.4vw,2.3rem);
+  line-height:1.15; letter-spacing:-.02em; margin-bottom:8px; color:#fff;
+}
+#cpm-catalogo .cpm-hero h2 i{ font-style:normal; color:var(--blue-l); }
+#cpm-catalogo .cpm-hero p{ color:rgba(255,255,255,.68); font-size:14px; max-width:52ch; font-weight:400; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BARRA DE FILTROS (sticky por debajo de la cabecera del sitio)
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-catalogo .cpm-bar{
+  position:sticky; top:var(--topbar); z-index:30;
+  background:rgba(255,255,255,.92);
+  -webkit-backdrop-filter:saturate(160%) blur(12px); backdrop-filter:saturate(160%) blur(12px);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 6px 18px rgba(19,42,65,.05);
+}
+#cpm-catalogo .cpm-bar-in{
+  width:100%; max-width:1240px; margin:0 auto; padding:14px clamp(16px,3vw,28px);
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+/* buscador */
+#cpm-catalogo .cpm-find{ position:relative; flex:1 1 260px; min-width:0; }
+#cpm-catalogo .cpm-find svg{
+  position:absolute; left:15px; top:50%; margin-top:-9px;
+  width:18px; height:18px; color:var(--ink3); pointer-events:none;
+}
+#cpm-catalogo input.cpm-search{
+  width:100% !important;
+  padding:12px 14px 12px 44px !important;
+  border:1.5px solid var(--line) !important;
+  border-radius:12px !important;
+  background:var(--white) !important;
+  color:var(--ink) !important;
+  font-size:14px !important;
+  font-weight:500 !important;
+}
+#cpm-catalogo input.cpm-search::placeholder{ color:var(--ink3); font-weight:400; opacity:1; }
+#cpm-catalogo input.cpm-search:focus{
+  border-color:var(--blue) !important;
+  box-shadow:0 0 0 3px rgba(61,122,181,.15) !important;
+}
+/* control segmentado */
+#cpm-catalogo .cpm-seg{
+  display:inline-flex; padding:3px; gap:2px; background:var(--pale);
+  border:1px solid #d7e6f6; border-radius:12px; flex:0 0 auto;
+}
+#cpm-catalogo button.cpm-tab{
+  padding:8px 16px !important;
+  border:0 !important;
+  border-radius:9px !important;
+  background:transparent !important;
+  color:var(--blue-d) !important;
+  font-size:12.5px !important;
+  font-weight:700 !important;
+  white-space:nowrap;
+}
+#cpm-catalogo button.cpm-tab:hover{ background:rgba(255,255,255,.7) !important; }
+#cpm-catalogo button.cpm-tab.on{
+  background:var(--navy) !important; color:#fff !important;
+  box-shadow:0 3px 10px rgba(19,42,65,.28) !important;
+}
+/* select de ciudad */
+#cpm-catalogo .cpm-city{ position:relative; flex:0 0 auto; }
+#cpm-catalogo select.cpm-select{
+  padding:11px 38px 11px 14px !important;
+  border:1.5px solid var(--line) !important;
+  border-radius:12px !important;
+  background:var(--white) !important;
+  color:var(--ink2) !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  min-width:190px;
+}
+#cpm-catalogo select.cpm-select:focus{ border-color:var(--blue) !important; }
+#cpm-catalogo .cpm-city::after{
+  content:''; position:absolute; right:15px; top:50%; margin-top:-3px;
+  width:8px; height:8px; border-right:2px solid var(--ink2); border-bottom:2px solid var(--ink2);
+  transform:rotate(45deg); pointer-events:none;
+}
+#cpm-catalogo .cpm-total{
+  margin-left:auto; font-size:12.5px; color:var(--ink2); font-weight:600; white-space:nowrap;
+}
+#cpm-catalogo .cpm-total b{ color:var(--navy); font-weight:800; }
+/* aviso de busqueda aproximada */
+#cpm-catalogo .cpm-hint{
+  flex:1 1 100%; display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  background:var(--pale); border:1px solid #cfe3f6; border-radius:11px;
+  padding:9px 14px; font-size:13px; color:var(--blue-d); font-weight:500;
+}
+#cpm-catalogo .cpm-hint svg{ width:16px; height:16px; flex:0 0 16px; }
+#cpm-catalogo .cpm-hint b{ font-weight:800; }
+
+/* ═══════════════════════════════════════════════════════════════
+   REJILLA Y TARJETAS
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-catalogo .cpm-body{ width:100%; max-width:1240px; margin:0 auto; padding:clamp(20px,3vw,30px) clamp(16px,3vw,28px) clamp(36px,5vw,56px); }
+#cpm-catalogo .cpm-grid{
+  display:grid; gap:clamp(14px,1.6vw,22px);
+  grid-template-columns:repeat(auto-fill, minmax(250px,1fr));
+}
+#cpm-catalogo .cpm-grid > *{ min-width:0; }
+
+#cpm-catalogo .cpm-card{
+  background:var(--white); border:1px solid var(--line); border-radius:var(--r);
+  overflow:hidden; cursor:pointer; box-shadow:var(--sh);
+  display:flex; flex-direction:column;
+  transition:transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .22s, border-color .22s;
+}
+#cpm-catalogo .cpm-card:hover{ transform:translateY(-5px); box-shadow:var(--sh-h); border-color:#cfe0f2; }
+#cpm-catalogo .cpm-thumb{
+  position:relative; aspect-ratio:4/3; overflow:hidden;
+  background:linear-gradient(150deg,#eaf3fc 0%,#d3e4f6 100%);
+}
+#cpm-catalogo .cpm-thumb img.cpm-photo{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  transition:transform .5s cubic-bezier(.2,.8,.3,1);
+}
+#cpm-catalogo .cpm-card:hover .cpm-thumb img.cpm-photo{ transform:scale(1.05); }
+/* Marca de agua CPM cuando la propiedad no tiene foto: se ve intencional,
+   no como una imagen rota. */
+#cpm-catalogo .cpm-wm{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+}
+#cpm-catalogo .cpm-wm img{ width:46%; max-width:120px; height:auto; opacity:.30; }
+#cpm-catalogo .cpm-wm::after{
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(135deg, rgba(255,255,255,.35) 0 2px, transparent 2px 9px);
+  opacity:.5;
+}
+#cpm-catalogo .cpm-tag{
+  position:absolute; top:11px; left:11px; z-index:2;
+  background:rgba(19,42,65,.9); color:#fff;
+  font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+  padding:5px 11px; border-radius:7px;
+}
+#cpm-catalogo .cpm-tag.macro{ background:rgba(200,168,75,.95); color:#2b2205; }
+#cpm-catalogo .cpm-nfoto{
+  position:absolute; bottom:10px; right:10px; z-index:2;
+  background:rgba(19,42,65,.75); color:#fff; border-radius:7px;
+  padding:4px 9px; font-size:11px; font-weight:700; display:flex; align-items:center; gap:5px;
+}
+#cpm-catalogo .cpm-nfoto svg{ width:12px; height:12px; }
+
+#cpm-catalogo .cpm-info{ padding:14px 16px 16px; display:flex; flex-direction:column; flex:1; }
+#cpm-catalogo .cpm-ref{
+  font-size:10px; font-weight:700; letter-spacing:.16em; color:var(--blue);
+  text-transform:uppercase; margin-bottom:6px;
+}
+#cpm-catalogo .cpm-title{
+  font-size:15px; font-weight:700; color:var(--navy); line-height:1.3;
+  letter-spacing:-.01em; margin-bottom:7px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+#cpm-catalogo .cpm-place{
+  font-size:12.5px; color:var(--ink2); font-weight:500;
+  display:flex; align-items:center; gap:6px; margin-bottom:14px;
+}
+#cpm-catalogo .cpm-place svg{ width:13px; height:13px; flex:0 0 13px; color:var(--blue-l); }
+#cpm-catalogo .cpm-place span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* flex-wrap en vez de un breakpoint: en tarjetas angostas el precio y el
+   chip de superficie no caben lado a lado (necesitan ~166px en un pie de
+   125px) y quedaban apretados. Asi el chip baja solo cuando hace falta. */
+#cpm-catalogo .cpm-foot{
+  margin-top:auto; padding-top:13px; border-top:1px solid var(--line);
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:4px 10px; flex-wrap:wrap;
+}
+#cpm-catalogo .cpm-price{ font-size:17px; font-weight:800; color:var(--navy); letter-spacing:-.02em; }
+#cpm-catalogo .cpm-size{
+  font-size:11.5px; font-weight:700; color:var(--blue-d);
+  background:var(--pale); padding:4px 10px; border-radius:7px; white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TARJETA PREMIUM (Imperio Conkal)
+   Mismo tamaño y distribución que las demás; solo cambia el
+   tratamiento: borde dorado, banderín y capas informativas.
+   ═══════════════════════════════════════════════════════════════ */
+/* Borde metálico de verdad: el degradado va en el border-box y el
+   relleno en el padding-box. Un `border: 2px solid oro` se ve plano. */
+#cpm-catalogo .cpm-card.premium{
+  border:2px solid transparent;
+  background:
+    linear-gradient(180deg,#fffdf6 0%,var(--white) 46%) padding-box,
+    var(--oro-grad) border-box;
+  box-shadow:0 1px 3px rgba(122,92,18,.16), 0 14px 34px rgba(19,42,65,.13);
+}
+#cpm-catalogo .cpm-card.premium:hover{
+  box-shadow:0 6px 16px rgba(122,92,18,.24), 0 26px 54px rgba(19,42,65,.20);
+}
+/* banderín superior derecho */
+#cpm-catalogo .cpm-flag{
+  position:absolute; top:11px; right:11px; z-index:3;
+  background:var(--oro-grad); color:#3a2c06;
+  font-size:8.5px; font-weight:800; letter-spacing:.14em;
+  text-transform:uppercase; padding:5px 11px; border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.55);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+}
+/* capas informativas sobre la foto */
+#cpm-catalogo .cpm-layers{
+  position:absolute; left:10px; right:10px; bottom:10px; z-index:3;
+  display:flex; gap:5px; flex-wrap:wrap;
+}
+#cpm-catalogo .cpm-layer{
+  background:rgba(10,22,36,.82); color:#f2dd9e;
+  border:1px solid rgba(226,199,120,.42);
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+  font-size:8.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  padding:4px 8px; border-radius:5px; white-space:nowrap;
+}
+#cpm-catalogo .cpm-layer.hot{
+  background:var(--oro-grad-sutil); color:#3a2c06; border-color:rgba(122,92,18,.5);
+  text-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+/* degradado para que las capas se lean sobre cualquier foto */
+#cpm-catalogo .cpm-card.premium .cpm-thumb::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:52%;
+  background:linear-gradient(to top, rgba(9,20,32,.72), rgba(9,20,32,0));
+  pointer-events:none; z-index:2;
+}
+#cpm-catalogo .cpm-card.premium .cpm-ref{ color:#9a7d28; }
+#cpm-catalogo .cpm-card.premium .cpm-foot{ border-top-color:rgba(200,168,75,.42); }
+#cpm-catalogo .cpm-desde{
+  display:block; font-size:9.5px; font-weight:800; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink3); margin-bottom:1px;
+}
+/* botón dentro de la tarjeta */
+#cpm-catalogo a.cpm-cta-card{
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  margin-top:12px; padding:12px; border-radius:10px;
+  background:var(--oro-grad); color:#3a2c06;
+  font-size:11.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+  box-shadow:0 3px 10px rgba(122,92,18,.3), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(88,66,12,.35);
+  transition:transform .18s, box-shadow .18s, filter .18s;
+}
+#cpm-catalogo a.cpm-cta-card:hover{
+  transform:translateY(-2px); filter:saturate(1.08) brightness(1.04);
+  box-shadow:0 8px 18px rgba(122,92,18,.42), inset 0 1px 0 rgba(255,255,255,.6);
+}
+#cpm-catalogo a.cpm-cta-card svg{ width:14px; height:14px; }
+
+/* ── Ficha premium ── */
+#cpm-portal .cpm-sheet.premium{
+  border:2px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box, var(--oro-grad) border-box;
+}
+#cpm-portal .cpm-sheet.premium .cpm-head{
+  background:linear-gradient(135deg,#0f2437,#20456a);
+  border-bottom:0; position:relative;
+}
+/* filo metálico bajo la cabecera */
+#cpm-portal .cpm-sheet.premium .cpm-head::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--oro-grad);
+}
+#cpm-portal .cpm-sheet.premium .cpm-head .k{
+  background:var(--oro-grad-sutil); color:#3a2c06; text-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+#cpm-portal .cpm-layers-sheet{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px; }
+#cpm-portal .cpm-layer-b{
+  background:#fdf8ea; border:1px solid rgba(180,145,47,.45); color:#6d5410;
+  font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase;
+  padding:7px 12px; border-radius:8px;
+}
+#cpm-portal .cpm-layer-b.hot{
+  background:var(--oro-grad-sutil); color:#3a2c06; border-color:rgba(122,92,18,.45);
+  text-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+#cpm-portal .cpm-acciones{ display:grid; gap:9px; }
+#cpm-portal a.cpm-btn-oro{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--oro-grad); color:#3a2c06;
+  border-radius:13px; padding:15px; font-size:13.5px; font-weight:800;
+  letter-spacing:.06em; text-transform:uppercase;
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+  box-shadow:0 6px 18px rgba(122,92,18,.32), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(88,66,12,.35);
+  transition:transform .18s, box-shadow .18s, filter .18s;
+}
+#cpm-portal a.cpm-btn-oro:hover{
+  transform:translateY(-2px); filter:saturate(1.08) brightness(1.04);
+  box-shadow:0 12px 26px rgba(122,92,18,.44), inset 0 1px 0 rgba(255,255,255,.6);
+}
+#cpm-portal a.cpm-btn-navy{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--navy); color:#fff; border-radius:13px; padding:14px;
+  font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  transition:background .18s;
+}
+#cpm-portal a.cpm-btn-navy:hover{ background:var(--navy2); }
+#cpm-portal a.cpm-btn-oro svg,#cpm-portal a.cpm-btn-navy svg{ width:17px; height:17px; }
+
+/* ── Esqueletos de carga ── */
+#cpm-catalogo .cpm-sk{ background:var(--white); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+#cpm-catalogo .cpm-sk .a{ aspect-ratio:4/3; }
+#cpm-catalogo .cpm-sk .b{ height:13px; margin:16px 16px 0; border-radius:5px; }
+#cpm-catalogo .cpm-sk .c{ height:13px; margin:10px 60px 22px 16px; border-radius:5px; }
+#cpm-catalogo .cpm-sk .a,#cpm-catalogo .cpm-sk .b,#cpm-catalogo .cpm-sk .c{
+  background:linear-gradient(90deg,#eef3f8 25%,#e2eaf3 37%,#eef3f8 63%);
+  background-size:400% 100%; animation:cpmSk 1.3s ease infinite;
+}
+@keyframes cpmSk{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+/* ── Vacio ── */
+#cpm-catalogo .cpm-none{ grid-column:1/-1; text-align:center; padding:60px 20px; }
+#cpm-catalogo .cpm-none svg{ width:46px; height:46px; margin:0 auto 16px; color:#cdd9e6; }
+#cpm-catalogo .cpm-none b{ display:block; font-size:17px; font-weight:800; color:var(--navy); }
+#cpm-catalogo .cpm-none p{ font-size:13.5px; color:var(--ink2); margin-top:7px; }
+#cpm-catalogo .cpm-sugs{ display:flex; gap:9px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
+#cpm-catalogo button.cpm-sug{
+  padding:8px 16px !important; border:1.5px solid var(--blue) !important; border-radius:9px !important;
+  background:var(--white) !important; color:var(--blue-d) !important;
+  font-size:13px !important; font-weight:700 !important;
+}
+#cpm-catalogo button.cpm-sug:hover{ background:var(--blue) !important; color:#fff !important; }
+
+/* ── Franja de diagnostico (?cpmdebug=1) ── */
+#cpm-catalogo .cpm-diag{
+  background:#fff6dd; border-bottom:1px solid #f0d99a; color:#7a5a12;
+  font-size:12px; font-weight:600; padding:9px clamp(16px,3vw,28px); line-height:1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FICHA Y VISOR (viven en #cpm-portal, dentro de <body>)
+   ═══════════════════════════════════════════════════════════════ */
+#cpm-portal{ font-family:var(--ff); }
+#cpm-portal .cpm-ov{
+  position:fixed; left:0; right:0; top:0; bottom:0; z-index:2147483000;
+  background:rgba(11,25,40,.72);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+#cpm-portal .cpm-ov.on{ display:flex; animation:cpmFade .18s ease; }
+@keyframes cpmFade{ from{opacity:0} to{opacity:1} }
+@keyframes cpmPop{ from{opacity:0; transform:translateY(14px) scale(.985)} to{opacity:1; transform:none} }
+@keyframes cpmUp{ from{transform:translateY(100%)} to{transform:none} }
+
+#cpm-portal .cpm-sheet{
+  background:var(--white); width:100%; max-width:600px; max-height:100%;
+  border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 40px 90px rgba(0,0,0,.45); animation:cpmPop .24s cubic-bezier(.2,.8,.3,1);
+}
+@media (max-width:620px){
+  #cpm-portal .cpm-ov{ align-items:flex-end; padding:0; }
+  #cpm-portal .cpm-sheet{ max-width:100%; border-radius:20px 20px 0 0; animation:cpmUp .26s cubic-bezier(.2,.8,.3,1); }
+}
+/* cabecera de la ficha */
+#cpm-portal .cpm-head{
+  flex:0 0 auto; background:var(--navy); color:#fff;
+  padding:14px 56px 14px 20px; position:relative;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+#cpm-portal .cpm-head .k{
+  font-size:9.5px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
+  background:rgba(90,149,204,.28); color:#bcd8f2; padding:4px 10px; border-radius:6px;
+}
+#cpm-portal .cpm-head .r{ font-size:11px; font-weight:700; letter-spacing:.12em; color:rgba(255,255,255,.5); }
+#cpm-portal button.cpm-x{
+  position:absolute; top:50%; right:14px; margin-top:-17px;
+  width:34px !important; height:34px !important; border-radius:50% !important;
+  border:0 !important; background:rgba(255,255,255,.13) !important; color:#fff !important;
+  display:flex !important; align-items:center; justify-content:center; cursor:pointer;
+  padding:0 !important;
+}
+#cpm-portal button.cpm-x:hover{ background:rgba(255,255,255,.26) !important; }
+#cpm-portal button.cpm-x svg{ width:15px; height:15px; }
+#cpm-portal .cpm-scroll{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+/* galeria */
+#cpm-portal .cpm-gal{
+  position:relative; aspect-ratio:16/10; overflow:hidden;
+  background:linear-gradient(150deg,#eaf3fc,#d3e4f6);
+}
+#cpm-portal .cpm-gal img.cpm-gimg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#cpm-portal .cpm-gal .cpm-wm2{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+#cpm-portal .cpm-gal .cpm-wm2 img{ width:34%; max-width:150px; opacity:.3; }
+#cpm-portal .cpm-gnum{
+  position:absolute; bottom:12px; right:13px; z-index:3;
+  background:rgba(19,42,65,.8); color:#fff; border-radius:8px;
+  padding:5px 12px; font-size:11.5px; font-weight:700;
+}
+#cpm-portal button.cpm-gnav{
+  position:absolute; top:50%; margin-top:-19px; z-index:3;
+  width:38px !important; height:38px !important; border-radius:50% !important;
+  border:0 !important; background:rgba(255,255,255,.94) !important; color:var(--navy) !important;
+  display:flex !important; align-items:center; justify-content:center; padding:0 !important;
+  cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.2);
+}
+#cpm-portal button.cpm-gnav svg{ width:17px; height:17px; }
+#cpm-portal button.cpm-gnav.p{ left:11px; } #cpm-portal button.cpm-gnav.n{ right:11px; }
+
+#cpm-portal .cpm-pad{ padding:20px; }
+#cpm-portal .cpm-name{ font-size:20px; font-weight:800; color:var(--navy); line-height:1.25; letter-spacing:-.02em; margin-bottom:7px; }
+#cpm-portal .cpm-loc{ font-size:13px; color:var(--ink2); font-weight:500; display:flex; align-items:center; gap:7px; margin-bottom:18px; }
+#cpm-portal .cpm-loc svg{ width:15px; height:15px; color:var(--blue); flex:0 0 15px; }
+/* precio */
+#cpm-portal .cpm-pbox{
+  background:linear-gradient(135deg,var(--navy),var(--navy2)); border-radius:14px;
+  padding:16px 20px; margin-bottom:16px; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+}
+#cpm-portal .cpm-pbox::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--gold); }
+#cpm-portal .cpm-pl{ font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.5); font-weight:700; margin-bottom:5px; }
+#cpm-portal .cpm-pv{ font-size:25px; font-weight:800; color:#fff; letter-spacing:-.02em; line-height:1; }
+#cpm-portal .cpm-pm{ font-size:14px; font-weight:700; color:var(--blue-l); }
+/* datos */
+#cpm-portal .cpm-facts{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:20px; }
+#cpm-portal .cpm-facts > *{ min-width:0; }
+#cpm-portal .cpm-fact{ background:var(--paper); border:1px solid var(--line); border-radius:11px; padding:11px 13px; }
+#cpm-portal .cpm-fact .l{ font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink3); font-weight:700; margin-bottom:4px; }
+#cpm-portal .cpm-fact .v{ font-size:14px; font-weight:700; color:var(--navy); overflow-wrap:break-word; }
+/* secciones */
+#cpm-portal .cpm-h{
+  font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--blue);
+  font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:10px;
+}
+#cpm-portal .cpm-h::after{ content:''; flex:1; height:1px; background:var(--line); }
+#cpm-portal .cpm-desc{ font-size:13.5px; line-height:1.75; color:#3f5163; margin-bottom:20px; font-weight:400; }
+#cpm-portal a.cpm-maps{
+  display:flex; align-items:center; gap:11px; background:var(--pale); border:1px solid #d3e5f7;
+  border-radius:12px; padding:13px 16px; color:var(--blue-d); font-size:13.5px; font-weight:700;
+  margin-bottom:16px; transition:background .18s;
+}
+#cpm-portal a.cpm-maps:hover{ background:#d9eaf9; }
+#cpm-portal a.cpm-maps svg{ width:18px; height:18px; flex:0 0 18px; }
+#cpm-portal a.cpm-maps .ar{ margin-left:auto; font-weight:800; }
+/* CTAs */
+#cpm-portal a.cpm-wa{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:linear-gradient(135deg,#25d366,#1eb457); color:#fff;
+  border-radius:13px; padding:15px; font-size:14px; font-weight:800;
+  box-shadow:0 8px 22px rgba(37,211,102,.3); margin-bottom:10px;
+  transition:transform .18s, box-shadow .18s;
+}
+#cpm-portal a.cpm-wa:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(37,211,102,.4); }
+#cpm-portal a.cpm-wa svg{ width:19px; height:19px; }
+#cpm-portal a.cpm-tel{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--white); border:1.5px solid var(--line); color:var(--navy);
+  border-radius:13px; padding:13px; font-size:13.5px; font-weight:700;
+  transition:border-color .18s, background .18s;
+}
+#cpm-portal a.cpm-tel:hover{ border-color:var(--blue); background:var(--pale); }
+#cpm-portal a.cpm-tel svg{ width:17px; height:17px; color:var(--blue); }
+
+/* visor de fotos */
+#cpm-portal .cpm-lb{
+  position:fixed; left:0; right:0; top:0; bottom:0; z-index:2147483200;
+  background:rgba(6,12,20,.97); display:none; align-items:center; justify-content:center;
+}
+#cpm-portal .cpm-lb.on{ display:flex; animation:cpmFade .18s ease; }
+#cpm-portal .cpm-lb-in{ width:100%; height:100%; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+#cpm-portal .cpm-lb img{ max-width:100%; max-height:100%; min-height:0; object-fit:contain; border-radius:10px; }
+#cpm-portal .cpm-lb-dots{ display:flex; gap:7px; flex:0 0 auto; }
+#cpm-portal .cpm-lb-dots i{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.32); cursor:pointer; }
+#cpm-portal .cpm-lb-dots i.on{ background:var(--blue-l); }
+#cpm-portal button.cpm-lb-btn{
+  position:absolute; border:0 !important; background:rgba(255,255,255,.14) !important; color:#fff !important;
+  border-radius:50% !important; display:flex !important; align-items:center; justify-content:center;
+  cursor:pointer; padding:0 !important;
+}
+#cpm-portal button.cpm-lb-btn:hover{ background:rgba(255,255,255,.28) !important; }
+#cpm-portal button.cpm-lb-btn.x{ top:18px; right:20px; width:42px !important; height:42px !important; }
+#cpm-portal button.cpm-lb-btn.p{ left:20px; top:50%; margin-top:-24px; width:48px !important; height:48px !important; }
+#cpm-portal button.cpm-lb-btn.n{ right:20px; top:50%; margin-top:-24px; width:48px !important; height:48px !important; }
+#cpm-portal button.cpm-lb-btn svg{ width:20px; height:20px; }
+
+/* ── Responsive ── */
+@media (max-width:760px){
+  /* 150px permite 2 columnas desde 350px de ancho; con 160 los telefonos
+     de 360-390 caian a una sola columna y las tarjetas quedaban enormes. */
+  #cpm-catalogo .cpm-grid{ grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px; }
+  #cpm-catalogo .cpm-title{ font-size:13.5px; }
+  #cpm-catalogo .cpm-price{ font-size:15px; }
+  #cpm-catalogo .cpm-info{ padding:12px 13px 14px; }
+  #cpm-catalogo select.cpm-select{ min-width:0; width:100%; }
+  #cpm-catalogo .cpm-city{ flex:1 1 160px; }
+  #cpm-catalogo .cpm-seg{ flex:1 1 100%; justify-content:space-between; }
+  #cpm-catalogo button.cpm-tab{ flex:1; justify-content:center; padding:9px 8px !important; }
+  #cpm-catalogo .cpm-total{ flex:1 1 100%; margin-left:0; text-align:right; }
+  #cpm-portal .cpm-facts{ grid-template-columns:1fr; }
+}
+@media (max-width:330px){
+  #cpm-catalogo .cpm-grid{ grid-template-columns:1fr; }
+}
+</style>
+
+<div class="cpm-diag" id="cpmDiag" style="display:none"></div>
+
+<!-- PORTADA -->
+<div class="cpm-hero">
+  <div class="cpm-in">
+    <div class="cpm-hero-top">
+      <img id="cpmLogoHero" alt="Corporativo Piñeiro-Medina" src="https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65"/>
+      <span>Cartera de propiedades</span>
+    </div>
+    <h2>Terrenos y macrolotes en <i>Yucatán y Quintana Roo</i></h2>
+    <p>Inventario seleccionado para inversión y desarrollo. Escríbenos y te compartimos el expediente completo de la propiedad que te interese.</p>
+  </div>
+</div>
+
+<!-- BARRA -->
+<div class="cpm-bar" id="cpmBar">
+  <div class="cpm-bar-in">
+    <div class="cpm-find">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      <input id="cpmQ" class="cpm-ctl cpm-search" type="search" placeholder="Buscar por ciudad, clave o descripción…" autocomplete="off"/>
+    </div>
+    <div class="cpm-seg" id="cpmSeg">
+      <button type="button" class="cpm-ctl cpm-tab on" data-t="Todos">Todos</button>
+      <button type="button" class="cpm-ctl cpm-tab" data-t="Terrenos">Terrenos</button>
+      <button type="button" class="cpm-ctl cpm-tab" data-t="Macrolotes">Macrolotes</button>
+    </div>
+    <div class="cpm-city">
+      <select id="cpmCity" class="cpm-ctl cpm-select"><option value="">Todas las ciudades</option></select>
+    </div>
+    <div class="cpm-total" id="cpmTotal"><b>—</b> propiedades</div>
+    <div class="cpm-hint" id="cpmHint" style="display:none"></div>
+  </div>
+</div>
+
+<!-- REJILLA -->
+<div class="cpm-body">
+  <div class="cpm-grid" id="cpmGrid"></div>
+</div>
+
+</div><!-- /#cpm-catalogo -->
+
+<!-- Modales: el JS mueve esto al <body> -->
+<div id="cpm-portal">
+  <div class="cpm-ov" id="cpmOv">
+    <div class="cpm-sheet" id="cpmSheet">
+      <div class="cpm-head">
+        <span class="k" id="cpmMTipo"></span>
+        <span class="r" id="cpmMRef"></span>
+        <button type="button" class="cpm-x" id="cpmClose" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="cpm-scroll" id="cpmScroll">
+        <div class="cpm-gal" id="cpmGal">
+          <div class="cpm-wm2" id="cpmGalWm"><img alt="" id="cpmLogoGal"/></div>
+          <img class="cpm-gimg" id="cpmGalImg" alt="" style="display:none"/>
+          <span class="cpm-gnum" id="cpmGalNum" style="display:none"></span>
+          <button type="button" class="cpm-ctl cpm-gnav p" id="cpmGalPrev" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button type="button" class="cpm-ctl cpm-gnav n" id="cpmGalNext" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+        <div class="cpm-pad">
+          <div class="cpm-name" id="cpmMName"></div>
+          <div class="cpm-loc" id="cpmMLoc"></div>
+          <div class="cpm-layers-sheet" id="cpmLayers" style="display:none"></div>
+          <div class="cpm-pbox">
+            <div><div class="cpm-pl">Precio</div><div class="cpm-pv" id="cpmMPrice"></div></div>
+            <div id="cpmM2Wrap" style="text-align:right"><div class="cpm-pl">Por m²</div><div class="cpm-pm" id="cpmM2"></div></div>
+          </div>
+          <div class="cpm-facts" id="cpmFacts"></div>
+          <div class="cpm-h">Descripción</div>
+          <p class="cpm-desc" id="cpmMDesc"></p>
+          <a class="cpm-maps" id="cpmMaps" href="#" target="_blank" rel="noreferrer" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Ver ubicación en Google Maps</span><span class="ar">→</span>
+          </a>
+          <!-- Botonera de la ficha destacada (Imperio Conkal). El JS la llena. -->
+          <div class="cpm-acciones" id="cpmAcciones" style="display:none"></div>
+          <a class="cpm-wa" id="cpmWa" href="#" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.15-1.7-.84-2-.94-.26-.1-.45-.15-.65.15-.19.29-.74.94-.91 1.13-.17.19-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.04-.17-.29-.02-.45.13-.6.13-.13.3-.34.44-.51.15-.17.2-.29.3-.49.1-.19.05-.36-.02-.51-.07-.15-.65-1.58-.9-2.16-.24-.57-.48-.49-.65-.5h-.56c-.19 0-.5.07-.77.36-.26.29-1 .98-1 2.4 0 1.41 1.03 2.78 1.17 2.97.15.19 2.03 3.1 4.92 4.35.69.3 1.22.47 1.64.6.69.22 1.32.19 1.81.12.55-.08 1.7-.69 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.34zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.46 9.46 0 0 1-1.45-5.04c0-5.22 4.25-9.47 9.48-9.47 2.53 0 4.91.99 6.7 2.78a9.42 9.42 0 0 1 2.77 6.7c0 5.22-4.25 9.47-9.48 9.47z"/></svg>
+            Solicitar información
+          </a>
+          <a class="cpm-tel" id="cpmTel" href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg>
+            <span id="cpmTelTxt">Llamar a un asesor</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cpm-lb" id="cpmLb">
+    <button type="button" class="cpm-ctl cpm-lb-btn x" id="cpmLbX" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button type="button" class="cpm-ctl cpm-lb-btn p" id="cpmLbP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button type="button" class="cpm-ctl cpm-lb-btn n" id="cpmLbN"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    <div class="cpm-lb-in"><img id="cpmLbImg" alt=""/><div class="cpm-lb-dots" id="cpmLbDots"></div></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ════════════════════ CONFIGURACION ════════════════════ */
+var CFG = {
+  firebase:{
+    apiKey:"AIzaSyChXbLFxpqAk6QryoNHaPeCA3ZYsxelPzw",
+    authDomain:"propiedades-cpm.firebaseapp.com",
+    projectId:"propiedades-cpm",
+    storageBucket:"propiedades-cpm.firebasestorage.app",
+    messagingSenderId:"320995468382",
+    appId:"1:320995468382:web:bf9e53a12dd4d4f1ce80cf"
+  },
+  colPublica:'catalogo_publico',   /* se intenta primero */
+  colPrivada:'terrenos',           /* respaldo si la publica no existe */
+  whatsapp:'529999490874',
+  telefono:'+52 999 949 0874',
+  logoBlanco:"https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65",
+  logoAzul:"https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FLOGOTIPO%20AZUL.png?alt=media&token=ef71529d-7e86-4f08-b286-2dad5335e08c",
+  fullBleed:false   /* true = ocupa todo el ancho de la ventana */
+};
+var VERSION='v5.1';
+
+/* ═══════════════════════════════════════════════════════
+   FICHA DESTACADA · IMPERIO CONKAL
+   No vive en Firestore: se inyecta aquí y siempre va primero.
+   Los datos numéricos salen de cotizador-imperio-conkal-v2.html
+   (76 lotes, precio_final desde $3,800,000, lotes 240–615 m²,
+   construcción 222–224 m², enganche fijo 15%).
+   Para editarla, cambia solo este bloque.
+   ═══════════════════════════════════════════════════════ */
+var IMPERIO = {
+  id:'IMPERIO CONKAL',
+  nombre:'Imperio Conkal · Residencial Privado',
+  tipo:'Desarrollo',
+  ciudad:'Conkal',
+  estado:'Yucatan',
+  descripcion:'Residencial privado en Conkal con casas de 222 a 224 m² de construcción sobre lotes desde 240 m². Seis modelos arquitectónicos, casa club con alberca, gimnasio y lobby. Esquema de 15% de enganche, mensualidades y saldo contra entrega.',
+  precio:3800000,
+  dimensiones_m2:240,
+  hectareas:0,
+  precio_m2:0,
+  ubicacion_maps:'https://maps.app.goo.gl/NyWBRxtysDm8GLP48',
+  /* Fotos de respaldo. Si el portafolio de asesores ya importó la carpeta
+     imperio_conkal de Storage, esas ganan (ver mezclarFotosImperio). */
+  fotos:[
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-itzar-dK7EpnNkEStZxdVh.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-akbal-148Mcmc4MjjK1mJe.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-aruma-L8WTeat4FKcoK4zf.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-atziri-JWYMO71YwrQVOaKS.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/alberca_-V2QEoDO2LOwg1gUH.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/lobby-y-sala3n_-4fjnpLGMUduMRgMs.jpg',
+    'https://assets.zyrosite.com/5MikVliRfr5rWuzU/gimnasio_-M8gwNcgYTESJjpKO.jpg'
+  ],
+  _premium:true,          /* borde metálico + capas */
+  _desde:true,            /* el precio se muestra como "Desde $..." */
+  _etiqueta:'Residencial', /* etiqueta de tipo; evita repetir "Desarrollo" con el banderín */
+  _flag:'Desarrollo propio',
+  /* t = texto en la ficha · tc = texto corto para el chip de la tarjeta */
+  _capas:[
+    {t:'Acepta INFONAVIT',   tc:'INFONAVIT',          hot:true},
+    {t:'Entrega en 6 meses', tc:'Entrega en 6 meses', hot:true},
+    {t:'15% de enganche'},
+    {t:'Casa club y alberca'}
+  ],
+  /* Los 3 botones de la ficha. En el catálogo público "Más información"
+     apunta a la landing informativa; en el portafolio de asesores va a
+     la página completa del desarrollo. */
+  _acciones:[
+    {txt:'Ver disponibilidad', url:'https://www.cpmempresarial.com/imperio-conkal-cotizador', estilo:'oro',  ico:'lista'},
+    {txt:'Más información',    url:'https://www.cpmempresarial.com/imperioconkal-info',       estilo:'navy', ico:'info'},
+    {txt:'Contactar por WhatsApp', url:'wa', estilo:'wa', ico:'wa'}
+  ],
+  /* Botón que aparece directamente sobre la tarjeta en la rejilla */
+  _ctaCard:{txt:'Más información', url:'https://www.cpmempresarial.com/imperioconkal-info'}
+};
+/* ═══════════════════════════════════════════════════════ */
+
+var root=document.getElementById('cpm-catalogo');
+if(!root) return;
+var portal=document.getElementById('cpm-portal');
+function $(id){ return document.getElementById(id); }
+
+/* RED DE SEGURIDAD: se arma antes que nada. Si algo fallara mas abajo,
+   el catalogo aparece igual con los datos de respaldo. */
+var listo=false;
+setTimeout(function(){
+  if(listo) return; listo=true;
+  console.warn('[CPM '+VERSION+'] Sin datos a los 8 s — respaldo local.');
+  try{ pintar(FALLBACK,'respaldo local (timeout)'); }catch(e){ console.error('[CPM] render:',e); }
+},8000);
+
+var FALLBACK=[{"id":"PYI01","nombre":"Terreno Izamal - PYI01","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"TERRENO EN IZAMAL, COL. YAXCHE. PROPIEDAD PRIVADA. TERRENO SIN CONSTRUCCION. PRECIO A TRATAR.","precio":350000,"dimensiones_m2":200,"hectareas":0.02,"precio_m2":1750,"ubicacion_maps":"https://maps.app.goo.gl/dvzZ9ojtD7VLcynp9","fotos":[]},{"id":"PYI02","nombre":"Terreno Izamal - PYI02","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"TERRENO EN IZAMAL, COL. SAN ROMAN CON CONSTRUCCION. PROPIEDAD PRIVADA.","precio":1000000,"dimensiones_m2":215,"hectareas":0.0215,"precio_m2":4651,"ubicacion_maps":"https://maps.app.goo.gl/5DMnHcsiEKSdjLFB7","fotos":[]},{"id":"PYI03","nombre":"Terreno Izamal - PYI03","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"TERRENO EN EL CENTRO DE IZAMAL. SIN CONSTRUCCION. BARDA PERIMETRAL. PROPIEDAD PRIVADA. 40X50 M.","precio":6400000,"dimensiones_m2":2000,"hectareas":0.2,"precio_m2":3200,"ubicacion_maps":"https://maps.app.goo.gl/Aw5L2tStdmw6gVsQ9","fotos":[]},{"id":"PYI04","nombre":"Terreno Izamal - PYI04","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"CASA EN VENTA EN IZAMAL. 215M2 DE CONSTRUCCION Y 524M2 DE TERRENO. IDEAL PARA AIRBNB. 3 CUARTOS CON BAÑO, PISCINA, ESTACIONAMIENTO.","precio":2700000,"dimensiones_m2":524,"hectareas":0.0524,"precio_m2":5153,"ubicacion_maps":"https://maps.app.goo.gl/wmTVDebXhmpVoiuj7","fotos":[]},{"id":"PYI05","nombre":"Terreno Izamal - PYI05","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Propiedad privada en Izamal a dos cuadras del centro histórico. 113.40 m2 terreno, 104 m2 construcción. 2 locales comerciales con baño.","precio":3500000,"dimensiones_m2":113.4,"hectareas":0.0113,"precio_m2":30864,"ubicacion_maps":"https://maps.app.goo.gl/5K8VyYEarPLjZ4fC6","fotos":[]},{"id":"PYI06","nombre":"Terreno Izamal - PYI06","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"6594 m2 a pie de carretera. Universidad UTC a 500 m. Empresa LEE. 2 gasolineras en radio 1 km. Precio negociable.","precio":6000000,"dimensiones_m2":6594,"hectareas":0.6594,"precio_m2":910,"ubicacion_maps":"","fotos":[]},{"id":"PYI07","nombre":"Terreno Izamal - PYI07","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"25x95 m2, propiedad privada, urge su venta. Junto a PYI06.","precio":2500000,"dimensiones_m2":2394,"hectareas":0.2394,"precio_m2":1044,"ubicacion_maps":"https://maps.app.goo.gl/obK9WDdexWG5amR3A","fotos":[]},{"id":"PYI08","nombre":"Terreno Izamal - PYI08","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"60X60 EN ESQUINA. SOBRE CARRETERA. PEQUEÑA CONSTRUCCION EN OBRA NEGRA. CERCA DE AVENIDA PRINCIPAL.","precio":2600000,"dimensiones_m2":3600,"hectareas":0.36,"precio_m2":722,"ubicacion_maps":"","fotos":[]},{"id":"PYI09","nombre":"Terreno Izamal - PYI09","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Terreno 8x48 irregular. Construccion 4x4. Salida Izamal-Kantunil. A borde de carretera. Precio negociable.","precio":550000,"dimensiones_m2":384,"hectareas":0.0384,"precio_m2":1432,"ubicacion_maps":"","fotos":[]},{"id":"PYI10","nombre":"Terreno Izamal - PYI10","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Casona colonial en el centro histórico del pueblo mágico de Izamal. 4 Recámaras, 294 m2 construccion, 399 m2 terreno.","precio":9500000,"dimensiones_m2":399,"hectareas":0.0399,"precio_m2":23810,"ubicacion_maps":"https://maps.app.goo.gl/uYkpeAumqsoGV43K6","fotos":[]},{"id":"PYI11","nombre":"Terreno Izamal - PYI11","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Terreno irregular en L. Construcciones en obra gris, piscina y dos accesos. 246 m2.","precio":550000,"dimensiones_m2":246,"hectareas":0.0246,"precio_m2":2236,"ubicacion_maps":"https://maps.app.goo.gl/C2xnBPCcWWRxBDNk7","fotos":[]},{"id":"PYI12","nombre":"Terreno Izamal - PYI12","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Terreno 1 de 2. 1450 m2. Bardeado con mampostería. Cerca del Convento de Izamal. Venta individual o conjunto.","precio":3500000,"dimensiones_m2":1450,"hectareas":0.145,"precio_m2":2414,"ubicacion_maps":"https://maps.app.goo.gl/sp4TaNvjm5mxU3jv6","fotos":[]},{"id":"PYI13","nombre":"Terreno Izamal - PYI13","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Terreno 2 de 2. 850 m2. Bardeado con mampostería. Cerca del Convento. Venta individual o conjunto.","precio":2500000,"dimensiones_m2":850,"hectareas":0.085,"precio_m2":2941,"ubicacion_maps":"https://maps.app.goo.gl/fo1fVPXtCRb7r479A","fotos":[]},{"id":"PYK01","nombre":"Terreno Kimbila - PYK01","tipo":"Terreno Particular","ciudad":"Kimbila","estado":"Yucatan","descripcion":"Kimbila, pueblo de guayaberas. Carretera Mérida-Cancún. Atractivos turísticos. Zona de crecimiento medio.","precio":1100000,"dimensiones_m2":3411,"hectareas":0.3411,"precio_m2":322,"ubicacion_maps":"https://maps.app.goo.gl/HqXcMgqs1GsNRDNL9","fotos":[]},{"id":"PYCH01","nombre":"Terreno Cholul - PYCH01","tipo":"Terreno Particular","ciudad":"Cholul","estado":"Yucatan","descripcion":"Cholul, Mérida. Doble vista - dos accesos a carreteras. Propiedad privada. 20X100 M.","precio":4000000,"dimensiones_m2":2000,"hectareas":0.2,"precio_m2":2000,"ubicacion_maps":"https://maps.app.goo.gl/qkdqcTFtLUqJodXk6","fotos":[]},{"id":"PYPG01","nombre":"Terreno Progreso - PYPG01","tipo":"Terreno Particular","ciudad":"Progreso","estado":"Yucatan","descripcion":"Carretera Progreso-Mérida. Rodeado de desarrollos. 20X41 M. 3 lotes juntos.","precio":500000,"dimensiones_m2":820,"hectareas":0.082,"precio_m2":610,"ubicacion_maps":"https://maps.app.goo.gl/9CMviGRgu3iYiD3z6","fotos":[]},{"id":"PYKN01","nombre":"Terreno Kanasin - PYKN01","tipo":"Terreno Particular","ciudad":"Kanasin","estado":"Yucatan","descripcion":"Rodeado de casas de interés social. Luz a pie de terreno. Ideal para departamentos o casas de interés social.","precio":1600000,"dimensiones_m2":2590.73,"hectareas":0.2591,"precio_m2":618,"ubicacion_maps":"https://maps.app.goo.gl/MUoEbh333Wb1z87GA","fotos":[]},{"id":"PYUC01","nombre":"Terreno Ucú - PYUC01","tipo":"Terreno Particular","ciudad":"Ucú","estado":"Yucatan","descripcion":"Privada 7 Lunas. 10x20. Listo para construir. Facilidad para luz y agua. Listo para escriturar.","precio":300000,"dimensiones_m2":200,"hectareas":0.02,"precio_m2":1500,"ubicacion_maps":"https://maps.app.goo.gl/JEAjna3zYstNnDwE9","fotos":[]},{"id":"PYI14","nombre":"Terreno Izamal - PYI14","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Casa en Izamal, salida a Sitilpech. Una sola escritura. Propiedad privada. A borde de carretera principal.","precio":1900000,"dimensiones_m2":0,"hectareas":0,"precio_m2":0,"ubicacion_maps":"https://maps.app.goo.gl/4zFZJvr2p8PGKF7t9","fotos":[]},{"id":"PYI15","nombre":"Terreno Cuahtemoc - PYI15","tipo":"Terreno Particular","ciudad":"Cuahtemoc","estado":"Yucatan","descripcion":"2400 m2 + 239 m2 construccion. Comisaría de Izamal, 7 min. Obra negra. Fundo Legal. Luz y agua.","precio":1500000,"dimensiones_m2":2400,"hectareas":0.24,"precio_m2":625,"ubicacion_maps":"https://maps.app.goo.gl/fjH53CyrAXwP7UHK7","fotos":[]},{"id":"PYCK01","nombre":"Terreno Conkal - PYCK01","tipo":"Terreno Particular","ciudad":"Conkal","estado":"Yucatan","descripcion":"2200 m2 sobre carretera. Cerca de Zensia Residencial. En esquina. Propiedad privada.","precio":5500000,"dimensiones_m2":2200,"hectareas":0.22,"precio_m2":2500,"ubicacion_maps":"https://maps.app.goo.gl/Y44boXRHA4XbMzb1A","fotos":[]},{"id":"PYI16","nombre":"Terreno Izamal - PYI16","tipo":"Terreno Particular","ciudad":"Izamal","estado":"Yucatan","descripcion":"Dentro de Izamal. Acceso por terracería. Propiedad privada, lista para escriturar. 10x45 m.","precio":280000,"dimensiones_m2":450,"hectareas":0.045,"precio_m2":622,"ubicacion_maps":"https://maps.app.goo.gl/WLSg9QFBXV34kDPF8","fotos":[]},{"id":"MYB01","nombre":"Macrolote Baca - MYB01","tipo":"Macrolote","ciudad":"Baca","estado":"Yucatan","descripcion":"13 ha en carretera Mérida-Motul. Esquina carretera Baca-Tixkuncheil. Precio negociable.","precio":66291000,"dimensiones_m2":132582,"hectareas":13.2582,"precio_m2":500,"ubicacion_maps":"https://maps.app.goo.gl/fVzG7JJB3Udnydjx5","fotos":[]},{"id":"MYB02","nombre":"Macrolote Baca - MYB02","tipo":"Macrolote","ciudad":"Baca","estado":"Yucatan","descripcion":"5 ha en carretera Mérida-Motul. Precio negociable.","precio":17500000,"dimensiones_m2":50000,"hectareas":5,"precio_m2":350,"ubicacion_maps":"https://maps.app.goo.gl/zJF1NKiW1kcPX3of8","fotos":[]},{"id":"MYB03","nombre":"Macrolote Baca - MYB03","tipo":"Macrolote","ciudad":"Baca","estado":"Yucatan","descripcion":"3.5 ha en carretera Mérida-Motul. Precio negociable.","precio":17500000,"dimensiones_m2":35000,"hectareas":3.5,"precio_m2":500,"ubicacion_maps":"https://maps.app.goo.gl/F6j9Aqhq4rLy9kmY9","fotos":[]},{"id":"MYB04","nombre":"Macrolote Baca - MYB04","tipo":"Macrolote","ciudad":"Baca","estado":"Yucatan","descripcion":"Frente Vertical Knits en Baca, dentro de mancha urbana.","precio":11545929,"dimensiones_m2":25657.62,"hectareas":2.565762,"precio_m2":450,"ubicacion_maps":"https://maps.app.goo.gl/EVk6PSuVQDqXa3ieA","fotos":[]},{"id":"MYCK01","nombre":"Macrolote Conkal - MYCK01","tipo":"Macrolote","ciudad":"Conkal","estado":"Yucatan","descripcion":"10 ha a borde de carretera, frente a Zensia Residencial.","precio":80540800,"dimensiones_m2":100676,"hectareas":10.0676,"precio_m2":800,"ubicacion_maps":"https://maps.app.goo.gl/Yiwq9ynyo3VxNwsA6","fotos":[]},{"id":"MYCK02","nombre":"Macrolote Conkal - MYCK02","tipo":"Macrolote","ciudad":"Conkal","estado":"Yucatan","descripcion":"Frente a Olivia Residencial en Conkal.","precio":15910000,"dimensiones_m2":13846.46,"hectareas":1.384646,"precio_m2":1149,"ubicacion_maps":"https://maps.app.goo.gl/mobxG19mPMKi2xiT8","fotos":[]},{"id":"MYDZ01","nombre":"Macrolote Dzityá - MYDZ01","tipo":"Macrolote","ciudad":"Dzityá","estado":"Yucatan","descripcion":"7.6 ha en Dzityá. Precio por debajo del mercado. Se puede vender desde 1 ha.","precio":91675200,"dimensiones_m2":76396,"hectareas":7.6396,"precio_m2":1200,"ubicacion_maps":"https://maps.app.goo.gl/QV6qyjQHTLpxJRmv6","fotos":[]},{"id":"MYI01","nombre":"Macrolote Chumbec - MYI01","tipo":"Macrolote","ciudad":"Chumbec","estado":"Yucatan","descripcion":"346 ha. Comisaría de Sudzal, 10 min de Izamal. Monte alto. Colinda carretera Mérida-Cancún.","precio":50000000,"dimensiones_m2":3467650,"hectareas":346.765,"precio_m2":14.42,"ubicacion_maps":"https://maps.app.goo.gl/1yaC4RVqPAAW6crFA","fotos":[]},{"id":"MYPT01","nombre":"Macrolote Peto - MYPT01","tipo":"Macrolote","ciudad":"Peto","estado":"Yucatan","descripcion":"23 ha a borde de carretera. Propiedad privada. Listo para escriturar. Negociable.","precio":23414802,"dimensiones_m2":234148.02,"hectareas":23.414802,"precio_m2":100,"ubicacion_maps":"https://maps.app.goo.gl/68C57bbyTjcu22nJA","fotos":[]},{"id":"MYTK01","nombre":"Macrolote Tunkas - MYTK01","tipo":"Macrolote","ciudad":"Tunkas","estado":"Yucatan","descripcion":"12 ha. Casa, piscina, transformador 75KVA, 2 pozos, sistema de riego. Corrales para 450 carneros.","precio":6000000,"dimensiones_m2":120000,"hectareas":12,"precio_m2":50,"ubicacion_maps":"https://maps.app.goo.gl/kDcWWgKWYtGPNmQM7","fotos":[]},{"id":"MYTK02","nombre":"Macrolote Tunkas - MYTK02","tipo":"Macrolote","ciudad":"Tunkas","estado":"Yucatan","descripcion":"71 ha. Carretera Sitilpech-Tunkas. Monte alto, rústico.","precio":3580500,"dimensiones_m2":716100,"hectareas":71.61,"precio_m2":5,"ubicacion_maps":"https://maps.app.goo.gl/2PYnuKhgZtsGokEf6","fotos":[]},{"id":"MYSP01","nombre":"Macrolote Sitilpech - MYSP01","tipo":"Macrolote","ciudad":"Sitilpech","estado":"Yucatan","descripcion":"14 ha. Luz, agua y permisos de extracción de material para construcción. Listo para operar.","precio":2812500,"dimensiones_m2":140625,"hectareas":14.0625,"precio_m2":20,"ubicacion_maps":"https://maps.app.goo.gl/QUi2nu4deM5UtZkj8","fotos":[]},{"id":"MYSP02","nombre":"Macrolote Sitilpech - MYSP02","tipo":"Macrolote","ciudad":"Sitilpech","estado":"Yucatan","descripcion":"28 ha. Rancho agrícola. 200 m de frente a carretera. Paneles solares, bomba sumergible, tanque 50,000 L.","precio":11545240,"dimensiones_m2":288631,"hectareas":28.8631,"precio_m2":40,"ubicacion_maps":"https://maps.app.goo.gl/1GdffiCbktXsqQz67","fotos":[]},{"id":"MYCC01","nombre":"Macrolote Cacalchen - MYCC01","tipo":"Macrolote","ciudad":"Cacalchen","estado":"Yucatan","descripcion":"19 ha. Rancho ganadero en Cacalchén, 30 min de Mérida. Pastizales, pozo artesanal.","precio":6500000,"dimensiones_m2":193932,"hectareas":19.3932,"precio_m2":33.52,"ubicacion_maps":"https://goo.gl/maps/yHCadkKvNN22","fotos":[]},{"id":"MYI02","nombre":"Macrolote Izamal - MYI02","tipo":"Macrolote","ciudad":"Izamal","estado":"Yucatan","descripcion":"50 ha. Exrancho porcícola. 2 bodegas, 5 naves, biodigestor, 2 graneros. Luz y agua. A pie de carretera.","precio":6500000,"dimensiones_m2":500000,"hectareas":50,"precio_m2":13,"ubicacion_maps":"https://maps.app.goo.gl/6Zr2Z4M3nnhQuwq9A","fotos":[]},{"id":"MYYX01","nombre":"Macrolote Yaxkukul - MYYX01","tipo":"Macrolote","ciudad":"Yaxkukul","estado":"Yucatan","descripcion":"1.2 ha por terracería. Ideal para lotificación o vivienda social.","precio":3499960,"dimensiones_m2":12499.86,"hectareas":1.249986,"precio_m2":280,"ubicacion_maps":"https://maps.app.goo.gl/ZJyxuxB4JbEBz8ir5","fotos":[]},{"id":"MYMC01","nombre":"Macrolote Mococha - MYMC01","tipo":"Macrolote","ciudad":"Mococha","estado":"Yucatan","descripcion":"1.7 ha sobre carretera principal en Mocochá, cerca del centro.","precio":7000000,"dimensiones_m2":17681.22,"hectareas":1.768122,"precio_m2":395.9,"ubicacion_maps":"https://maps.app.goo.gl/H6ZwRCuNDpTvNcJh9","fotos":[]},{"id":"MYSJ01","nombre":"Macrolote San Jose Dzal - MYSJ01","tipo":"Macrolote","ciudad":"San Jose Dzal","estado":"Yucatan","descripcion":"10 ha en San José Dzal, 20 min de Mérida. Propiedad privada. Ideal para desarrollo urbano.","precio":7000000,"dimensiones_m2":100000,"hectareas":10,"precio_m2":70,"ubicacion_maps":"https://maps.app.goo.gl/WVfxDDU1BbLYauCe7","fotos":[]},{"id":"MYMT01","nombre":"Macrolote Motul - MYMT01","tipo":"Macrolote","ciudad":"Motul","estado":"Yucatan","descripcion":"4 ha en carretera Motul-Techac. A borde de carretera. Terreno ejidal.","precio":3000000,"dimensiones_m2":40000,"hectareas":4,"precio_m2":75,"ubicacion_maps":"https://maps.app.goo.gl/vc87TNTU5Fk7EF8g8","fotos":[]},{"id":"MYMT02","nombre":"Macrolote Motul - MYMT02","tipo":"Macrolote","ciudad":"Motul","estado":"Yucatan","descripcion":"8 ha en carretera Motul-Techac. A borde de carretera. Terreno ejidal.","precio":4500000,"dimensiones_m2":80000,"hectareas":8,"precio_m2":56.25,"ubicacion_maps":"https://maps.app.goo.gl/BUe2oB74j5wUT7DC7","fotos":[]},{"id":"MYMT03","nombre":"Macrolote Motul - MYMT03","tipo":"Macrolote","ciudad":"Motul","estado":"Yucatan","descripcion":"2.8 ha. Salida Tizimín. 158 m de frente a carretera federal.","precio":11369200,"dimensiones_m2":28423,"hectareas":2.8423,"precio_m2":400,"ubicacion_maps":"https://maps.app.goo.gl/WHAzzEyDrNuwbGcn7","fotos":[]},{"id":"MQRFC01","nombre":"Macrolote Felipe Carrillo Puerto","tipo":"Macrolote","ciudad":"Felipe Carrillo Puerto","estado":"Quintana Roo","descripcion":"304 ha a borde de carretera federal Valladolid-FCP. TIENE CENOTE. Se puede vender desde 10 ha.","precio":76000000,"dimensiones_m2":3040000,"hectareas":304,"precio_m2":25,"ubicacion_maps":"https://maps.app.goo.gl/ZbD3YXLtxPgR1d18A","fotos":[]},{"id":"MYTX01","nombre":"Macrolote Tekax - MYTX01","tipo":"Macrolote","ciudad":"Tekax","estado":"Yucatan","descripcion":"52 ha en Tekax, sobre carretera. Se puede vender desde 5 ha.","precio":10400000,"dimensiones_m2":520000,"hectareas":52,"precio_m2":20,"ubicacion_maps":"https://maps.app.goo.gl/UNh8xWy1Gey8hjS16","fotos":[]},{"id":"MYI03","nombre":"Macrolote Izamal - MYI03","tipo":"Macrolote","ciudad":"Izamal","estado":"Yucatan","descripcion":"9.8 ha ejidales en Izamal. Terracería a ~300 m de carretera. Certificado Parcelario.","precio":1200000,"dimensiones_m2":98000,"hectareas":9.8,"precio_m2":12.24,"ubicacion_maps":"https://maps.app.goo.gl/6PAFTxbkFYRLRFVKA","fotos":[]},{"id":"MYHN01","nombre":"Macrolote Hunucma - MYHN01","tipo":"Macrolote","ciudad":"Hunucma","estado":"Yucatan","descripcion":"96 ha en Hunucmá, a metros de la carretera Hunucmá-Sisal. Propiedad privada.","precio":48000000,"dimensiones_m2":960000,"hectareas":96,"precio_m2":50,"ubicacion_maps":"https://maps.app.goo.gl/7hKnYn8VgL3axGh29","fotos":[]}];
+
+/* ════ Estado ════ */
+var DATA=[], tipoAct='Todos', actual=null, gi=0, li=0, lfotos=[];
+var DIAG={};   /* que respondio cada coleccion, para la franja de ?cpmdebug=1 */
+var DEBUG=false;
+try{ DEBUG=/[?&]cpmdebug=1/.test(location.search)||/[?&]cpmdebug=1/.test(topSearch()); }catch(e){}
+function topSearch(){ try{ return window.top.location.search||''; }catch(e){ return location.search||''; } }
+
+/* ═══════════════ 1) CONTENEDOR DE HOSTINGER ═══════════════ */
+function liberar(){
+  var el=root.parentElement, n=0;
+  while(el && el!==document.body && n<8){
+    var s=el.style;
+    /* Solo se quitan restricciones. NO poner width:'100%': si el
+       contenedor trae padding con content-box, width:100%+padding
+       desborda a la derecha y la pagina se recorre de lado. */
+    s.maxWidth='none'; s.boxSizing='border-box';
+    s.height='auto'; s.minHeight='0'; s.maxHeight='none'; s.overflow='visible';
+    el=el.parentElement; n++;
+  }
+  medirCabecera();
+  if(CFG.fullBleed) bleed();
+}
+/* Alto de la cabecera FIJA del sitio, para que la barra sticky no
+   se esconda debajo de ella. Se busca el elemento fijo mas alto
+   pegado al borde superior de la ventana. */
+function medirCabecera(){
+  var alto=0;
+  try{
+    var nodos=document.body ? document.body.children : [];
+    for(var i=0;i<nodos.length;i++){
+      var e=nodos[i];
+      if(e===root || e===portal || (e.contains && e.contains(root))) continue;
+      var cs=getComputedStyle(e);
+      if(cs.position!=='fixed' && cs.position!=='sticky') continue;
+      if(cs.display==='none' || cs.visibility==='hidden') continue;
+      var r=e.getBoundingClientRect();
+      if(r.top<=2 && r.bottom>alto && r.bottom<260 && r.width>window.innerWidth*0.5) alto=r.bottom;
+    }
+  }catch(e){}
+  root.style.setProperty('--topbar', Math.round(alto)+'px');
+}
+function bleed(){
+  root.style.width=''; root.style.marginLeft=''; root.style.marginRight='';
+  var vw=document.documentElement.clientWidth;
+  var r=root.getBoundingClientRect(), w0=r.width, left=r.left;
+  if(vw<=w0+1) return;
+  root.style.marginLeft=(-left)+'px';
+  root.style.width=vw+'px';
+  root.style.marginRight=(w0-vw+left)+'px';
+}
+liberar();
+window.addEventListener('load',liberar);
+window.addEventListener('resize',liberar,{passive:true});
+window.addEventListener('scroll',medirCabecera,{passive:true});
+[200,600,1200,2200].forEach(function(t){ setTimeout(liberar,t); });
+
+/* ═══════════════ 2) BANDA VISIBLE (modales en iframe) ═══════════════ */
+var FRAME={el:null,win:null};
+(function(){
+  var dentro=false;
+  try{ dentro=(window.self!==window.top); }catch(e){ dentro=true; }
+  if(!dentro) return;
+  try{
+    var fe=window.frameElement;
+    if(fe && typeof window.parent.innerHeight==='number'){ FRAME.el=fe; FRAME.win=window.parent; }
+  }catch(e){ FRAME.el=null; FRAME.win=null; }
+})();
+function banda(){
+  if(!FRAME.el) return null;
+  try{
+    var r=FRAME.el.getBoundingClientRect(), ph=FRAME.win.innerHeight;
+    var top=Math.max(0,-r.top), bot=Math.min(r.height, ph-r.top);
+    return {top:top, height:Math.max(220,bot-top)};
+  }catch(e){ return null; }
+}
+/* ─────────────────────────────────────────────────────────
+   ESPACIO EN BLANCO AL FILTRAR
+   Hostinger fija el alto del iframe con el contenido que había al
+   cargar. Al filtrar, la rejilla encoge pero el iframe conserva su
+   alto y queda un hueco enorme antes del pie de página. Como el
+   iframe es del mismo origen, aquí se le ajusta el alto al contenido
+   real y se desbloquea su contenedor en la página padre.
+   ───────────────────────────────────────────────────────── */
+function aplicarAlto(){
+  if(!FRAME.el) return;
+  try{
+    var alto=Math.ceil(root.getBoundingClientRect().height);
+    if(alto<40) return;
+    var actual=parseFloat(FRAME.el.style.height)||0;
+    if(Math.abs(actual-alto)>2){          /* umbral: evita reescrituras inútiles */
+      FRAME.el.style.height=alto+'px';
+      FRAME.el.style.minHeight='0';
+    }
+    var el=FRAME.el.parentElement, n=0;
+    while(el && el.tagName!=='BODY' && n<6){
+      var s=el.style;
+      s.height='auto'; s.minHeight='0'; s.maxHeight='none'; s.overflow='visible';
+      el=el.parentElement; n++;
+    }
+  }catch(e){}
+}
+function ajustarIframe(){
+  /* DOS pasadas a propósito. La medición hecha en el mismo tick del
+     re-render puede tomarse antes de que el navegador asiente la nueva
+     altura de la rejilla: medido, la primera daba 2612 px cuando el
+     contenido real era 3825 y el iframe RECORTABA el contenido. La
+     segunda pasada converge exacto.
+     Nada de ResizeObserver aquí: observar el mismo elemento cuyo alto
+     acabamos de cambiar dispara el bucle que el navegador suprime, y
+     entonces la corrección nunca llega. */
+  aplicarAlto();
+  setTimeout(aplicarAlto,60);
+  setTimeout(aplicarAlto,300);
+}
+window.addEventListener('load',ajustarIframe);
+[300,900,1800].forEach(function(t){ setTimeout(ajustarIframe,t); });
+/* Red de seguridad: si Hostinger vuelve a fijar el alto por su cuenta,
+   o si las fotos cambian el layout, esto lo devuelve a su sitio. */
+setInterval(aplicarAlto,800);
+
+var anclados=[];
+function anclar(el){
+  var b=banda();
+  if(!b){ el.style.top=''; el.style.bottom=''; el.style.height=''; return; }
+  el.style.top=b.top+'px'; el.style.bottom='auto'; el.style.height=b.height+'px';
+}
+function seguir(el,on){
+  var i=anclados.indexOf(el);
+  if(on && i<0) anclados.push(el);
+  if(!on && i>=0) anclados.splice(i,1);
+  if(on) anclar(el);
+}
+(function(){
+  /* Directo, sin requestAnimationFrame: rAF se congela cuando la
+     pestaña no esta al frente y el modal se quedaria a la deriva. */
+  function ping(){ for(var i=0;i<anclados.length;i++) anclar(anclados[i]); }
+  window.addEventListener('scroll',ping,{passive:true});
+  window.addEventListener('resize',ping,{passive:true});
+  if(FRAME.win){ try{
+    FRAME.win.addEventListener('scroll',ping,{passive:true});
+    FRAME.win.addEventListener('resize',ping,{passive:true});
+  }catch(e){} }
+  setInterval(function(){ if(anclados.length) ping(); },250);
+})();
+
+/* ═══════════════ 3) BUSQUEDA TOLERANTE A ERRORES ═══════════════ */
+/* Rango de diacriticos U+0300..U+036F por codigo numerico. Escribirlo con
+   caracteres literales lo corrompe si la pagina no se sirve como UTF-8 y
+   lanza "Range out of order in character class", que tumba todo el script. */
+var RE_DIA=new RegExp('['+String.fromCharCode(0x300)+'-'+String.fromCharCode(0x36F)+']','g');
+function norm(s){
+  s=String(s==null?'':s).toLowerCase();
+  try{ s=s.normalize('NFD').replace(RE_DIA,''); }catch(e){}
+  return s.replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function lev(a,b,max){
+  if(a===b) return 0;
+  var la=a.length, lb=b.length;
+  if(Math.abs(la-lb)>max) return max+1;
+  if(!la) return lb; if(!lb) return la;
+  var prev=new Array(lb+1), cur=new Array(lb+1), i, j;
+  for(j=0;j<=lb;j++) prev[j]=j;
+  for(i=1;i<=la;i++){
+    cur[0]=i; var best=cur[0];
+    for(j=1;j<=lb;j++){
+      var cost=(a.charCodeAt(i-1)===b.charCodeAt(j-1))?0:1;
+      var v=prev[j]+1;
+      if(cur[j-1]+1<v) v=cur[j-1]+1;
+      if(prev[j-1]+cost<v) v=prev[j-1]+cost;
+      cur[j]=v; if(v<best) best=v;
+    }
+    if(best>max) return max+1;
+    var t=prev; prev=cur; cur=t;
+  }
+  return prev[lb];
+}
+function tol(n){ return n<=3?0 : n<=5?1 : n<=8?2 : 3; }
+function indexar(t){
+  var texto=norm([t.id,t.nombre,t.tipo,t.ciudad,t.estado,t.descripcion].join(' '));
+  var vistos={}, toks=[], parts=texto.split(' ');
+  for(var i=0;i<parts.length;i++){ var p=parts[i]; if(p.length>=3 && !vistos[p]){ vistos[p]=1; toks.push(p); } }
+  t._txt=texto; t._toks=toks; return t;
+}
+var VOCAB=[];
+function vocab(){
+  var peso={}, bonito={};
+  DATA.forEach(function(t){
+    [t.ciudad,t.estado,t.tipo].forEach(function(v){
+      norm(v).split(' ').forEach(function(w){ if(w.length>=4) peso[w]=(peso[w]||0)+3; });
+    });
+    (t._toks||[]).forEach(function(w){ if(w.length>=4) peso[w]=(peso[w]||0)+1; });
+    [t.ciudad,t.estado,t.nombre,t.descripcion].forEach(function(v){
+      String(v||'').split(/[\s,.;:()]+/).forEach(function(w){
+        var k=norm(w); if(k.length>=4 && !bonito[k]) bonito[k]=w;
+      });
+    });
+  });
+  VOCAB=Object.keys(peso).map(function(k){ return {k:k,peso:peso[k],txt:bonito[k]||k}; })
+               .sort(function(a,b){ return b.peso-a.peso; });
+}
+function scoreTok(tk,t){
+  if(t._txt.indexOf(tk)>=0) return 0;
+  var tt=tol(tk.length), mejor=-1;
+  for(var i=0;i<t._toks.length;i++){
+    var w=t._toks[i];
+    if(w.indexOf(tk)===0) return 0.4;
+    if(w.length>tk.length && tk.length>=4){
+      var dp=lev(tk,w.substr(0,tk.length),tt);
+      if(dp<=tt && (mejor<0 || 0.5+dp<mejor)) mejor=0.5+dp;
+    }
+    if(Math.abs(w.length-tk.length)<=tt){
+      var d=lev(tk,w,tt);
+      if(d<=tt && (mejor<0 || d<mejor)) mejor=d;
+      if(mejor===0) break;
+    }
+  }
+  return mejor<0 ? -1 : (mejor||0.2);
+}
+function sugerir(tk){
+  var tt=tol(tk.length)+1, mejor=null, mejorD=99;
+  for(var i=0;i<VOCAB.length;i++){
+    var v=VOCAB[i], d=99;
+    if(Math.abs(v.k.length-tk.length)<=tt) d=lev(tk,v.k,tt);
+    if(v.k.length>tk.length && tk.length>=4){
+      var dp=lev(tk,v.k.substr(0,tk.length),tt);
+      if(dp<d) d=dp;
+    }
+    if(d<mejorD || (d===mejorD && mejor && v.peso>mejor.peso)){ mejorD=d; mejor=v; }
+    if(mejorD===0) break;
+  }
+  return (mejor && mejorD<=tt) ? mejor.txt : null;
+}
+function buscar(qRaw, base){
+  var s=norm(qRaw);
+  if(!s) return {lista:base,aprox:false,sug:[]};
+  var toks=s.split(' ').filter(function(x){ return x.length>=2; });
+  if(!toks.length) return {lista:base,aprox:false,sug:[]};
+  var estricto=base.filter(function(t){
+    for(var i=0;i<toks.length;i++){ if(t._txt.indexOf(toks[i])<0) return false; }
+    return true;
+  });
+  if(estricto.length) return {lista:estricto,aprox:false,sug:[]};
+  var pts=[];
+  base.forEach(function(t){
+    var total=0;
+    for(var i=0;i<toks.length;i++){ var v=scoreTok(toks[i],t); if(v<0) return; total+=v; }
+    pts.push({t:t,s:total});
+  });
+  if(pts.length){
+    pts.sort(function(a,b){ return a.s-b.s || String(a.t.id).localeCompare(String(b.t.id)); });
+    return {lista:pts.map(function(x){return x.t;}),aprox:true,sug:[]};
+  }
+  var sug=[];
+  toks.forEach(function(tk){ var x=sugerir(tk); if(x && sug.indexOf(x)<0) sug.push(x); });
+  return {lista:[],aprox:false,sug:sug.slice(0,3)};
+}
+
+/* ════ Formato ════ */
+function n2(v){ if(typeof v==='number') return isFinite(v)?v:0; var n=parseFloat(String(v||'').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+function money(n){ n=n2(n); if(!n) return 'A consultar'; return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(n); }
+function sup(t){
+  if(t.hectareas>=1) return t.hectareas.toLocaleString('es-MX',{maximumFractionDigits:2})+' ha';
+  if(t.dimensiones_m2>0) return t.dimensiones_m2.toLocaleString('es-MX')+' m²';
+  return '—';
+}
+function fotosDe(o){
+  var f=o.fotos||o.imagenes||o.images||o.photos||o.fotografias||o.galeria||[];
+  if(typeof f==='string') f=f.split(/[,\n]/);
+  if(!Array.isArray(f)) f=[];
+  return f.filter(function(u){ return typeof u==='string' && /^https?:\/\//i.test(u.trim()); }).map(function(u){ return u.trim(); });
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+var PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+var CAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="3.2"/></svg>';
+var INFO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+var LUPA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>';
+/* Iconos de los botones de la ficha destacada */
+var ICO={
+  lista:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  wa:   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.15-1.7-.84-2-.94-.26-.1-.45-.15-.65.15-.19.29-.74.94-.91 1.13-.17.19-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.04-.17-.29-.02-.45.13-.6.13-.13.3-.34.44-.51.15-.17.2-.29.3-.49.1-.19.05-.36-.02-.51-.07-.15-.65-1.58-.9-2.16-.24-.57-.48-.49-.65-.5h-.56c-.19 0-.5.07-.77.36-.26.29-1 .98-1 2.4 0 1.41 1.03 2.78 1.17 2.97.15.19 2.03 3.1 4.92 4.35.69.3 1.22.47 1.64.6.69.22 1.32.19 1.81.12.55-.08 1.7-.69 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.34zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.46 9.46 0 0 1-1.45-5.04c0-5.22 4.25-9.47 9.48-9.47 2.53 0 4.91.99 6.7 2.78a9.42 9.42 0 0 1 2.77 6.7c0 5.22-4.25 9.47-9.48 9.47z"/></svg>'
+};
+
+/* ════ Esqueletos ════ */
+function esqueletos(){
+  var g=$('cpmGrid'), h='';
+  for(var i=0;i<8;i++) h+='<div class="cpm-sk"><div class="a"></div><div class="b"></div><div class="c"></div></div>';
+  g.innerHTML=h;
+}
+esqueletos();
+
+/* ════ Ciudades ════ */
+function ciudades(){
+  var sel=$('cpmCity'), prev=sel.value, out=[], vis={};
+  DATA.forEach(function(t){ if(t.ciudad && !vis[t.ciudad]){ vis[t.ciudad]=1; out.push(t.ciudad); } });
+  out.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  sel.innerHTML='<option value="">Todas las ciudades</option>';
+  out.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  if(prev && out.indexOf(prev)>=0) sel.value=prev;
+}
+
+/* ════ Filtrado + render ════ */
+function base(){
+  var c=$('cpmCity').value;
+  return DATA.filter(function(t){
+    if(tipoAct==='Terrenos'   && t.tipo!=='Terreno Particular') return false;
+    if(tipoAct==='Macrolotes' && t.tipo!=='Macrolote')          return false;
+    if(c && t.ciudad!==c) return false;
+    return true;
+  });
+}
+function filtrar(){
+  var q=$('cpmQ').value||'';
+  var res=buscar(q, base());
+  var grid=$('cpmGrid'), hint=$('cpmHint');
+  $('cpmTotal').innerHTML='<b>'+res.lista.length+'</b> propiedad'+(res.lista.length!==1?'es':'');
+
+  if(res.aprox){
+    hint.style.display='flex';
+    hint.innerHTML=INFO+'<span>Sin coincidencias exactas para <b>'+esc(q.trim())+'</b>. Te mostramos lo más parecido.</span>';
+  }else{ hint.style.display='none'; hint.innerHTML=''; }
+
+  if(!res.lista.length){
+    var s='';
+    if(res.sug.length){
+      s='<p>¿Quizá quisiste decir…?</p><div class="cpm-sugs">'+
+        res.sug.map(function(x){ return '<button type="button" class="cpm-ctl cpm-sug" data-s="'+esc(x)+'">'+esc(x)+'</button>'; }).join('')+'</div>';
+    }else{ s='<p>Prueba con otra ciudad o palabra clave</p>'; }
+    grid.innerHTML='<div class="cpm-none">'+LUPA+'<b>Sin resultados</b>'+s+'</div>';
+    Array.prototype.forEach.call(grid.querySelectorAll('.cpm-sug'),function(b){
+      b.addEventListener('click',function(){ $('cpmQ').value=b.getAttribute('data-s'); filtrar(); $('cpmQ').focus(); });
+    });
+    return;
+  }
+  /* La destacada siempre encabeza, sin importar el orden que traiga
+     el filtro o el puntaje de la búsqueda aproximada. */
+  var lista=res.lista.slice().sort(function(a,b){ return (b._premium?1:0)-(a._premium?1:0); });
+  var frag=document.createDocumentFragment();
+  lista.forEach(function(t){ frag.appendChild(tarjeta(t)); });
+  grid.innerHTML='';
+  grid.appendChild(frag);
+  ajustarIframe();
+}
+function tarjeta(t){
+  var d=document.createElement('div');
+  d.className='cpm-card'+(t._premium?' premium':'');
+  d.addEventListener('click',function(){ abrir(t); });
+  var hay=t.fotos && t.fotos.length>0;
+  var macro=(t.tipo==='Macrolote');
+  var etiqueta = t._premium ? (t._etiqueta||t.tipo) : (macro?'Macrolote':'Terreno');
+  var img = hay
+    ? '<img class="cpm-photo" src="'+esc(t.fotos[0])+'" alt="'+esc(t.nombre)+'" loading="lazy"><div class="cpm-wm" style="display:none"><img src="'+esc(CFG.logoAzul)+'" alt=""></div>'
+    : '<div class="cpm-wm"><img src="'+esc(CFG.logoAzul)+'" alt=""></div>';
+
+  /* capas informativas solo en la tarjeta destacada */
+  var capas='';
+  if(t._premium && t._capas && t._capas.length){
+    capas='<div class="cpm-layers">'+t._capas.slice(0,2).map(function(c){
+      return '<span class="cpm-layer'+(c.hot?' hot':'')+'">'+esc(c.tc||c.t)+'</span>';
+    }).join('')+'</div>';
+  }
+  var flag = (t._premium && t._flag) ? '<span class="cpm-flag">'+esc(t._flag)+'</span>' : '';
+  var precio = (t._desde?'<span class="cpm-desde">Desde</span>':'')+money(t.precio);
+  var cta = (t._premium && t._ctaCard)
+    ? '<a class="cpm-cta-card" href="'+esc(t._ctaCard.url)+'" target="_blank" rel="noopener">'+esc(t._ctaCard.txt)+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>'
+    : '';
+
+  d.innerHTML=
+    '<div class="cpm-thumb">'+img+
+      '<span class="cpm-tag'+(macro?' macro':'')+(t._premium?' macro':'')+'">'+esc(etiqueta)+'</span>'+
+      flag+
+      (hay&&t.fotos.length>1?'<span class="cpm-nfoto">'+CAM+t.fotos.length+'</span>':'')+
+      capas+
+    '</div>'+
+    '<div class="cpm-info">'+
+      '<div class="cpm-ref">'+esc(t.id)+'</div>'+
+      '<div class="cpm-title">'+esc(t.nombre)+'</div>'+
+      '<div class="cpm-place">'+PIN+'<span>'+esc(t.ciudad)+(t.estado?', '+esc(t.estado):'')+'</span></div>'+
+      '<div class="cpm-foot"><span class="cpm-price">'+precio+'</span><span class="cpm-size">'+sup(t)+(t._desde?'+':'')+'</span></div>'+
+      cta+
+    '</div>';
+
+  /* el botón de la tarjeta no debe abrir también la ficha */
+  var b=d.querySelector('a.cpm-cta-card');
+  if(b) b.addEventListener('click',function(e){ e.stopPropagation(); });
+
+  var im=d.querySelector('img.cpm-photo');
+  if(im) im.addEventListener('error',function(){
+    im.style.display='none';
+    var wm=d.querySelector('.cpm-wm'); if(wm) wm.style.display='flex';
+  });
+  return d;
+}
+
+/* ════ Ficha ════ */
+function abrir(t){
+  actual=t; gi=0;
+  var hay=t.fotos && t.fotos.length>0;
+  $('cpmMTipo').textContent=t.tipo;
+  $('cpmMRef').textContent=t.id;
+  $('cpmMName').textContent=t.nombre;
+  $('cpmMLoc').innerHTML=PIN+'<span>'+esc(t.ciudad)+(t.estado?', '+esc(t.estado):'')+'</span>';
+  $('cpmMPrice').textContent=money(t.precio);
+  $('cpmM2Wrap').style.display = t.precio_m2>0 ? 'block':'none';
+  if(t.precio_m2>0) $('cpmM2').textContent=money(t.precio_m2);
+
+  var im=$('cpmGalImg'), wm=$('cpmGalWm');
+  if(hay){
+    wm.style.display='none'; im.src=t.fotos[0]; im.style.display='block';
+    var multi=t.fotos.length>1;
+    $('cpmGalNum').style.display=multi?'block':'none';
+    $('cpmGalNum').textContent='1 / '+t.fotos.length;
+    $('cpmGalPrev').style.display=multi?'flex':'none';
+    $('cpmGalNext').style.display=multi?'flex':'none';
+    $('cpmGal').style.cursor='zoom-in';
+  }else{
+    wm.style.display='flex'; im.style.display='none'; im.removeAttribute('src');
+    $('cpmGalNum').style.display='none'; $('cpmGalPrev').style.display='none'; $('cpmGalNext').style.display='none';
+    $('cpmGal').style.cursor='default';
+  }
+
+  var f=[];
+  if(t.dimensiones_m2>0) f.push(['Superficie', t.dimensiones_m2.toLocaleString('es-MX')+' m²']);
+  if(t.hectareas>0)      f.push(['Hectáreas', t.hectareas.toLocaleString('es-MX',{maximumFractionDigits:4})+' ha']);
+  if(t.ciudad)           f.push(['Ciudad', t.ciudad]);
+  if(t.estado)           f.push(['Estado', t.estado]);
+  $('cpmFacts').innerHTML=f.map(function(p){
+    return '<div class="cpm-fact"><div class="l">'+esc(p[0])+'</div><div class="v">'+esc(p[1])+'</div></div>';
+  }).join('');
+  $('cpmMDesc').textContent=t.descripcion||'Sin descripción disponible.';
+
+  var mp=$('cpmMaps');
+  if(t.ubicacion_maps && /^https?:\/\//.test(t.ubicacion_maps)){ mp.href=t.ubicacion_maps; mp.style.display='flex'; }
+  else mp.style.display='none';
+
+  var msg=encodeURIComponent(t._premium
+    ? 'Hola, me interesa Imperio Conkal. Quiero información de disponibilidad y precios.'
+    : 'Hola, me interesa información sobre la propiedad '+t.nombre+' ('+t.id+') en '+t.ciudad+', '+t.estado+'. Precio: '+money(t.precio)+'.');
+  var waUrl='https://wa.me/'+CFG.whatsapp+'?text='+msg;
+
+  /* ── Ficha destacada: capas + 3 botones en vez de los CTA normales ── */
+  var sheet=$('cpmSheet'), capas=$('cpmLayers'), acc=$('cpmAcciones');
+  sheet.classList.toggle('premium', !!t._premium);
+  if(t._premium){
+    capas.style.display='flex';
+    capas.innerHTML=(t._capas||[]).map(function(c){
+      return '<span class="cpm-layer-b'+(c.hot?' hot':'')+'">'+esc(c.t)+'</span>';
+    }).join('');
+    acc.style.display='grid';
+    acc.innerHTML=(t._acciones||[]).map(function(a){
+      var href=(a.url==='wa')?waUrl:a.url;
+      var cls=(a.estilo==='oro')?'cpm-btn-oro':(a.estilo==='wa'?'cpm-wa':'cpm-btn-navy');
+      return '<a class="'+cls+'" href="'+esc(href)+'" target="_blank" rel="noopener">'+ICO[a.ico||'info']+esc(a.txt)+'</a>';
+    }).join('');
+    $('cpmWa').style.display='none';
+    $('cpmTel').style.display='none';
+  }else{
+    capas.style.display='none'; capas.innerHTML='';
+    acc.style.display='none';   acc.innerHTML='';
+    $('cpmWa').style.display='flex'; $('cpmWa').href=waUrl;
+    $('cpmTel').style.display='flex'; $('cpmTel').href='tel:'+CFG.telefono.replace(/\s/g,'');
+    $('cpmTelTxt').textContent=CFG.telefono;
+  }
+
+  $('cpmScroll').scrollTop=0;
+  var ov=$('cpmOv'); ov.classList.add('on'); seguir(ov,true);
+  document.body.style.overflow='hidden';
+}
+function cerrar(){
+  var ov=$('cpmOv'); ov.classList.remove('on'); seguir(ov,false);
+  if(!$('cpmLb').classList.contains('on')) document.body.style.overflow='';
+}
+function galNav(dir){
+  if(!actual || !actual.fotos.length) return;
+  gi=(gi+dir+actual.fotos.length)%actual.fotos.length;
+  $('cpmGalImg').src=actual.fotos[gi];
+  $('cpmGalNum').textContent=(gi+1)+' / '+actual.fotos.length;
+}
+
+/* ════ Visor ════ */
+function abrirLb(){
+  if(!actual || !actual.fotos.length) return;
+  lfotos=actual.fotos; li=gi; pintarLb();
+  var lb=$('cpmLb'); lb.classList.add('on'); seguir(lb,true);
+}
+function cerrarLb(){
+  var lb=$('cpmLb'); lb.classList.remove('on'); seguir(lb,false);
+  if(!$('cpmOv').classList.contains('on')) document.body.style.overflow='';
+}
+function lbNav(d){ li=(li+d+lfotos.length)%lfotos.length; pintarLb(); }
+function pintarLb(){
+  $('cpmLbImg').src=lfotos[li];
+  var dots=$('cpmLbDots'); dots.innerHTML='';
+  var multi=lfotos.length>1;
+  if(multi) lfotos.forEach(function(_,i){
+    var e=document.createElement('i'); if(i===li) e.className='on';
+    e.addEventListener('click',function(){ li=i; pintarLb(); });
+    dots.appendChild(e);
+  });
+  $('cpmLbP').style.display=multi?'flex':'none';
+  $('cpmLbN').style.display=multi?'flex':'none';
+}
+
+/* ════ Eventos ════ */
+$('cpmQ').addEventListener('input',filtrar);
+$('cpmCity').addEventListener('change',filtrar);
+$('cpmSeg').addEventListener('click',function(e){
+  var b=e.target.closest?e.target.closest('.cpm-tab'):null; if(!b) return;
+  tipoAct=b.getAttribute('data-t');
+  Array.prototype.forEach.call(root.querySelectorAll('.cpm-tab'),function(x){ x.classList.toggle('on', x===b); });
+  $('cpmCity').value='';
+  filtrar();
+});
+$('cpmClose').addEventListener('click',cerrar);
+$('cpmOv').addEventListener('click',function(e){ if(e.target===$('cpmOv')) cerrar(); });
+$('cpmSheet').addEventListener('click',function(e){ e.stopPropagation(); });
+$('cpmGal').addEventListener('click',abrirLb);
+$('cpmGalPrev').addEventListener('click',function(e){ e.stopPropagation(); galNav(-1); });
+$('cpmGalNext').addEventListener('click',function(e){ e.stopPropagation(); galNav(1); });
+$('cpmGalImg').addEventListener('error',function(){
+  $('cpmGalImg').style.display='none'; $('cpmGalWm').style.display='flex';
+});
+$('cpmLbX').addEventListener('click',cerrarLb);
+$('cpmLbP').addEventListener('click',function(){ lbNav(-1); });
+$('cpmLbN').addEventListener('click',function(){ lbNav(1); });
+$('cpmLb').addEventListener('click',function(e){ if(e.target===$('cpmLb')||e.target.className==='cpm-lb-in') cerrarLb(); });
+document.addEventListener('keydown',function(e){
+  var lbOn=$('cpmLb').classList.contains('on');
+  if(e.key==='Escape'){ if(lbOn) cerrarLb(); else if($('cpmOv').classList.contains('on')) cerrar(); }
+  if(lbOn){ if(e.key==='ArrowLeft') lbNav(-1); if(e.key==='ArrowRight') lbNav(1); }
+});
+/* los logos de marca de agua */
+$('cpmLogoGal').src=CFG.logoAzul;
+
+/* Mover los modales al <body>: asi ningun contenedor de Hostinger con
+   transform o overflow puede recortarlos. */
+if(portal && portal.parentNode!==document.body) document.body.appendChild(portal);
+
+/* ════ Pintar ════ */
+function pintar(data,origen){
+  /* Las fotos reales de Imperio Conkal viven en la carpeta imperio_conkal
+     de Storage, y listar Storage exige sesión (el catálogo público no la
+     tiene). El portafolio de asesores, que sí está autenticado, importa
+     esa carpeta y guarda las URL en el documento "IMPERIO CONKAL" de
+     catalogo_publico. Aquí se toman de ahí y ese documento se saca de la
+     lista normal para que no salga dos veces. */
+  var fotosImperio=null;
+  data=data.filter(function(t){
+    if(String(t.id||'').toUpperCase().replace(/[_\s-]+/g,' ').trim()==='IMPERIO CONKAL'){
+      if(Array.isArray(t.fotos) && t.fotos.length) fotosImperio=t.fotos;
+      return false;
+    }
+    return true;
+  });
+  var IMP = fotosImperio
+    ? (function(){ var o={}; for(var k in IMPERIO) o[k]=IMPERIO[k]; o.fotos=fotosImperio; return o; })()
+    : IMPERIO;
+
+  DATA=data.map(function(t){
+    return indexar({
+      id:t.id, nombre:t.nombre||t.id||'Propiedad', tipo:t.tipo||'Terreno Particular',
+      ciudad:t.ciudad||'', estado:t.estado||'', descripcion:t.descripcion||'',
+      precio:n2(t.precio_total||t.precio),
+      dimensiones_m2:n2(t.dimensiones_m2), hectareas:n2(t.hectareas), precio_m2:n2(t.precio_m2),
+      ubicacion_maps:t.ubicacion_maps||'',
+      fotos:Array.isArray(t.fotos)?t.fotos:[]
+    });
+  }).sort(function(a,b){ return String(a.id).localeCompare(String(b.id)); });
+  /* La ficha destacada va al frente y no viene de Firestore.
+     Se indexa igual para que también responda a búsqueda y filtros. */
+  DATA.unshift(indexar(IMP));
+  vocab(); ciudades(); filtrar(); liberar();
+  if(DEBUG){
+    var d=$('cpmDiag'); d.style.display='block';
+    var conFoto=DATA.filter(function(t){ return t.fotos.length; }).length;
+    var det=[];
+    det.push('<b>'+esc(CFG.colPublica)+'</b>: '+esc(DIAG[CFG.colPublica]||'sin respuesta todavía'));
+    det.push('<b>'+esc(CFG.colPrivada)+'</b>: '+esc(DIAG[CFG.colPrivada]||'no se intentó'));
+    d.innerHTML='CATALOGO '+VERSION+' · origen: <b>'+esc(origen)+'</b> · '+DATA.length+
+      ' propiedades · con foto: <b>'+conFoto+'</b> · iframe: '+(FRAME.el?'sí':'no')+
+      '<br>Firestore → '+det.join(' &nbsp;|&nbsp; ');
+  }
+}
+
+/* ════ Datos ════ */
+function iniciar(){
+  if(typeof firebase==='undefined' || !firebase.firestore){ return setTimeout(iniciar,150); }
+  var db;
+  try{
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(CFG.firebase);
+    db=firebase.firestore();
+  }catch(e){
+    if(!listo){ listo=true; pintar(FALLBACK,'respaldo local (Firebase no inició)'); }
+    return;
+  }
+  sub(CFG.colPublica, function(){
+    sub(CFG.colPrivada, function(){
+      if(!listo){ listo=true; pintar(FALLBACK,'respaldo local (Firestore sin acceso)'); }
+    });
+  });
+  function sub(col, alFallar){
+    var hecho=false;
+    try{
+      db.collection(col).onSnapshot(function(snap){
+        var data=snap.docs.map(function(d){
+          var o=d.data()||{};
+          var x={}; for(var k in o) if(Object.prototype.hasOwnProperty.call(o,k)) x[k]=o[k];
+          x.id=o.id||d.id; x.fotos=fotosDe(o);
+          return x;
+        });
+        if(!data.length){
+          /* OJO: llegar aqui significa que la REGLA SI DEJA LEER pero la
+             coleccion esta vacia. Es un diagnostico muy distinto a
+             permission-denied y por eso se distingue en la franja. */
+          DIAG[col]='se puede leer pero está VACÍA (falta apretar «Sincronizar catálogo»)';
+          if(!hecho){ hecho=true; console.warn('[CPM] "'+col+'" vacía.'); alFallar(); }
+          return;
+        }
+        DIAG[col]='OK, '+data.length+' documentos';
+        hecho=true; listo=true;
+        console.log('[CPM '+VERSION+'] '+col+' OK — '+data.length+' documentos');
+        pintar(data,'Firestore · '+col);
+      },function(err){
+        DIAG[col]=(err.code||'error')+(err.code==='permission-denied'?' (la regla de lectura NO está activa)':'');
+        console.warn('[CPM] "'+col+'" ('+(err.code||'?')+'): '+err.message);
+        if(!hecho){ hecho=true; alFallar(); }
+      });
+    }catch(e){ DIAG[col]='excepción: '+e.message; if(!hecho){ hecho=true; alFallar(); } }
+  }
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar);
+else iniciar();
+
+})();
+</script>
+<!-- ===== FIN CATALOGO CPM v5 ===== -->

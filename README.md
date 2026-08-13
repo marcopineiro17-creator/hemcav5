@@ -52,9 +52,10 @@ de scripts.
 | `portafolio-hms-embed.html` | el portafolio de Hummingbird | `#hbp` |
 | `divisiones-embed-hostinger.html` | `/divisiones` | `#cpm-divisiones` |
 | `inicio-embed-hostinger.html` | la portada | `#cpm-home` |
+| `catalogo-embed-hostinger.html` | `/catalogo-de-propiedades` | `#cpm-catalogo` |
 
 Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `home_prep.py`,
-`build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
+`cat_prep.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
 original. Los originales de partida están en `src/`.
 
 ### Destinos de los enlaces
@@ -90,6 +91,26 @@ apartado que les corresponde**. Como los identificadores de esa página no se
 pueden saber de antemano, se miran cuando hacen falta: al pasar el puntero por
 la tarjeta se pide la página una vez, se busca el título que corresponde y se
 añade su ancla. Si falla algo, el enlace se queda apuntando a la página.
+
+### El catálogo y la altura reservada por Hostinger
+
+El constructor mide el bloque una vez y guarda esa altura en los contenedores
+del iframe: alto fijo en `.grid-embed`, `min-height` en la sección y —el que de
+verdad manda— una **fila de rejilla de alto fijo** en `.block-layout`. Al
+filtrar, el iframe encoge pero esa reserva no, y queda el hueco en blanco antes
+del pie.
+
+El catálogo lo colapsa él mismo (`colapsarContenedores`), con `!important`
+porque la reserva del constructor también lo lleva. Es el mismo tratamiento que
+tu código global aplica a los bloques que sí reconoce; `#cpm-catalogo` no está
+en su lista, así que tiene que hacerlo solo.
+
+La ficha de propiedad se ancla **debajo** de la cabecera fija del sitio. Esa
+altura se mide en el documento del sitio, no en el del bloque —medirla dentro
+del iframe daba siempre 0, y por eso el botón de cerrar acababa tapado por la
+cabecera en móvil. El desplazamiento de la barra de filtros, en cambio, sólo se
+aplica fuera de un iframe: dentro, `position:sticky` no puede pegarse a nada y
+lo único que consigue es taparle la primera fila de tarjetas.
 
 ## Pendiente
 
