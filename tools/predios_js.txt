@@ -1,0 +1,257 @@
+<script>
+(function () {
+  "use strict";
+
+  var raiz = document.getElementById("cpm-predios");
+  if (!raiz || raiz.getAttribute("data-init")) return;
+  raiz.setAttribute("data-init", "arrancando");
+
+  /* ---------------------------------------------------------------
+     EL UNICO DATO QUE HAY QUE EDITAR A MANO
+     Numero de WhatsApp de la division, en formato internacional y sin
+     signos: 52 + lada + numero. Mientras este vacio, los botones de
+     WhatsApp no se rompen: se comportan como el resto y llevan a la
+     pagina de contacto del sitio. Se deja vacio a proposito -- los dos
+     numeros que hay en el sitio son de HEMCA y de HMS, y mandar ahi a
+     alguien que quiere escriturar seria peor que no tener boton.
+     --------------------------------------------------------------- */
+  var WHATSAPP = "";                       /* p.ej. "529991234567" */
+  var MENSAJE  = "Hola, quiero información sobre regularización y escrituración de mi propiedad.";
+
+  function safe(fn) { try { fn(); } catch (e) {} }
+
+  /* Si algo falla, se retira el ocultado y todo queda visible. Nunca una
+     pagina en blanco por un error de guion. */
+  function rendirse(e) {
+    safe(function () { raiz.classList.remove("js-on"); });
+    safe(function () {
+      var p = raiz.querySelectorAll(".rv");
+      for (var i = 0; i < p.length; i++) p[i].classList.add("is-visible");
+    });
+    safe(function () { if (window.console && console.warn) console.warn("[CPM predios] modo seguro:", e); });
+  }
+
+  raiz.classList.add("js-on");
+  try { principal(); } catch (e) { rendirse(e); }
+
+  function principal() {
+
+/*__MOTOR__*/
+
+    var M = hbEngine(raiz, {
+      claseVisible: "is-visible",
+      limite: 9000,
+      /* El runtime global de CPM reconoce #hb-lp, #ic-lp y #cpm-divisiones,
+         y este id no esta en esa lista: no va a redimensionar el marco por
+         nosotros. Se manda el mensaje de altura de todas formas por si un
+         dia se agrega, y ademas colapsamos los contenedores aqui abajo. */
+      tipoAltura: "cpm-predios:height",
+      proyecto: "regularizacion-predios",
+      /* Nadie va a redimensionar el marco por nosotros, asi que lo hacemos
+         aqui. No hay pugna posible porque somos el unico que escribe. */
+      escribeAltura: true
+    });
+
+    /* =============================================================
+       1. ALTURA RESERVADA POR EL CONSTRUCTOR
+       Hostinger mide el bloque una vez y guarda esa altura en los
+       contenedores del iframe: alto fijo en .grid-embed, min-height en la
+       seccion y -- el que de verdad manda -- una fila de rejilla de alto
+       fijo en .block-layout. Al abrir o cerrar una pregunta el contenido
+       cambia de alto, el iframe se ajusta y esa reserva se queda: de ahi
+       el hueco en blanco antes del pie.
+       Hay que escribirlo con !important porque la reserva del constructor
+       tambien lo lleva.
+       ============================================================= */
+    function colapsarContenedores() {
+      if (!M.enMarco) return;
+      var marco = null;
+      safe(function () { marco = window.frameElement; });
+      if (!marco) return;
+      var el = marco.parentElement, n = 0;
+      while (el && el.tagName !== "BODY" && n < 8) {
+        var s = el.style, cl = " " + (el.className || "") + " ";
+        s.setProperty("height", "auto", "important");
+        s.setProperty("min-height", "0", "important");
+        s.setProperty("max-height", "none", "important");
+        s.overflow = "visible";
+        var esRejilla = false;
+        safe(function () { esRejilla = getComputedStyle(el).display.indexOf("grid") >= 0; });
+        if (esRejilla || cl.indexOf(" block-layout ") >= 0) {
+          s.setProperty("grid-template-rows", "auto", "important");
+        }
+        if (/ (grid-embed|layout-element|block-layout|block) /.test(cl)) {
+          s.setProperty("margin-bottom", "0", "important");
+          s.setProperty("padding-bottom", "0", "important");
+        }
+        el = el.parentElement; n++;
+      }
+    }
+    function ajustar() { M.programarAjuste(); safe(colapsarContenedores); }
+
+    /* =============================================================
+       2. ENLACES QUE SALEN DEL BLOQUE
+       Una ruta relativa dentro de un iframe se resuelve contra el
+       documento del marco y navega DENTRO del marco: eso es lo que
+       producia el "rechazo la conexion". Se arregla haciendo la direccion
+       absoluta y abriendo en la ventana completa.
+       Y para no depender de rutas escritas a mano, primero se busca cada
+       destino EN EL MENU REAL del sitio: el documento padre es del mismo
+       origen, asi que se lee su navegacion y se enlaza donde enlaza el
+       propio sitio. La ruta de respaldo solo entra si no aparece.
+       ============================================================= */
+    var ORIGEN = "https://www.cpmempresarial.com";
+    safe(function () {
+      var o = window.parent.location.origin;
+      if (o && /^https?:/.test(o)) ORIGEN = o;
+    });
+
+    function sinAcentos(t) {
+      t = (t || "").toLowerCase();
+      safe(function () { t = t.normalize("NFD").replace(/[̀-ͯ]/g, ""); });
+      return t.replace(/\s+/g, " ").trim();
+    }
+
+    var menu = null;
+    function leeMenu() {
+      if (menu) return menu;
+      menu = {};
+      safe(function () {
+        var docPadre = window.parent.document;
+        var anclas = docPadre.querySelectorAll("a[href]");
+        for (var i = 0; i < anclas.length; i++) {
+          var a = anclas[i];
+          var href = a.getAttribute("href") || "";
+          if (/^(#|mailto:|tel:|javascript:)/i.test(href)) continue;
+          var u;
+          try { u = new URL(href, docPadre.baseURI); } catch (e) { continue; }
+          if (u.origin !== ORIGEN) continue;
+          var ruta = u.pathname.replace(/\/+$/, "");
+          if (!ruta) continue;
+          var texto = sinAcentos(a.textContent);
+          if (!texto || texto.length > 40) continue;
+          /* Paginas de tramite: sus nombres se parecen demasiado a los
+             destinos reales ("aviso legal" no es la division legal). */
+          if (/aviso|privacidad|terminos|cookies|politica|blog/.test(texto)) continue;
+          if (!menu[texto]) menu[texto] = u.href;
+        }
+      });
+      return menu;
+    }
+
+    /* Coincidencia exacta o por el principio del texto. Nunca "contiene":
+       asi es como se acaba enlazando a la pagina equivocada. */
+    function rutaDelSitio(claves) {
+      var m = leeMenu(), i, k;
+      for (i = 0; i < claves.length; i++) {
+        k = sinAcentos(claves[i]);
+        if (m[k]) return m[k];
+      }
+      for (i = 0; i < claves.length; i++) {
+        k = sinAcentos(claves[i]);
+        for (var texto in m) {
+          if (Object.prototype.hasOwnProperty.call(m, texto) && texto.indexOf(k) === 0) return m[texto];
+        }
+      }
+      return null;
+    }
+
+    var salidas = [].slice.call(raiz.querySelectorAll("a[data-cpm-destino]"));
+    salidas.forEach(function (a) {
+      var claves = (a.getAttribute("data-cpm-destino") || "").split("|");
+      var respaldo = a.getAttribute("data-cpm-respaldo") || "/contacto";
+      a.setAttribute("href", rutaDelSitio(claves) || (ORIGEN + respaldo));
+      a.setAttribute("target", "_top");
+      a.setAttribute("rel", "noopener");
+    });
+
+    /* WhatsApp: solo si hay numero. Si no, el boton se queda con el destino
+       de contacto que ya se le puso arriba, y sigue funcionando. */
+    if (/^\d{10,15}$/.test(WHATSAPP)) {
+      [].slice.call(raiz.querySelectorAll("[data-cpm-wa]")).forEach(function (a) {
+        a.setAttribute("href", "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(MENSAJE));
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener");
+      });
+    }
+
+    /* Respaldo por si el navegador ignora el target (pasa en marcos con
+       sandbox): se navega la ventana completa a mano. */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[target="_top"]') : null;
+        if (!a || ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.button > 0) return;
+        var url = a.getAttribute("href");
+        if (!url || url.charAt(0) === "#") return;
+        ev.preventDefault();
+        try { window.top.location.href = url; }
+        catch (e) { window.open(url, "_blank", "noopener"); }
+      });
+    });
+
+    /* ---------- 3. Entradas al hacer scroll ---------- */
+    [].slice.call(raiz.querySelectorAll(".rv")).forEach(function (el) { M.alEntrar(el); });
+
+    /* ---------- 4. Preguntas frecuentes ----------
+       Se abre una a la vez. Al abrir o cerrar cambia el alto del bloque, y
+       dentro de un iframe eso exige remedir: sin el ajuste, el marco se
+       queda con el alto viejo y la respuesta aparece cortada. */
+    safe(function () {
+      var preguntas = [].slice.call(raiz.querySelectorAll(".pregunta"));
+      preguntas.forEach(function (p) {
+        var boton = p.querySelector(".pregunta-btn");
+        var cuerpo = p.querySelector(".pregunta-cuerpo");
+        if (!boton || !cuerpo) return;
+        var id = "p-" + Math.random().toString(36).slice(2, 8);
+        cuerpo.id = id;
+        boton.setAttribute("aria-expanded", "false");
+        boton.setAttribute("aria-controls", id);
+        boton.addEventListener("click", function () {
+          var abierta = p.classList.contains("abierta");
+          preguntas.forEach(function (o) {
+            o.classList.remove("abierta");
+            var b = o.querySelector(".pregunta-btn");
+            if (b) b.setAttribute("aria-expanded", "false");
+          });
+          if (!abierta) {
+            p.classList.add("abierta");
+            boton.setAttribute("aria-expanded", "true");
+          }
+          ajustar();
+        });
+      });
+    });
+
+    /* ---------- 5. Enlaces internos del propio bloque ----------
+       scrollIntoView atraviesa el marco y arrastra el scroll del padre. */
+    safe(function () {
+      raiz.addEventListener("click", function (ev) {
+        var a = ev.target.closest ? ev.target.closest('a[href^="#"]') : null;
+        if (!a) return;
+        var destino = raiz.querySelector(a.getAttribute("href"));
+        if (!destino) return;
+        ev.preventDefault();
+        try { destino.scrollIntoView({ behavior: M.lento ? "auto" : "smooth", block: "start" }); }
+        catch (e) { safe(function () { destino.scrollIntoView(); }); }
+      });
+    });
+
+    /* ---------- 6. Ano del pie ---------- */
+    safe(function () {
+      var y = raiz.querySelector("#cpmPrediosYear");
+      if (y) y.textContent = String(new Date().getFullYear());
+    });
+
+    raiz.setAttribute("data-init", "listo");
+    M.arrancar();
+    safe(colapsarContenedores);
+    /* Segunda pasada: el constructor a veces fija la reserva despues de
+       que el bloque termina de montarse. */
+    setTimeout(function () { safe(colapsarContenedores); }, 400);
+    setTimeout(function () { safe(colapsarContenedores); }, 1400);
+    safe(function () {
+      window.addEventListener("resize", function () { safe(colapsarContenedores); }, { passive: true });
+    });
+  }
+})();
+</script>

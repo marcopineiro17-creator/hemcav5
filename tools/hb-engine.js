@@ -123,6 +123,18 @@ function hbEngine(root, opts) {
     if (opts.whatsapp) aviso.whatsappUrl = opts.whatsapp;
     if (opts.proyecto) aviso.project = opts.proyecto;
     try { window.parent.postMessage(aviso, "*"); } catch (e) {}
+
+    /* Excepcion deliberada a lo anterior: escribir la altura del iframe.
+       Solo tiene sentido cuando NADIE mas la va a escribir -- es decir,
+       cuando el tipo de mensaje de arriba no esta en la lista que atiende
+       el runtime global de CPM. Entonces no hay dos manos sobre el mismo
+       valor, no hay pugna y no hay vibracion; lo que hay sin esto es un
+       iframe de 150px sobre un contenido de miles. Sigue protegido por el
+       techo y por el contador de subidas de arriba, que es justo lo que
+       evita que una medida en svh lo desboque. */
+    if (opts.escribeAltura && marco) {
+      try { marco.style.setProperty("height", alto + "px", "important"); } catch (e) {}
+    }
   }
 
   /* El documento del iframe es blanco por omision. Si el iframe queda un

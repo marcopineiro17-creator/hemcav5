@@ -1,0 +1,387 @@
+<div id="cpm-predios">
+
+  <!-- ============ PORTADA ============ -->
+  <section class="portada">
+    <div class="env">
+      <p class="rotulo rv">CPM · Regularización de Predios</p>
+      <div class="portada-caja">
+        <h1 class="rv d1">Una propiedad no es del todo tuya <em>hasta que está escriturada.</em></h1>
+        <p class="entradilla rv d2">
+          Avalúos, subdivisión de predios, compraventas, cancelación de hipoteca y
+          escrituración. Llevamos el trámite completo ante el <strong>INSEJUPY</strong> y la
+          notaría —desde un lote hasta un macrolote— y te entregamos tu escritura inscrita.
+        </p>
+        <div class="acciones rv d3">
+          <a class="btn btn--solido" data-cpm-wa
+             data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">
+            Quiero regularizar mi propiedad
+          </a>
+          <a class="btn btn--linea" href="#casos">Ver si es mi caso</a>
+        </div>
+      </div>
+
+      <div class="portada-datos rv">
+        <div class="dato"><b class="cifra">Lotes y macrolotes</b><span>Urbanos y rústicos</span></div>
+        <div class="dato"><b class="cifra">Casas y terrenos</b><span>Particulares y de desarrollo</span></div>
+        <div class="dato"><b class="cifra">Trámite completo</b><span>Del expediente a la escritura</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LOS DOS CASOS ============ -->
+  <section class="banda" id="casos">
+    <div class="env">
+      <div class="intro-seccion">
+        <p class="rotulo rv">A quién ayudamos</p>
+        <h2 class="rv">¿Te reconoces en alguno de estos dos casos?</h2>
+        <p class="rv d1">
+          Son, con diferencia, las dos situaciones que más llegan a nuestra mesa. En las dos
+          la propiedad ya se pagó y en las dos falta el paso que la vuelve legalmente tuya.
+        </p>
+      </div>
+
+      <div class="casos">
+        <article class="caso rv d1">
+          <span class="caso-marca">El caso más frecuente</span>
+          <h3>Acabas de recibir tu terreno y todavía no está a tu nombre</h3>
+          <p>
+            Lo liquidaste en un desarrollo, te lo acaban de entregar, o se lo compraste a un
+            particular. Tienes tu contrato, tus recibos y quizá ya hasta la posesión física.
+          </p>
+          <p>
+            Pero mientras no exista <strong>escritura pública inscrita</strong>, en los registros
+            el terreno sigue sin ser tuyo: no lo puedes vender ni heredar con certeza, no sirve
+            como garantía de un crédito, y cualquier problema legal o fiscal del vendedor
+            todavía te puede alcanzar.
+          </p>
+          <p class="caso-hacemos">
+            <b>Lo que hacemos</b>
+            Revisamos el antecedente de propiedad y el estado del predio, tramitamos los
+            certificados que correspondan ante el INSEJUPY, coordinamos el avalúo y te
+            acompañamos hasta la firma ante notario y la entrega de tu escritura inscrita.
+          </p>
+        </article>
+
+        <article class="caso rv d2">
+          <span class="caso-marca caso-marca--suave">El que casi nadie termina</span>
+          <h3>Ya liquidaste tu crédito, pero la hipoteca sigue inscrita</h3>
+          <p>
+            Terminaste de pagar con INFONAVIT, FOVISSSTE, un banco o un crédito directo.
+            Te dieron tu carta de no adeudo y ahí quedó la cosa.
+          </p>
+          <p>
+            El problema es que <strong>pagar el crédito no cancela la hipoteca</strong>. El
+            gravamen permanece anotado en tu propiedad hasta que se cancela formalmente, y
+            eso aparece el día que quieres vender, heredar o volver a pedir un crédito
+            —normalmente con prisa y con el comprador esperando.
+          </p>
+          <p class="caso-hacemos">
+            <b>Lo que hacemos</b>
+            Gestionamos ante la institución la carta o instrucción de cancelación, tramitamos
+            la cancelación del gravamen y, si hace falta, dejamos la propiedad escriturada a
+            tu nombre y libre de hipoteca.
+          </p>
+        </article>
+      </div>
+
+      <div class="casos-menores">
+        <article class="caso-menor rv d1">
+          <h3>Vas a vender</h3>
+          <p>
+            Preparamos el avalúo, revisamos que el expediente esté completo y, si quieres,
+            nosotros mismos comercializamos la propiedad y llevamos la compraventa de
+            principio a fin.
+          </p>
+        </article>
+        <article class="caso-menor rv d2">
+          <h3>Vas a dividir o fusionar</h3>
+          <p>
+            Subdivisión de un predio en lotes, división entre herederos o socios, o fusión de
+            predios colindantes: hacemos el trámite con la medición, los planos y la
+            inscripción que le corresponde a cada fracción.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICIOS ============ -->
+  <section class="banda banda--claro">
+    <div class="env">
+      <div class="intro-seccion">
+        <p class="rotulo rv">Servicios</p>
+        <h2 class="rv">Todo el trámite, en una sola mesa</h2>
+        <p class="rv d1">
+          No te mandamos a un valuador por un lado, a un gestor por otro y a la notaría por
+          tu cuenta. Nosotros llevamos el control del expediente completo y tú firmas.
+        </p>
+      </div>
+
+      <div class="servicios">
+        <article class="servicio rv"><span class="servicio-num">01</span>
+          <h3>Avalúo</h3>
+          <p>Avalúo de tu terreno o casa, tanto para conocer su valor real de venta como para
+             el trámite que lo requiera.</p></article>
+
+        <article class="servicio rv d1"><span class="servicio-num">02</span>
+          <h3>Escrituración</h3>
+          <p>Integración del expediente, coordinación con la notaría y seguimiento hasta que
+             la escritura queda inscrita a tu nombre.</p></article>
+
+        <article class="servicio rv d2"><span class="servicio-num">03</span>
+          <h3>Cancelación de hipoteca</h3>
+          <p>Carta de liberación con la institución acreedora y cancelación del gravamen para
+             dejar la propiedad libre.</p></article>
+
+        <article class="servicio rv d3"><span class="servicio-num">04</span>
+          <h3>Subdivisión y fusión</h3>
+          <p>División de un predio en lotes o macrolotes, y fusión de predios colindantes, con
+             su medición y su plano.</p></article>
+
+        <article class="servicio rv"><span class="servicio-num">05</span>
+          <h3>Compraventa</h3>
+          <p>Revisión del antecedente, contrato, cálculo de lo que corresponde pagar y firma.
+             Tanto si compras como si vendes.</p></article>
+
+        <article class="servicio rv d1"><span class="servicio-num">06</span>
+          <h3>Trámites ante el INSEJUPY</h3>
+          <p>Certificados, inscripciones y constancias del instituto, gestionados por
+             nosotros sin que tengas que ir.</p></article>
+
+        <article class="servicio rv d2"><span class="servicio-num">07</span>
+          <h3>Venta de tu propiedad</h3>
+          <p>Si además quieres venderla, la comercializamos con la estructura inmobiliaria de
+             CPM y cerramos la operación ya regularizada.</p></article>
+
+        <article class="servicio rv d3"><span class="servicio-num">08</span>
+          <h3>Regularización de la tenencia</h3>
+          <p>Cuando el antecedente está incompleto, el predio viene de una sucesión o la
+             posesión no coincide con el papel.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ALCANCE ============ -->
+  <section class="banda">
+    <div class="env">
+      <div class="alcance">
+        <div>
+          <p class="rotulo rv">Qué regularizamos</p>
+          <h2 class="rv">Desde un lote pequeño hasta un macrolote</h2>
+          <p class="entradilla rv d1" style="margin-top:18px">
+            El tamaño no cambia el procedimiento, cambia el expediente. Trabajamos operaciones
+            de particulares y también carteras completas de desarrolladoras.
+          </p>
+        </div>
+        <div class="rv d2">
+          <div class="fichas">
+            <span class="ficha">Lotes residenciales</span>
+            <span class="ficha">Macrolotes</span>
+            <span class="ficha">Casas</span>
+            <span class="ficha">Terrenos urbanos</span>
+            <span class="ficha">Predios rústicos</span>
+            <span class="ficha">Locales y naves</span>
+            <span class="ficha">Fraccionamientos</span>
+            <span class="ficha">Herencias y sucesiones</span>
+          </div>
+          <p class="nota-alcance">
+            Si no sabes en qué situación está tu propiedad, esa es justamente la primera
+            consulta: revisamos tus documentos y te decimos qué tienes, qué te falta y qué
+            trámite corresponde.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROCESO ============ -->
+  <section class="banda banda--claro">
+    <div class="env">
+      <div class="intro-seccion">
+        <p class="rotulo rv">Cómo trabajamos</p>
+        <h2 class="rv">Cinco pasos, y sabes en cuál estás</h2>
+      </div>
+
+      <div class="pasos">
+        <div class="paso rv"><div class="paso-num">01</div>
+          <div><h3>Revisión de tus documentos</h3>
+            <p>Nos compartes lo que tengas —contrato, recibos, carta de no adeudo, escritura
+               anterior, plano— y te decimos con claridad qué falta. Esta primera revisión no
+               tiene costo.</p></div></div>
+
+        <div class="paso rv"><div class="paso-num">02</div>
+          <div><h3>Diagnóstico y presupuesto</h3>
+            <p>Te entregamos por escrito el trámite que corresponde, los pasos que lleva y lo
+               que cuesta, separando nuestros honorarios de los derechos e impuestos que se
+               pagan a terceros.</p></div></div>
+
+        <div class="paso rv"><div class="paso-num">03</div>
+          <div><h3>Avalúo, medición y certificados</h3>
+            <p>Coordinamos el avalúo y la medición cuando hacen falta, y solicitamos los
+               certificados y constancias ante las instancias correspondientes.</p></div></div>
+
+        <div class="paso rv"><div class="paso-num">04</div>
+          <div><h3>Firma ante notario</h3>
+            <p>Preparamos el expediente completo, lo revisamos con la notaría y agendamos tu
+               firma. Vas una vez, con todo listo.</p></div></div>
+
+        <div class="paso rv"><div class="paso-num">05</div>
+          <div><h3>Entrega de tu escritura inscrita</h3>
+            <p>Damos seguimiento a la inscripción y te entregamos tu escritura. A partir de
+               ahí la propiedad es tuya en los registros, no sólo en el contrato.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSTITUCIONAL ============ -->
+  <section class="banda">
+    <div class="env">
+      <div class="institucional rv">
+        <p class="rotulo">Certeza jurídica</p>
+        <h2>Qué es el INSEJUPY y por qué importa</h2>
+        <p>
+          El Instituto de Seguridad Jurídica Patrimonial de Yucatán es la instancia estatal
+          donde se inscriben y se certifican los actos sobre inmuebles. Mientras una operación
+          no llega ahí, existe entre las partes pero no frente a terceros: es la diferencia
+          entre tener un contrato y tener una propiedad oponible a cualquiera.
+        </p>
+        <p>
+          Ahí es donde trabajamos. Y es también la razón por la que un trámite bien hecho se
+          nota años después —cuando vendes, cuando heredas o cuando pides un crédito— y uno
+          mal hecho también.
+        </p>
+
+        <div class="institucional-lista">
+          <div><h3>Se inscribe</h3><p>La operación queda anotada en el folio del inmueble y
+            surte efectos frente a terceros.</p></div>
+          <div><h3>Se certifica</h3><p>Constancias y certificados que acreditan quién es
+            el titular y si el predio tiene gravámenes.</p></div>
+          <div><h3>Se conserva</h3><p>El antecedente queda encadenado, que es lo que permite
+            demostrar la propiedad en el futuro.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PREGUNTAS ============ -->
+  <section class="banda banda--claro">
+    <div class="env">
+      <div class="intro-seccion">
+        <p class="rotulo rv">Preguntas frecuentes</p>
+        <h2 class="rv">Lo que más nos preguntan</h2>
+      </div>
+
+      <div class="preguntas rv">
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>Ya pagué mi terreno y tengo mi contrato. ¿De verdad necesito escriturar?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>Sí. El contrato acredita el acuerdo entre tú y quien te vendió, pero la
+               escritura pública inscrita es lo que acredita que eres el propietario frente a
+               cualquier tercero. Sin ella, vender, heredar o hipotecar se complica, y en el
+               peor caso el predio queda expuesto a reclamaciones que no tienen que ver
+               contigo.</p>
+          </div>
+        </div>
+
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>Terminé de pagar mi INFONAVIT. ¿No queda liberada sola la hipoteca?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>No. Liquidar el crédito y cancelar la hipoteca son dos cosas distintas. La
+               carta de no adeudo dice que ya no debes; el gravamen sigue inscrito hasta que
+               se tramita su cancelación.</p>
+            <p>Es el trámite que más gente deja pendiente, y casi siempre aparece en el peor
+               momento: cuando ya hay un comprador esperando.</p>
+          </div>
+        </div>
+
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>¿Cuánto tarda y cuánto cuesta?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>Depende del estado del expediente, del tipo de predio y del trámite que
+               corresponda, así que no damos una cifra genérica que después no se sostenga.
+               Lo que sí hacemos es entregarte, después de revisar tus documentos, un
+               presupuesto por escrito donde se separan nuestros honorarios de los derechos,
+               impuestos y gastos de notaría que se pagan a terceros.</p>
+          </div>
+        </div>
+
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>Mi papá falleció y el terreno sigue a su nombre. ¿Pueden ayudarme?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>Sí. Es uno de los casos que más vemos. El camino depende de si hay testamento y
+               de cuántos herederos son, y termina igual: la propiedad inscrita a nombre de
+               quien corresponda. Lo revisamos contigo antes de empezar.</p>
+          </div>
+        </div>
+
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>Quiero dividir mi terreno entre mis hijos. ¿Se puede?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>En general sí, siempre que el predio cumpla con las medidas mínimas y el uso de
+               suelo que marque el municipio donde está. Ese es el primer punto que revisamos:
+               si la subdivisión es viable, y en cuántas fracciones.</p>
+          </div>
+        </div>
+
+        <div class="pregunta">
+          <button class="pregunta-btn" type="button">
+            <span>Vivo fuera de Yucatán. ¿Tengo que estar presente?</span>
+            <span class="pregunta-mas" aria-hidden="true"></span>
+          </button>
+          <div class="pregunta-cuerpo">
+            <p>Para la mayoría del trámite no. Nosotros llevamos la gestión y te mantenemos al
+               tanto. Para la firma ante notario normalmente sí se requiere tu comparecencia o
+               un poder otorgado en forma; te decimos desde el principio cuál de las dos
+               aplica a tu caso.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CIERRE ============ -->
+  <section class="cierre banda--linea">
+    <div class="env">
+      <p class="rotulo rv" style="justify-content:center">Empecemos</p>
+      <h2 class="rv">Mándanos tus documentos y te decimos qué falta</h2>
+      <p class="entradilla rv d1">
+        La primera revisión no tiene costo. Si tu caso no requiere trámite, también te lo
+        decimos.
+      </p>
+      <div class="acciones rv d2">
+        <a class="btn btn--solido" data-cpm-wa
+           data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">
+          Escribir a un asesor
+        </a>
+        <a class="btn btn--linea"
+           data-cpm-destino="regularizacion|regularizacion de predios|servicios inmobiliarios"
+           data-cpm-respaldo="/contacto">
+          Agendar una revisión
+        </a>
+      </div>
+
+      <p class="cierre-legal rv">
+        Corporativo Piñeiro Medina · División de Regularización de Predios.
+        La información de esta página es orientativa y no sustituye la asesoría legal
+        particular de cada caso; el trámite aplicable se determina después de revisar la
+        documentación del predio. © <span id="cpmPrediosYear">2026</span> CPM.
+      </p>
+    </div>
+  </section>
+
+</div>

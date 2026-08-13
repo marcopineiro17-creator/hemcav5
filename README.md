@@ -41,7 +41,7 @@ public_html/
 
 ## Bloques para el contenedor de código de Hostinger
 
-Además de la página suelta de HEMCA, hay cinco bloques pensados para pegarse
+Además de la página suelta de HEMCA, hay seis bloques pensados para pegarse
 en un contenedor de código del constructor. No llevan etiquetas de documento,
 todo su CSS está acotado a su propio contenedor y no dependen de ningún CDN
 de scripts.
@@ -53,10 +53,36 @@ de scripts.
 | `divisiones-embed-hostinger.html` | `/divisiones` | `#cpm-divisiones` |
 | `inicio-embed-hostinger.html` | la portada | `#cpm-home` |
 | `catalogo-embed-hostinger.html` | `/catalogo-de-propiedades` | `#cpm-catalogo` |
+| `predios-embed-hostinger.html` | `/regularizacion-predios` | `#cpm-predios` |
 
 Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `home_prep.py`,
-`cat_prep.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
+`cat_prep.py`, `predios.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
 original. Los originales de partida están en `src/`.
+
+### Regularización de Predios
+
+Es el único bloque que no parte de un original pegado: se escribe aquí, en
+tres piezas —`tools/predios_css.txt`, `predios_html.txt` y `predios_js.txt`—
+que `tools/predios.py` une con el motor y revisa antes de publicar.
+
+Marca propia, distinta de HEMCA y de HMS: fondo blanco, tipografía con serif
+del sistema para los títulos (formal, y sin depender de un CDN de fuentes) y
+como secundario el azul `#051958`, que es el que ya identifica a la división
+legal en el bloque de Divisiones. No se inventó un color nuevo.
+
+**Lo único que hay que editar a mano** es la constante `WHATSAPP` al principio
+del guion. Se dejó vacía a propósito: los dos números que hay en el sitio son
+de HEMCA y de HMS, y mandar ahí a alguien que quiere escriturar sería peor que
+no tener botón. Mientras esté vacía, los botones de WhatsApp llevan a la
+página de contacto y el bloque funciona igual.
+
+Este bloque **escribe él mismo la altura del iframe** (`escribeAltura` en el
+motor), al revés que los demás. El motor evita hacerlo porque el runtime
+global de CPM también la escribe y las dos manos sobre el mismo valor
+producían la vibración; pero ese runtime sólo reconoce `#hb-lp`, `#ic-lp` y
+`#cpm-divisiones`, así que a `#cpm-predios` no le contesta nadie: sin escribirla,
+el iframe se queda en 150 px sobre un contenido de 7 000. Como aquí no hay dos
+escritores, no hay pugna posible.
 
 ### Destinos de los enlaces
 
