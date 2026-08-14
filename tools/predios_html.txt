@@ -28,50 +28,53 @@
         <div class="escena rv d2" data-foto="portada" aria-label="Plano de subdivisión de un predio">
           <div class="escena-foto"></div>
           <div class="arte">
-            <svg viewBox="0 0 400 500" width="100%" height="100%"
+            <svg viewBox="0 0 480 330" width="100%" height="100%"
                  preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-              <rect width="400" height="500" fill="#eef2f9"/>
+              <rect width="480" height="330" fill="#eef2f9"/>
               <g stroke="#c3cbdc" stroke-width="1">
-                <path d="M0 60h400M0 130h400M0 200h400M0 270h400M0 340h400M0 410h400M0 480h400"/>
-                <path d="M60 0v500M130 0v500M200 0v500M270 0v500M340 0v500"/>
+                <path d="M0 55h480M0 110h480M0 165h480M0 220h480M0 275h480"/>
+                <path d="M60 0v330M120 0v330M180 0v330M240 0v330M300 0v330M360 0v330M420 0v330"/>
               </g>
               <!-- Linderos del predio -->
-              <path class="trazo" style="--largo:1120" d="M56 96 L344 78 L356 396 L70 420 Z"
+              <path class="trazo" style="--largo:1200" d="M46 62 L432 48 L442 262 L58 278 Z"
                     fill="rgba(5,25,88,.05)" stroke="#051958" stroke-width="2.5"
                     stroke-linejoin="round"/>
               <!-- Divisiones interiores -->
-              <path class="trazo t2" style="--largo:330" d="M152 88 L162 412"
-                    stroke="#0b2c7d" stroke-width="1.6" stroke-dasharray="1" fill="none"/>
-              <path class="trazo t3" style="--largo:330" d="M250 82 L258 404"
+              <path class="trazo t2" style="--largo:220" d="M142 56 L150 272"
                     stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
-              <path class="trazo t4" style="--largo:300" d="M60 254 L352 240"
+              <path class="trazo t3" style="--largo:220" d="M240 52 L248 268"
                     stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
-              <!-- Acotaciones -->
-              <g class="aparece" fill="none" stroke="#6b7688" stroke-width="1">
-                <path d="M56 452 L244 452M56 446v12M244 446v12"/>
-              </g>
-              <text class="aparece" x="150" y="472" text-anchor="middle"
-                    font-family="Georgia,serif" font-size="15" fill="#495468">Frente del predio</text>
+              <path class="trazo t4" style="--largo:220" d="M338 48 L344 264"
+                    stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
+              <path class="trazo t5" style="--largo:400" d="M50 168 L438 156"
+                    stroke="#0b2c7d" stroke-width="1.4" fill="none"/>
               <!-- Numeros de lote -->
-              <g class="aparece a2" font-family="Georgia,serif" font-size="17" fill="#051958">
-                <text x="100" y="180">01</text><text x="198" y="176">02</text>
-                <text x="298" y="172">03</text><text x="100" y="345">04</text>
-                <text x="200" y="340">05</text><text x="300" y="335">06</text>
+              <g class="aparece a2" font-family="Georgia,serif" font-size="16" fill="#051958">
+                <text x="88" y="122">01</text><text x="186" y="118">02</text>
+                <text x="284" y="114">03</text><text x="382" y="110">04</text>
+                <text x="88" y="232">05</text><text x="186" y="228">06</text>
+                <text x="284" y="224">07</text><text x="382" y="220">08</text>
               </g>
+              <!-- Acotacion del frente -->
+              <g class="aparece" fill="none" stroke="#6b7688" stroke-width="1">
+                <path d="M46 300 L300 300M46 294v12M300 294v12"/>
+              </g>
+              <text class="aparece" x="173" y="320" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="14" fill="#495468">Frente del predio</text>
               <!-- Norte -->
-              <g transform="translate(371,46)"><g class="aparece a3">
-                <path d="M0 -18 L7 8 L0 2 L-7 8 Z" fill="#051958"/>
-                <text x="0" y="26" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="12" fill="#051958">N</text>
+              <g transform="translate(452,34)"><g class="aparece a3">
+                <path d="M0 -16 L6 7 L0 2 L-6 7 Z" fill="#051958"/>
+                <text x="0" y="24" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="11" fill="#051958">N</text>
               </g></g>
               <!-- Sello -->
-              <g transform="translate(320,452)"><g class="sello">
-                <circle r="40" fill="none" stroke="#051958" stroke-width="2.5"/>
-                <circle r="33" fill="none" stroke="#051958" stroke-width="1"/>
-                <text y="-4" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="13" fill="#051958">INSCRITO</text>
-                <text y="15" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="10" fill="#0b2c7d" letter-spacing="1">CPM</text>
+              <g transform="translate(392,298)"><g class="sello">
+                <circle r="34" fill="none" stroke="#051958" stroke-width="2.5"/>
+                <circle r="28" fill="none" stroke="#051958" stroke-width="1"/>
+                <text y="-3" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="11" fill="#051958">INSCRITO</text>
+                <text y="12" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="9" fill="#0b2c7d" letter-spacing="1">CPM</text>
               </g></g>
             </svg>
           </div>
@@ -157,7 +160,7 @@
           </div>
         </article>
 
-        <article class="caso rv d2">
+        <article class="caso caso--espejo rv d2">
           <div class="escena" data-foto="hipoteca" aria-label="Cancelación de hipoteca">
             <div class="escena-foto"></div>
             <span class="caso-marca caso-marca--suave">El que casi nadie termina</span>
@@ -368,8 +371,10 @@
           </p>
         </div>
 
-        <div class="escena rv d1" data-foto="alcance" aria-label="Predios de distintos tamaños">
+        <div class="escena es-diptico rv d1" data-foto="alcance" data-foto-2="alcance2"
+             aria-label="Medición de predios en campo">
           <div class="escena-foto"></div>
+          <div class="escena-foto-2"></div>
           <div class="arte">
             <svg viewBox="0 0 400 320" width="100%" height="100%"
                  preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -478,6 +483,18 @@
           </div>
         </div>
 
+        <div>
+          <div class="documentos">
+            <figure class="doc-figura">
+              <div class="doc-lamina" data-doc="insejupy"></div>
+              <figcaption>Inscripción ante el INSEJUPY</figcaption>
+            </figure>
+            <figure class="doc-figura">
+              <div class="doc-lamina" data-doc="desarrollo"></div>
+              <figcaption>Croquis de un desarrollo</figcaption>
+            </figure>
+          </div>
+
         <div class="sello-caja" aria-hidden="true">
           <svg class="sello-anillo" viewBox="0 0 200 200" width="100%" height="100%">
             <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
@@ -497,6 +514,7 @@
             <text x="60" y="82" text-anchor="middle" font-family="Georgia,serif"
                   font-size="8" fill="rgba(255,255,255,.75)" letter-spacing="2">PREDIOS</text>
           </svg>
+        </div>
         </div>
       </div>
     </div>
@@ -595,8 +613,10 @@
 
   <!-- ============ CIERRE ============ -->
   <section class="cierre banda--linea" data-foto-cierre>
-    <div class="cierre-fondo"></div>
-    <div class="env">
+    <!-- La imagen va limpia, sin velo ni degradado: es un predio real y el
+         punto es que se vea tal cual. -->
+    <div class="cierre-imagen"></div>
+    <div class="env cierre-cabeza">
       <p class="rotulo rv">Empecemos</p>
       <h2 class="rv">Mándanos tus documentos y te decimos qué falta</h2>
       <p class="entradilla rv d1">

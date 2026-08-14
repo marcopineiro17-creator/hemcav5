@@ -20,24 +20,33 @@
 
   /* ---------------------------------------------------------------
      FOTOS
-     Pega aqui la direccion de cada imagen (las de tu Hostinger sirven
-     tal cual: https://assets.zyrosite.com/...). Cada hueco que quede
-     vacio NO se ve vacio: debajo hay una ilustracion vectorial hecha
-     para sostenerse sola, y la foto solo la sustituye cuando existe.
-     Asi la pagina se puede publicar hoy e ir poniendo fotos despues.
+     Direccion de cada imagen. Cualquier hueco que se deje vacio NO se ve
+     vacio: debajo hay una ilustracion vectorial hecha para sostenerse
+     sola, y la foto solo la sustituye cuando existe.
 
-       portada    vertical, un terreno o una vista aerea del predio
-       escritura  documento, firma, notaria, entrega de llaves
-       hipoteca   casa terminada, papeles, oficina
-       alcance    lotes o fraccionamiento vistos desde arriba
-       cierre     panoramica ancha; se le pone un velo azul encima
+     La maqueta esta hecha para la ORIENTACION de cada foto; si se cambia
+     una por otra de orientacion distinta, hay que revisar su hueco:
+
+       portada     HORIZONTAL, ocupa la mitad derecha de la portada
+       escritura   VERTICAL, columna de la primera tarjeta
+       hipoteca    VERTICAL, columna de la segunda tarjeta (en espejo)
+       alcance     VERTICAL, mitad izquierda del diptico
+       alcance2    VERTICAL, mitad derecha del diptico
+       cierre      APAISADA, banda limpia -- sin velo ni degradado
+       insejupy    documento, lamina izquierda del bloque azul
+       desarrollo  documento, lamina derecha del bloque azul
      --------------------------------------------------------------- */
+  var BASE_FOTOS = "https://assets.zyrosite.com/5MikVliRfr5rWuzU/";
   var FOTOS = {
-    portada:   "",
-    escritura: "",
-    hipoteca:  "",
-    alcance:   "",
-    cierre:    ""
+    portada:   BASE_FOTOS + "whatsapp-image-2025-12-04-at-16.55.20-sfW7FoskAJSvRfIP.jpeg",
+    escritura: BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.50.06-UJLlV0mtbn9E8NBH.jpeg",
+    hipoteca:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.49.05-Od14AzBZz8HLtiGE.jpeg",
+    alcance:   BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.59.34-ybaR3wIUlugjUETo.jpeg",
+    alcance2:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.53.58-lWjwdjvuHNNLGluR.jpeg",
+    cierre:    BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.56.29-aegqWUfz9r949OH4.jpeg",
+    /* Documentos del bloque institucional. Si se vacian, vuelve el sello. */
+    insejupy:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.48.05-wIxIzvx277Gkg81Q.jpeg",
+    desarrollo:BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.47.41-vdqs1N6JJ4p9ojSs.jpeg"
   };
 
   function safe(fn) { try { fn(); } catch (e) {} }
@@ -224,12 +233,35 @@
         capa.style.backgroundImage = 'url("' + url + '")';
         escena.classList.add("con-foto");
         conFoto.push(escena);
+        /* Segunda lamina del diptico, cuando la escena la declara. */
+        var seg = escena.getAttribute("data-foto-2");
+        var capa2 = escena.querySelector(".escena-foto-2");
+        if (seg && capa2 && FOTOS[seg]) {
+          capa2.style.backgroundImage = 'url("' + FOTOS[seg] + '")';
+        } else if (capa2) {
+          /* Sin segunda foto el diptico no tiene sentido: la primera ocupa
+             todo en vez de dejar media escena vacia. */
+          capa2.style.display = "none";
+          escena.classList.remove("es-diptico");
+        }
       });
+
+      /* Documentos del bloque institucional. */
+      var inst = raiz.querySelector(".institucional");
+      var docs = [].slice.call(raiz.querySelectorAll("[data-doc]"));
+      var puestos = 0;
+      docs.forEach(function (d) {
+        var u = FOTOS[d.getAttribute("data-doc")];
+        if (!u) return;
+        d.style.backgroundImage = 'url("' + u + '")';
+        puestos++;
+      });
+      if (inst && puestos === docs.length && puestos > 0) inst.classList.add("con-docs");
       var cierre = raiz.querySelector("[data-foto-cierre]");
       if (cierre && FOTOS.cierre) {
-        var fondo = cierre.querySelector(".cierre-fondo");
-        if (fondo) {
-          fondo.style.backgroundImage = 'url("' + FOTOS.cierre + '")';
+        var banda = cierre.querySelector(".cierre-imagen");
+        if (banda) {
+          banda.style.backgroundImage = 'url("' + FOTOS.cierre + '")';
           cierre.classList.add("con-foto");
         }
       }

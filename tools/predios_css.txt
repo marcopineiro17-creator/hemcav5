@@ -137,11 +137,14 @@
 #cpm-predios .escena.con-foto .escena-foto { opacity:1 }
 #cpm-predios .escena.con-foto.is-visible .escena-foto { transform:scale(1) }
 #cpm-predios .escena.con-foto .arte { opacity:0 }
-/* Velo azul sobre la foto: mantiene la marca y garantiza que el texto que
-   va encima se lea, venga la foto que venga. */
+/* Tinte azul muy leve, no un velo: da unidad de marca y hace que el filete
+   blanco se lea sobre cualquier fotografia, pero deja ver la imagen. Empezo
+   siendo un velo al 42% pensado para sostener texto encima; con fotos de
+   verdad tapaba justo lo que hay que ver, y las etiquetas que van sobre la
+   imagen llevan su propio fondo solido y no lo necesitan. */
 #cpm-predios .escena.con-foto::after {
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(160deg,rgba(5,25,88,.42),rgba(5,25,88,.08) 55%,rgba(5,25,88,.5));
+  background:linear-gradient(160deg,rgba(5,25,88,.2),rgba(5,25,88,.03) 55%,rgba(5,25,88,.26));
 }
 #cpm-predios .arte { position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s ease }
 #cpm-predios .escena-marco {
@@ -191,7 +194,7 @@
 #cpm-predios .portada h1 { margin-bottom:22px }
 #cpm-predios .portada h1 em { font-style:italic;color:var(--azul) }
 #cpm-predios .portada .entradilla { max-width:52ch }
-#cpm-predios .portada .escena { aspect-ratio:4/5;min-height:340px }
+#cpm-predios .portada .escena { aspect-ratio:16/11;min-height:0 }
 #cpm-predios .portada-datos {
   display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,56px);margin-top:clamp(34px,4.6vw,52px);
   padding-top:26px;border-top:1px solid var(--linea);
@@ -203,15 +206,26 @@
 }
 
 /* ---------- Los dos casos ---------- */
-#cpm-predios .casos { display:grid;gap:clamp(18px,2.4vw,26px);grid-template-columns:repeat(2,1fr) }
+/* Un caso por fila, con la fotografia vertical a un lado y el texto al
+   otro, alternando el lado. Antes eran dos columnas con la foto apaisada
+   arriba; las fotos de esta division son verticales -- gente midiendo en
+   campo, documentos -- y en un hueco apaisado se recortaban justo por
+   donde importan. */
+#cpm-predios .casos { display:grid;gap:clamp(20px,2.6vw,30px);grid-template-columns:1fr }
 #cpm-predios .caso {
-  background:#fff;border:1px solid var(--linea);
-  display:flex;flex-direction:column;overflow:hidden;
-  transition:box-shadow .3s ease,transform .3s ease;
+  background:#fff;border:1px solid var(--linea);overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,.44fr) minmax(0,1fr);
+  transition:box-shadow .3s ease;
 }
-#cpm-predios .caso:hover { box-shadow:0 18px 46px rgba(5,25,88,.12);transform:translateY(-3px) }
-#cpm-predios .caso .escena { border:0;border-bottom:1px solid var(--linea);aspect-ratio:16/8;min-height:180px }
-#cpm-predios .caso-cuerpo { padding:clamp(24px,3.2vw,36px);display:flex;flex-direction:column;flex:1 }
+#cpm-predios .caso:hover { box-shadow:0 18px 46px rgba(5,25,88,.12) }
+#cpm-predios .caso--espejo { grid-template-columns:minmax(0,1fr) minmax(0,.44fr) }
+#cpm-predios .caso--espejo .escena { order:2;border-left:1px solid var(--linea);border-right:0 }
+#cpm-predios .caso .escena {
+  border:0;border-right:1px solid var(--linea);aspect-ratio:auto;min-height:400px;height:100%;
+}
+#cpm-predios .caso-cuerpo {
+  padding:clamp(26px,3.4vw,44px);display:flex;flex-direction:column;justify-content:center;
+}
 #cpm-predios .caso-marca {
   position:absolute;left:18px;top:18px;z-index:3;
   font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;
@@ -277,7 +291,25 @@
 
 /* ---------- Alcance ---------- */
 #cpm-predios .alcance { display:grid;gap:clamp(30px,4vw,60px);grid-template-columns:1fr 1fr;align-items:center }
-#cpm-predios .alcance .escena { aspect-ratio:5/4;min-height:300px }
+/* Diptico: dos fotos verticales dentro de una sola escena, cada una en su
+   mitad. Asi las dos se ven completas en vez de recortar una apaisada. */
+#cpm-predios .alcance .escena { aspect-ratio:1/1;min-height:320px }
+#cpm-predios .escena.es-diptico .escena-foto { width:50%;right:auto }
+#cpm-predios .escena-foto-2 {
+  position:absolute;top:0;bottom:0;right:0;width:50%;
+  background-size:cover;background-position:center;opacity:0;
+  transition:opacity .8s ease .1s,transform 1.2s cubic-bezier(.22,.61,.36,1);
+  transform:scale(1.06);
+}
+#cpm-predios .escena.con-foto .escena-foto-2 { opacity:1 }
+#cpm-predios .escena.con-foto.is-visible .escena-foto-2 {
+  transform:scale(1.04) translate3d(0,calc(var(--par,0px) * -1),0);
+}
+/* Junta entre las dos mitades, para que se lean como dos laminas. */
+#cpm-predios .escena.es-diptico.con-foto::before {
+  content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;
+  background:#fff;z-index:2;transform:translateX(-1px);
+}
 #cpm-predios .fichas { display:flex;flex-wrap:wrap;gap:9px;margin-top:26px }
 #cpm-predios .ficha {
   border:1px solid var(--linea-fuerte);padding:9px 16px;font-size:14px;color:var(--tinta);
@@ -333,8 +365,8 @@
 #cpm-predios .institucional {
   background:var(--azul);color:#dfe5f5;padding:clamp(36px,5vw,64px);
   position:relative;overflow:hidden;
-  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
-  gap:clamp(28px,4vw,56px);align-items:center;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+  gap:clamp(26px,3.4vw,46px);align-items:center;
 }
 #cpm-predios .institucional::before {
   /* Retícula tenue: textura de plano, sin imagenes ni filtros caros. */
@@ -398,23 +430,45 @@
 #cpm-predios .pregunta-cuerpo p { font-size:15.4px }
 #cpm-predios .pregunta-cuerpo p + p { margin-top:12px }
 
-/* ---------- Cierre ---------- */
-#cpm-predios .cierre { position:relative;padding:clamp(56px,7vw,92px) 0;text-align:center;overflow:hidden }
-#cpm-predios .cierre-fondo { position:absolute;inset:0;background-size:cover;background-position:center;opacity:0 }
-#cpm-predios .cierre.con-foto .cierre-fondo { opacity:1 }
-#cpm-predios .cierre.con-foto::before {
-  content:"";position:absolute;inset:0;background:rgba(5,25,88,.9);
+/* ---------- Cierre ----------
+   La imagen va como banda propia, limpia: sin velo azul y sin degradado.
+   Antes iba de fondo con un velo encima para que el texto se leyera, pero
+   la foto que cierra la pagina es un predio real con una casa vieja y el
+   punto es justamente que se vea tal cual. Poniendola como banda, la
+   imagen se ve entera y el texto conserva su contraste sobre blanco. */
+#cpm-predios .cierre { position:relative;padding:0 0 clamp(56px,7vw,92px);text-align:center }
+#cpm-predios .cierre-imagen {
+  display:none;width:100%;aspect-ratio:21/9;background-size:cover;background-position:center;
+  margin-bottom:clamp(44px,5.5vw,72px);
 }
-#cpm-predios .cierre .env { position:relative;z-index:1 }
+#cpm-predios .cierre.con-foto .cierre-imagen { display:block }
+#cpm-predios .cierre-cabeza { padding-top:clamp(56px,7vw,92px) }
+#cpm-predios .cierre.con-foto .cierre-cabeza { padding-top:0 }
 #cpm-predios .cierre h2 { margin:0 auto 20px;max-width:26ch;text-wrap:balance }
 #cpm-predios .cierre .entradilla { margin:0 auto;text-align:center }
 #cpm-predios .cierre .acciones { justify-content:center }
 #cpm-predios .cierre .rotulo { justify-content:center }
-#cpm-predios .cierre.con-foto h2,#cpm-predios .cierre.con-foto .entradilla { color:#fff }
-#cpm-predios .cierre.con-foto .rotulo { color:#a9b8e0 }
-#cpm-predios .cierre.con-foto .rotulo::before { background:#a9b8e0 }
-#cpm-predios .cierre.con-foto .btn--linea { border-color:rgba(255,255,255,.5);color:#fff;background:transparent }
-#cpm-predios .cierre.con-foto .cierre-legal { color:#b9c4e0;border-top-color:rgba(255,255,255,.24) }
+
+/* ---------- Documentos del bloque institucional ----------
+   Cuando hay fotografia de documento se muestran; si no, se queda el sello
+   giratorio. Mismo criterio que las escenas: ningun hueco vacio. */
+#cpm-predios .documentos { display:none;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6vw,18px) }
+#cpm-predios .institucional.con-docs .documentos { display:grid }
+#cpm-predios .institucional.con-docs .sello-caja { display:none }
+#cpm-predios .doc-figura { margin:0 }
+#cpm-predios .doc-lamina {
+  aspect-ratio:3/4;background-size:cover;background-position:top center;
+  border:1px solid rgba(255,255,255,.34);background-color:#fff;
+  box-shadow:0 20px 46px rgba(0,0,0,.34);
+  opacity:0;transform:translateY(16px);
+  transition:opacity .7s cubic-bezier(.22,.61,.36,1),transform .7s cubic-bezier(.22,.61,.36,1);
+}
+#cpm-predios .institucional.is-visible .doc-lamina { opacity:1;transform:none }
+#cpm-predios .institucional.is-visible .doc-figura:nth-child(2) .doc-lamina { transition-delay:.12s }
+#cpm-predios .doc-figura figcaption {
+  margin-top:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:#9fb0dd;line-height:1.5;
+}
 #cpm-predios .cierre-legal {
   margin-top:clamp(34px,4vw,48px);padding-top:24px;border-top:1px solid var(--linea);
   font-size:13px;color:var(--suave);max-width:78ch;margin-left:auto;margin-right:auto;
@@ -432,7 +486,7 @@
 #cpm-predios.js-on .rv.d2.is-visible { transition-delay:.16s }
 #cpm-predios.js-on .rv.d3.is-visible { transition-delay:.24s }
 /* Paralaje suave de las fotos: el guion escribe --par (en px). */
-#cpm-predios .escena-foto,#cpm-predios .cierre-fondo { will-change:transform }
+#cpm-predios .escena-foto,#cpm-predios .escena-foto-2 { will-change:transform }
 #cpm-predios .escena.con-foto.is-visible .escena-foto {
   transform:scale(1.04) translate3d(0,var(--par,0px),0);
 }
@@ -459,7 +513,15 @@
 @media (max-width:900px) {
   #cpm-predios .portada-rejilla { grid-template-columns:1fr;gap:30px }
   #cpm-predios .portada .escena { aspect-ratio:16/11;min-height:0 }
-  #cpm-predios .casos,#cpm-predios .casos-menores,#cpm-predios .alcance { grid-template-columns:1fr }
+  #cpm-predios .casos-menores,#cpm-predios .alcance { grid-template-columns:1fr }
+  #cpm-predios .caso,#cpm-predios .caso--espejo { grid-template-columns:1fr }
+  /* Vertical tambien en movil: las fotos de los casos son verticales y en
+     un hueco apaisado se recortaban por la mitad. */
+  #cpm-predios .caso .escena,#cpm-predios .caso--espejo .escena {
+    order:0;aspect-ratio:4/5;min-height:0;height:auto;
+    border-right:0;border-left:0;border-bottom:1px solid var(--linea);
+  }
+  #cpm-predios .documentos { grid-template-columns:1fr 1fr }
   #cpm-predios .alcance .escena { aspect-ratio:16/10;min-height:0 }
   #cpm-predios .institucional-lista { grid-template-columns:1fr;gap:18px }
   #cpm-predios .portada-datos { gap:20px 30px }

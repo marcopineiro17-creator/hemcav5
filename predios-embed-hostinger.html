@@ -173,11 +173,14 @@
 #cpm-predios .escena.con-foto .escena-foto { opacity:1 }
 #cpm-predios .escena.con-foto.is-visible .escena-foto { transform:scale(1) }
 #cpm-predios .escena.con-foto .arte { opacity:0 }
-/* Velo azul sobre la foto: mantiene la marca y garantiza que el texto que
-   va encima se lea, venga la foto que venga. */
+/* Tinte azul muy leve, no un velo: da unidad de marca y hace que el filete
+   blanco se lea sobre cualquier fotografia, pero deja ver la imagen. Empezo
+   siendo un velo al 42% pensado para sostener texto encima; con fotos de
+   verdad tapaba justo lo que hay que ver, y las etiquetas que van sobre la
+   imagen llevan su propio fondo solido y no lo necesitan. */
 #cpm-predios .escena.con-foto::after {
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(160deg,rgba(5,25,88,.42),rgba(5,25,88,.08) 55%,rgba(5,25,88,.5));
+  background:linear-gradient(160deg,rgba(5,25,88,.2),rgba(5,25,88,.03) 55%,rgba(5,25,88,.26));
 }
 #cpm-predios .arte { position:absolute;inset:0;width:100%;height:100%;transition:opacity .5s ease }
 #cpm-predios .escena-marco {
@@ -227,7 +230,7 @@
 #cpm-predios .portada h1 { margin-bottom:22px }
 #cpm-predios .portada h1 em { font-style:italic;color:var(--azul) }
 #cpm-predios .portada .entradilla { max-width:52ch }
-#cpm-predios .portada .escena { aspect-ratio:4/5;min-height:340px }
+#cpm-predios .portada .escena { aspect-ratio:16/11;min-height:0 }
 #cpm-predios .portada-datos {
   display:flex;flex-wrap:wrap;gap:clamp(20px,4vw,56px);margin-top:clamp(34px,4.6vw,52px);
   padding-top:26px;border-top:1px solid var(--linea);
@@ -239,15 +242,26 @@
 }
 
 /* ---------- Los dos casos ---------- */
-#cpm-predios .casos { display:grid;gap:clamp(18px,2.4vw,26px);grid-template-columns:repeat(2,1fr) }
+/* Un caso por fila, con la fotografia vertical a un lado y el texto al
+   otro, alternando el lado. Antes eran dos columnas con la foto apaisada
+   arriba; las fotos de esta division son verticales -- gente midiendo en
+   campo, documentos -- y en un hueco apaisado se recortaban justo por
+   donde importan. */
+#cpm-predios .casos { display:grid;gap:clamp(20px,2.6vw,30px);grid-template-columns:1fr }
 #cpm-predios .caso {
-  background:#fff;border:1px solid var(--linea);
-  display:flex;flex-direction:column;overflow:hidden;
-  transition:box-shadow .3s ease,transform .3s ease;
+  background:#fff;border:1px solid var(--linea);overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,.44fr) minmax(0,1fr);
+  transition:box-shadow .3s ease;
 }
-#cpm-predios .caso:hover { box-shadow:0 18px 46px rgba(5,25,88,.12);transform:translateY(-3px) }
-#cpm-predios .caso .escena { border:0;border-bottom:1px solid var(--linea);aspect-ratio:16/8;min-height:180px }
-#cpm-predios .caso-cuerpo { padding:clamp(24px,3.2vw,36px);display:flex;flex-direction:column;flex:1 }
+#cpm-predios .caso:hover { box-shadow:0 18px 46px rgba(5,25,88,.12) }
+#cpm-predios .caso--espejo { grid-template-columns:minmax(0,1fr) minmax(0,.44fr) }
+#cpm-predios .caso--espejo .escena { order:2;border-left:1px solid var(--linea);border-right:0 }
+#cpm-predios .caso .escena {
+  border:0;border-right:1px solid var(--linea);aspect-ratio:auto;min-height:400px;height:100%;
+}
+#cpm-predios .caso-cuerpo {
+  padding:clamp(26px,3.4vw,44px);display:flex;flex-direction:column;justify-content:center;
+}
 #cpm-predios .caso-marca {
   position:absolute;left:18px;top:18px;z-index:3;
   font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;
@@ -313,7 +327,25 @@
 
 /* ---------- Alcance ---------- */
 #cpm-predios .alcance { display:grid;gap:clamp(30px,4vw,60px);grid-template-columns:1fr 1fr;align-items:center }
-#cpm-predios .alcance .escena { aspect-ratio:5/4;min-height:300px }
+/* Diptico: dos fotos verticales dentro de una sola escena, cada una en su
+   mitad. Asi las dos se ven completas en vez de recortar una apaisada. */
+#cpm-predios .alcance .escena { aspect-ratio:1/1;min-height:320px }
+#cpm-predios .escena.es-diptico .escena-foto { width:50%;right:auto }
+#cpm-predios .escena-foto-2 {
+  position:absolute;top:0;bottom:0;right:0;width:50%;
+  background-size:cover;background-position:center;opacity:0;
+  transition:opacity .8s ease .1s,transform 1.2s cubic-bezier(.22,.61,.36,1);
+  transform:scale(1.06);
+}
+#cpm-predios .escena.con-foto .escena-foto-2 { opacity:1 }
+#cpm-predios .escena.con-foto.is-visible .escena-foto-2 {
+  transform:scale(1.04) translate3d(0,calc(var(--par,0px) * -1),0);
+}
+/* Junta entre las dos mitades, para que se lean como dos laminas. */
+#cpm-predios .escena.es-diptico.con-foto::before {
+  content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;
+  background:#fff;z-index:2;transform:translateX(-1px);
+}
 #cpm-predios .fichas { display:flex;flex-wrap:wrap;gap:9px;margin-top:26px }
 #cpm-predios .ficha {
   border:1px solid var(--linea-fuerte);padding:9px 16px;font-size:14px;color:var(--tinta);
@@ -369,8 +401,8 @@
 #cpm-predios .institucional {
   background:var(--azul);color:#dfe5f5;padding:clamp(36px,5vw,64px);
   position:relative;overflow:hidden;
-  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
-  gap:clamp(28px,4vw,56px);align-items:center;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);
+  gap:clamp(26px,3.4vw,46px);align-items:center;
 }
 #cpm-predios .institucional::before {
   /* Retícula tenue: textura de plano, sin imagenes ni filtros caros. */
@@ -434,23 +466,45 @@
 #cpm-predios .pregunta-cuerpo p { font-size:15.4px }
 #cpm-predios .pregunta-cuerpo p + p { margin-top:12px }
 
-/* ---------- Cierre ---------- */
-#cpm-predios .cierre { position:relative;padding:clamp(56px,7vw,92px) 0;text-align:center;overflow:hidden }
-#cpm-predios .cierre-fondo { position:absolute;inset:0;background-size:cover;background-position:center;opacity:0 }
-#cpm-predios .cierre.con-foto .cierre-fondo { opacity:1 }
-#cpm-predios .cierre.con-foto::before {
-  content:"";position:absolute;inset:0;background:rgba(5,25,88,.9);
+/* ---------- Cierre ----------
+   La imagen va como banda propia, limpia: sin velo azul y sin degradado.
+   Antes iba de fondo con un velo encima para que el texto se leyera, pero
+   la foto que cierra la pagina es un predio real con una casa vieja y el
+   punto es justamente que se vea tal cual. Poniendola como banda, la
+   imagen se ve entera y el texto conserva su contraste sobre blanco. */
+#cpm-predios .cierre { position:relative;padding:0 0 clamp(56px,7vw,92px);text-align:center }
+#cpm-predios .cierre-imagen {
+  display:none;width:100%;aspect-ratio:21/9;background-size:cover;background-position:center;
+  margin-bottom:clamp(44px,5.5vw,72px);
 }
-#cpm-predios .cierre .env { position:relative;z-index:1 }
+#cpm-predios .cierre.con-foto .cierre-imagen { display:block }
+#cpm-predios .cierre-cabeza { padding-top:clamp(56px,7vw,92px) }
+#cpm-predios .cierre.con-foto .cierre-cabeza { padding-top:0 }
 #cpm-predios .cierre h2 { margin:0 auto 20px;max-width:26ch;text-wrap:balance }
 #cpm-predios .cierre .entradilla { margin:0 auto;text-align:center }
 #cpm-predios .cierre .acciones { justify-content:center }
 #cpm-predios .cierre .rotulo { justify-content:center }
-#cpm-predios .cierre.con-foto h2,#cpm-predios .cierre.con-foto .entradilla { color:#fff }
-#cpm-predios .cierre.con-foto .rotulo { color:#a9b8e0 }
-#cpm-predios .cierre.con-foto .rotulo::before { background:#a9b8e0 }
-#cpm-predios .cierre.con-foto .btn--linea { border-color:rgba(255,255,255,.5);color:#fff;background:transparent }
-#cpm-predios .cierre.con-foto .cierre-legal { color:#b9c4e0;border-top-color:rgba(255,255,255,.24) }
+
+/* ---------- Documentos del bloque institucional ----------
+   Cuando hay fotografia de documento se muestran; si no, se queda el sello
+   giratorio. Mismo criterio que las escenas: ningun hueco vacio. */
+#cpm-predios .documentos { display:none;grid-template-columns:1fr 1fr;gap:clamp(12px,1.6vw,18px) }
+#cpm-predios .institucional.con-docs .documentos { display:grid }
+#cpm-predios .institucional.con-docs .sello-caja { display:none }
+#cpm-predios .doc-figura { margin:0 }
+#cpm-predios .doc-lamina {
+  aspect-ratio:3/4;background-size:cover;background-position:top center;
+  border:1px solid rgba(255,255,255,.34);background-color:#fff;
+  box-shadow:0 20px 46px rgba(0,0,0,.34);
+  opacity:0;transform:translateY(16px);
+  transition:opacity .7s cubic-bezier(.22,.61,.36,1),transform .7s cubic-bezier(.22,.61,.36,1);
+}
+#cpm-predios .institucional.is-visible .doc-lamina { opacity:1;transform:none }
+#cpm-predios .institucional.is-visible .doc-figura:nth-child(2) .doc-lamina { transition-delay:.12s }
+#cpm-predios .doc-figura figcaption {
+  margin-top:10px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:#9fb0dd;line-height:1.5;
+}
 #cpm-predios .cierre-legal {
   margin-top:clamp(34px,4vw,48px);padding-top:24px;border-top:1px solid var(--linea);
   font-size:13px;color:var(--suave);max-width:78ch;margin-left:auto;margin-right:auto;
@@ -468,7 +522,7 @@
 #cpm-predios.js-on .rv.d2.is-visible { transition-delay:.16s }
 #cpm-predios.js-on .rv.d3.is-visible { transition-delay:.24s }
 /* Paralaje suave de las fotos: el guion escribe --par (en px). */
-#cpm-predios .escena-foto,#cpm-predios .cierre-fondo { will-change:transform }
+#cpm-predios .escena-foto,#cpm-predios .escena-foto-2 { will-change:transform }
 #cpm-predios .escena.con-foto.is-visible .escena-foto {
   transform:scale(1.04) translate3d(0,var(--par,0px),0);
 }
@@ -495,7 +549,15 @@
 @media (max-width:900px) {
   #cpm-predios .portada-rejilla { grid-template-columns:1fr;gap:30px }
   #cpm-predios .portada .escena { aspect-ratio:16/11;min-height:0 }
-  #cpm-predios .casos,#cpm-predios .casos-menores,#cpm-predios .alcance { grid-template-columns:1fr }
+  #cpm-predios .casos-menores,#cpm-predios .alcance { grid-template-columns:1fr }
+  #cpm-predios .caso,#cpm-predios .caso--espejo { grid-template-columns:1fr }
+  /* Vertical tambien en movil: las fotos de los casos son verticales y en
+     un hueco apaisado se recortaban por la mitad. */
+  #cpm-predios .caso .escena,#cpm-predios .caso--espejo .escena {
+    order:0;aspect-ratio:4/5;min-height:0;height:auto;
+    border-right:0;border-left:0;border-bottom:1px solid var(--linea);
+  }
+  #cpm-predios .documentos { grid-template-columns:1fr 1fr }
   #cpm-predios .alcance .escena { aspect-ratio:16/10;min-height:0 }
   #cpm-predios .institucional-lista { grid-template-columns:1fr;gap:18px }
   #cpm-predios .portada-datos { gap:20px 30px }
@@ -546,50 +608,53 @@
         <div class="escena rv d2" data-foto="portada" aria-label="Plano de subdivisión de un predio">
           <div class="escena-foto"></div>
           <div class="arte">
-            <svg viewBox="0 0 400 500" width="100%" height="100%"
+            <svg viewBox="0 0 480 330" width="100%" height="100%"
                  preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-              <rect width="400" height="500" fill="#eef2f9"/>
+              <rect width="480" height="330" fill="#eef2f9"/>
               <g stroke="#c3cbdc" stroke-width="1">
-                <path d="M0 60h400M0 130h400M0 200h400M0 270h400M0 340h400M0 410h400M0 480h400"/>
-                <path d="M60 0v500M130 0v500M200 0v500M270 0v500M340 0v500"/>
+                <path d="M0 55h480M0 110h480M0 165h480M0 220h480M0 275h480"/>
+                <path d="M60 0v330M120 0v330M180 0v330M240 0v330M300 0v330M360 0v330M420 0v330"/>
               </g>
               <!-- Linderos del predio -->
-              <path class="trazo" style="--largo:1120" d="M56 96 L344 78 L356 396 L70 420 Z"
+              <path class="trazo" style="--largo:1200" d="M46 62 L432 48 L442 262 L58 278 Z"
                     fill="rgba(5,25,88,.05)" stroke="#051958" stroke-width="2.5"
                     stroke-linejoin="round"/>
               <!-- Divisiones interiores -->
-              <path class="trazo t2" style="--largo:330" d="M152 88 L162 412"
-                    stroke="#0b2c7d" stroke-width="1.6" stroke-dasharray="1" fill="none"/>
-              <path class="trazo t3" style="--largo:330" d="M250 82 L258 404"
+              <path class="trazo t2" style="--largo:220" d="M142 56 L150 272"
                     stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
-              <path class="trazo t4" style="--largo:300" d="M60 254 L352 240"
+              <path class="trazo t3" style="--largo:220" d="M240 52 L248 268"
                     stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
-              <!-- Acotaciones -->
-              <g class="aparece" fill="none" stroke="#6b7688" stroke-width="1">
-                <path d="M56 452 L244 452M56 446v12M244 446v12"/>
-              </g>
-              <text class="aparece" x="150" y="472" text-anchor="middle"
-                    font-family="Georgia,serif" font-size="15" fill="#495468">Frente del predio</text>
+              <path class="trazo t4" style="--largo:220" d="M338 48 L344 264"
+                    stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
+              <path class="trazo t5" style="--largo:400" d="M50 168 L438 156"
+                    stroke="#0b2c7d" stroke-width="1.4" fill="none"/>
               <!-- Numeros de lote -->
-              <g class="aparece a2" font-family="Georgia,serif" font-size="17" fill="#051958">
-                <text x="100" y="180">01</text><text x="198" y="176">02</text>
-                <text x="298" y="172">03</text><text x="100" y="345">04</text>
-                <text x="200" y="340">05</text><text x="300" y="335">06</text>
+              <g class="aparece a2" font-family="Georgia,serif" font-size="16" fill="#051958">
+                <text x="88" y="122">01</text><text x="186" y="118">02</text>
+                <text x="284" y="114">03</text><text x="382" y="110">04</text>
+                <text x="88" y="232">05</text><text x="186" y="228">06</text>
+                <text x="284" y="224">07</text><text x="382" y="220">08</text>
               </g>
+              <!-- Acotacion del frente -->
+              <g class="aparece" fill="none" stroke="#6b7688" stroke-width="1">
+                <path d="M46 300 L300 300M46 294v12M300 294v12"/>
+              </g>
+              <text class="aparece" x="173" y="320" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="14" fill="#495468">Frente del predio</text>
               <!-- Norte -->
-              <g transform="translate(371,46)"><g class="aparece a3">
-                <path d="M0 -18 L7 8 L0 2 L-7 8 Z" fill="#051958"/>
-                <text x="0" y="26" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="12" fill="#051958">N</text>
+              <g transform="translate(452,34)"><g class="aparece a3">
+                <path d="M0 -16 L6 7 L0 2 L-6 7 Z" fill="#051958"/>
+                <text x="0" y="24" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="11" fill="#051958">N</text>
               </g></g>
               <!-- Sello -->
-              <g transform="translate(320,452)"><g class="sello">
-                <circle r="40" fill="none" stroke="#051958" stroke-width="2.5"/>
-                <circle r="33" fill="none" stroke="#051958" stroke-width="1"/>
-                <text y="-4" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="13" fill="#051958">INSCRITO</text>
-                <text y="15" text-anchor="middle" font-family="Georgia,serif"
-                      font-size="10" fill="#0b2c7d" letter-spacing="1">CPM</text>
+              <g transform="translate(392,298)"><g class="sello">
+                <circle r="34" fill="none" stroke="#051958" stroke-width="2.5"/>
+                <circle r="28" fill="none" stroke="#051958" stroke-width="1"/>
+                <text y="-3" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="11" fill="#051958">INSCRITO</text>
+                <text y="12" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="9" fill="#0b2c7d" letter-spacing="1">CPM</text>
               </g></g>
             </svg>
           </div>
@@ -675,7 +740,7 @@
           </div>
         </article>
 
-        <article class="caso rv d2">
+        <article class="caso caso--espejo rv d2">
           <div class="escena" data-foto="hipoteca" aria-label="Cancelación de hipoteca">
             <div class="escena-foto"></div>
             <span class="caso-marca caso-marca--suave">El que casi nadie termina</span>
@@ -886,8 +951,10 @@
           </p>
         </div>
 
-        <div class="escena rv d1" data-foto="alcance" aria-label="Predios de distintos tamaños">
+        <div class="escena es-diptico rv d1" data-foto="alcance" data-foto-2="alcance2"
+             aria-label="Medición de predios en campo">
           <div class="escena-foto"></div>
+          <div class="escena-foto-2"></div>
           <div class="arte">
             <svg viewBox="0 0 400 320" width="100%" height="100%"
                  preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -996,6 +1063,18 @@
           </div>
         </div>
 
+        <div>
+          <div class="documentos">
+            <figure class="doc-figura">
+              <div class="doc-lamina" data-doc="insejupy"></div>
+              <figcaption>Inscripción ante el INSEJUPY</figcaption>
+            </figure>
+            <figure class="doc-figura">
+              <div class="doc-lamina" data-doc="desarrollo"></div>
+              <figcaption>Croquis de un desarrollo</figcaption>
+            </figure>
+          </div>
+
         <div class="sello-caja" aria-hidden="true">
           <svg class="sello-anillo" viewBox="0 0 200 200" width="100%" height="100%">
             <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
@@ -1015,6 +1094,7 @@
             <text x="60" y="82" text-anchor="middle" font-family="Georgia,serif"
                   font-size="8" fill="rgba(255,255,255,.75)" letter-spacing="2">PREDIOS</text>
           </svg>
+        </div>
         </div>
       </div>
     </div>
@@ -1113,8 +1193,10 @@
 
   <!-- ============ CIERRE ============ -->
   <section class="cierre banda--linea" data-foto-cierre>
-    <div class="cierre-fondo"></div>
-    <div class="env">
+    <!-- La imagen va limpia, sin velo ni degradado: es un predio real y el
+         punto es que se vea tal cual. -->
+    <div class="cierre-imagen"></div>
+    <div class="env cierre-cabeza">
       <p class="rotulo rv">Empecemos</p>
       <h2 class="rv">Mándanos tus documentos y te decimos qué falta</h2>
       <p class="entradilla rv d1">
@@ -1168,24 +1250,33 @@
 
   /* ---------------------------------------------------------------
      FOTOS
-     Pega aqui la direccion de cada imagen (las de tu Hostinger sirven
-     tal cual: https://assets.zyrosite.com/...). Cada hueco que quede
-     vacio NO se ve vacio: debajo hay una ilustracion vectorial hecha
-     para sostenerse sola, y la foto solo la sustituye cuando existe.
-     Asi la pagina se puede publicar hoy e ir poniendo fotos despues.
+     Direccion de cada imagen. Cualquier hueco que se deje vacio NO se ve
+     vacio: debajo hay una ilustracion vectorial hecha para sostenerse
+     sola, y la foto solo la sustituye cuando existe.
 
-       portada    vertical, un terreno o una vista aerea del predio
-       escritura  documento, firma, notaria, entrega de llaves
-       hipoteca   casa terminada, papeles, oficina
-       alcance    lotes o fraccionamiento vistos desde arriba
-       cierre     panoramica ancha; se le pone un velo azul encima
+     La maqueta esta hecha para la ORIENTACION de cada foto; si se cambia
+     una por otra de orientacion distinta, hay que revisar su hueco:
+
+       portada     HORIZONTAL, ocupa la mitad derecha de la portada
+       escritura   VERTICAL, columna de la primera tarjeta
+       hipoteca    VERTICAL, columna de la segunda tarjeta (en espejo)
+       alcance     VERTICAL, mitad izquierda del diptico
+       alcance2    VERTICAL, mitad derecha del diptico
+       cierre      APAISADA, banda limpia -- sin velo ni degradado
+       insejupy    documento, lamina izquierda del bloque azul
+       desarrollo  documento, lamina derecha del bloque azul
      --------------------------------------------------------------- */
+  var BASE_FOTOS = "https://assets.zyrosite.com/5MikVliRfr5rWuzU/";
   var FOTOS = {
-    portada:   "",
-    escritura: "",
-    hipoteca:  "",
-    alcance:   "",
-    cierre:    ""
+    portada:   BASE_FOTOS + "whatsapp-image-2025-12-04-at-16.55.20-sfW7FoskAJSvRfIP.jpeg",
+    escritura: BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.50.06-UJLlV0mtbn9E8NBH.jpeg",
+    hipoteca:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.49.05-Od14AzBZz8HLtiGE.jpeg",
+    alcance:   BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.59.34-ybaR3wIUlugjUETo.jpeg",
+    alcance2:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.53.58-lWjwdjvuHNNLGluR.jpeg",
+    cierre:    BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.56.29-aegqWUfz9r949OH4.jpeg",
+    /* Documentos del bloque institucional. Si se vacian, vuelve el sello. */
+    insejupy:  BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.48.05-wIxIzvx277Gkg81Q.jpeg",
+    desarrollo:BASE_FOTOS + "whatsapp-image-2026-08-13-at-22.47.41-vdqs1N6JJ4p9ojSs.jpeg"
   };
 
   function safe(fn) { try { fn(); } catch (e) {} }
@@ -1867,12 +1958,35 @@
         capa.style.backgroundImage = 'url("' + url + '")';
         escena.classList.add("con-foto");
         conFoto.push(escena);
+        /* Segunda lamina del diptico, cuando la escena la declara. */
+        var seg = escena.getAttribute("data-foto-2");
+        var capa2 = escena.querySelector(".escena-foto-2");
+        if (seg && capa2 && FOTOS[seg]) {
+          capa2.style.backgroundImage = 'url("' + FOTOS[seg] + '")';
+        } else if (capa2) {
+          /* Sin segunda foto el diptico no tiene sentido: la primera ocupa
+             todo en vez de dejar media escena vacia. */
+          capa2.style.display = "none";
+          escena.classList.remove("es-diptico");
+        }
       });
+
+      /* Documentos del bloque institucional. */
+      var inst = raiz.querySelector(".institucional");
+      var docs = [].slice.call(raiz.querySelectorAll("[data-doc]"));
+      var puestos = 0;
+      docs.forEach(function (d) {
+        var u = FOTOS[d.getAttribute("data-doc")];
+        if (!u) return;
+        d.style.backgroundImage = 'url("' + u + '")';
+        puestos++;
+      });
+      if (inst && puestos === docs.length && puestos > 0) inst.classList.add("con-docs");
       var cierre = raiz.querySelector("[data-foto-cierre]");
       if (cierre && FOTOS.cierre) {
-        var fondo = cierre.querySelector(".cierre-fondo");
-        if (fondo) {
-          fondo.style.backgroundImage = 'url("' + FOTOS.cierre + '")';
+        var banda = cierre.querySelector(".cierre-imagen");
+        if (banda) {
+          banda.style.backgroundImage = 'url("' + FOTOS.cierre + '")';
           cierre.classList.add("con-foto");
         }
       }
