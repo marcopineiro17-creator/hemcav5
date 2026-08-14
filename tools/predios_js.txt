@@ -18,6 +18,28 @@
   var WHATSAPP = "";                       /* p.ej. "529991234567" */
   var MENSAJE  = "Hola, quiero información sobre regularización y escrituración de mi propiedad.";
 
+  /* ---------------------------------------------------------------
+     FOTOS
+     Pega aqui la direccion de cada imagen (las de tu Hostinger sirven
+     tal cual: https://assets.zyrosite.com/...). Cada hueco que quede
+     vacio NO se ve vacio: debajo hay una ilustracion vectorial hecha
+     para sostenerse sola, y la foto solo la sustituye cuando existe.
+     Asi la pagina se puede publicar hoy e ir poniendo fotos despues.
+
+       portada    vertical, un terreno o una vista aerea del predio
+       escritura  documento, firma, notaria, entrega de llaves
+       hipoteca   casa terminada, papeles, oficina
+       alcance    lotes o fraccionamiento vistos desde arriba
+       cierre     panoramica ancha; se le pone un velo azul encima
+     --------------------------------------------------------------- */
+  var FOTOS = {
+    portada:   "",
+    escritura: "",
+    hipoteca:  "",
+    alcance:   "",
+    cierre:    ""
+  };
+
   function safe(fn) { try { fn(); } catch (e) {} }
 
   /* Si algo falla, se retira el ocultado y todo queda visible. Nunca una
@@ -189,10 +211,76 @@
       });
     });
 
-    /* ---------- 3. Entradas al hacer scroll ---------- */
-    [].slice.call(raiz.querySelectorAll(".rv")).forEach(function (el) { M.alEntrar(el); });
+    /* ---------- 3. Fotos ----------
+       Solo se pone la que tenga direccion. Sin ella queda la ilustracion,
+       que no es un hueco gris esperando imagen sino una pieza acabada. */
+    var conFoto = [];
+    safe(function () {
+      [].slice.call(raiz.querySelectorAll("[data-foto]")).forEach(function (escena) {
+        var url = FOTOS[escena.getAttribute("data-foto")];
+        if (!url) return;
+        var capa = escena.querySelector(".escena-foto");
+        if (!capa) return;
+        capa.style.backgroundImage = 'url("' + url + '")';
+        escena.classList.add("con-foto");
+        conFoto.push(escena);
+      });
+      var cierre = raiz.querySelector("[data-foto-cierre]");
+      if (cierre && FOTOS.cierre) {
+        var fondo = cierre.querySelector(".cierre-fondo");
+        if (fondo) {
+          fondo.style.backgroundImage = 'url("' + FOTOS.cierre + '")';
+          cierre.classList.add("con-foto");
+        }
+      }
+    });
 
-    /* ---------- 4. Preguntas frecuentes ----------
+    /* ---------- 4. Entradas al hacer scroll ----------
+       Ademas de .rv van las escenas: sus trazos, sellos y marcos arrancan
+       con .is-visible, y dentro de las tarjetas la escena no lleva .rv. */
+    var vistos = [];
+    [].slice.call(raiz.querySelectorAll(".rv, .escena")).forEach(function (el) {
+      if (vistos.indexOf(el) >= 0) return;
+      vistos.push(el);
+      M.alEntrar(el);
+    });
+
+    /* ---------- 5. Movimiento continuo ----------
+       Dos cosas por fotograma, y solo mientras la pagina se mueve:
+         · el relleno de la linea del proceso, segun cuanto has avanzado;
+         · un paralaje corto en las fotos.
+       Todas las medidas salen de M.techo y M.alto, que dentro del marco
+       leen de una cache: cero lecturas de maquetacion por fotograma, que
+       es lo que hacia temblar los otros bloques. Y si no hay ninguna foto
+       puesta, el paralaje ni se registra. */
+    var pasos = raiz.querySelector("#prediosPasos");
+    if (pasos || conFoto.length) {
+      M.continuo(function (H, S) {
+        if (pasos) {
+          var arriba = M.techo(pasos, S), alto = M.alto(pasos);
+          /* El relleno mide el recorrido de la seccion por la pantalla, no
+             su distancia al borde: empieza cuando su techo cruza el 85% de
+             la altura visible y termina cuando su pie pasa del 55%. Medido
+             contra el borde a secas, una seccion mas corta que la pantalla
+             se llenaba entera de golpe -- que es lo que pasaba antes. */
+          var reparto = H * 0.3 + alto;
+          var avance = (H * 0.85 - arriba) / (reparto || 1);
+          avance = avance < 0 ? 0 : (avance > 1 ? 1 : avance);
+          M.escribeProp(pasos, "--avance", avance.toFixed(3));
+        }
+        for (var i = 0; i < conFoto.length; i++) {
+          var e = conFoto[i];
+          var t = M.techo(e, S), a = M.alto(e);
+          var centro = t + a / 2 - H / 2;
+          var d = centro / (H || 1);
+          if (d < -1.4 || d > 1.4) continue;      /* fuera de vista: no se toca */
+          M.escribeProp(e.querySelector(".escena-foto"), "--par",
+                        (-d * 14).toFixed(1) + "px");
+        }
+      });
+    }
+
+    /* ---------- 6. Preguntas frecuentes ----------
        Se abre una a la vez. Al abrir o cerrar cambia el alto del bloque, y
        dentro de un iframe eso exige remedir: sin el ajuste, el marco se
        queda con el alto viejo y la respuesta aparece cortada. */
@@ -222,7 +310,7 @@
       });
     });
 
-    /* ---------- 5. Enlaces internos del propio bloque ----------
+    /* ---------- 7. Enlaces internos del propio bloque ----------
        scrollIntoView atraviesa el marco y arrastra el scroll del padre. */
     safe(function () {
       raiz.addEventListener("click", function (ev) {
@@ -236,7 +324,7 @@
       });
     });
 
-    /* ---------- 6. Ano del pie ---------- */
+    /* ---------- 8. Ano del pie ---------- */
     safe(function () {
       var y = raiz.querySelector("#cpmPrediosYear");
       if (y) y.textContent = String(new Date().getFullYear());

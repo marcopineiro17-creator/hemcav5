@@ -39,6 +39,34 @@ def sin_comentarios(s):
     return re.sub(r"<!--.*?-->", "", s, flags=re.S)
 
 
+def quita_keyframes(css):
+    """Saca los bloques @keyframes enteros antes de revisar el acotado.
+
+    Dentro de un @keyframes los 'selectores' son `from`, `to` y porcentajes,
+    que por definicion no llevan el id del contenedor. Sin quitarlos, la
+    revision los denuncia como CSS suelto -- que es justo el falso positivo
+    que ya habia costado tiempo en otro guion del repositorio.
+    """
+    fuera, i = [], 0
+    while True:
+        m = re.search(r"@keyframes[^{]*\{", css[i:])
+        if not m:
+            fuera.append(css[i:])
+            break
+        ini = i + m.start()
+        fuera.append(css[i:ini])
+        # Contar llaves para encontrar el cierre del bloque completo.
+        j, prof = i + m.end(), 1
+        while j < len(css) and prof:
+            if css[j] == "{":
+                prof += 1
+            elif css[j] == "}":
+                prof -= 1
+            j += 1
+        i = j
+    return "".join(fuera)
+
+
 def revisa(s):
     problemas = []
     limpio = sin_comentarios(s)
@@ -84,6 +112,7 @@ def revisa(s):
     #    aspecto al editor del constructor y al resto del sitio.
     css = "\n".join(re.findall(r"<style>(.*?)</style>", s, re.S))
     css = sin_comentarios(css)
+    css = quita_keyframes(css)
     sueltos = []
     for bloque in re.split(r"\}", css):
         if "{" not in bloque:

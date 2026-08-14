@@ -3,20 +3,79 @@
   <!-- ============ PORTADA ============ -->
   <section class="portada">
     <div class="env">
-      <p class="rotulo rv">CPM · Regularización de Predios</p>
-      <div class="portada-caja">
-        <h1 class="rv d1">Una propiedad no es del todo tuya <em>hasta que está escriturada.</em></h1>
-        <p class="entradilla rv d2">
-          Avalúos, subdivisión de predios, compraventas, cancelación de hipoteca y
-          escrituración. Llevamos el trámite completo ante el <strong>INSEJUPY</strong> y la
-          notaría —desde un lote hasta un macrolote— y te entregamos tu escritura inscrita.
-        </p>
-        <div class="acciones rv d3">
-          <a class="btn btn--solido" data-cpm-wa
-             data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">
-            Quiero regularizar mi propiedad
-          </a>
-          <a class="btn btn--linea" href="#casos">Ver si es mi caso</a>
+      <div class="portada-rejilla">
+        <div>
+          <p class="rotulo rv">CPM · Regularización de Predios</p>
+          <h1 class="rv d1">Una propiedad no es del todo tuya <em>hasta que está escriturada.</em></h1>
+          <p class="entradilla rv d2">
+            Avalúos, subdivisión de predios, compraventas, cancelación de hipoteca y
+            escrituración. Llevamos el trámite completo ante el <strong>INSEJUPY</strong> y la
+            notaría —desde un lote hasta un macrolote— y te entregamos tu escritura inscrita.
+          </p>
+          <div class="acciones rv d3">
+            <a class="btn btn--solido" data-cpm-wa
+               data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">
+              Quiero regularizar mi propiedad
+              <svg class="flecha" width="16" height="16" viewBox="0 0 16 16" fill="none"
+                   stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M2 8h11M9 4l4 4-4 4"/></svg>
+            </a>
+            <a class="btn btn--linea" href="#casos">Ver si es mi caso</a>
+          </div>
+        </div>
+
+        <!-- Plano de subdivisión: se dibuja solo al entrar -->
+        <div class="escena rv d2" data-foto="portada" aria-label="Plano de subdivisión de un predio">
+          <div class="escena-foto"></div>
+          <div class="arte">
+            <svg viewBox="0 0 400 500" width="100%" height="100%"
+                 preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <rect width="400" height="500" fill="#eef2f9"/>
+              <g stroke="#c3cbdc" stroke-width="1">
+                <path d="M0 60h400M0 130h400M0 200h400M0 270h400M0 340h400M0 410h400M0 480h400"/>
+                <path d="M60 0v500M130 0v500M200 0v500M270 0v500M340 0v500"/>
+              </g>
+              <!-- Linderos del predio -->
+              <path class="trazo" style="--largo:1120" d="M56 96 L344 78 L356 396 L70 420 Z"
+                    fill="rgba(5,25,88,.05)" stroke="#051958" stroke-width="2.5"
+                    stroke-linejoin="round"/>
+              <!-- Divisiones interiores -->
+              <path class="trazo t2" style="--largo:330" d="M152 88 L162 412"
+                    stroke="#0b2c7d" stroke-width="1.6" stroke-dasharray="1" fill="none"/>
+              <path class="trazo t3" style="--largo:330" d="M250 82 L258 404"
+                    stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
+              <path class="trazo t4" style="--largo:300" d="M60 254 L352 240"
+                    stroke="#0b2c7d" stroke-width="1.6" fill="none"/>
+              <!-- Acotaciones -->
+              <g class="aparece" fill="none" stroke="#6b7688" stroke-width="1">
+                <path d="M56 452 L244 452M56 446v12M244 446v12"/>
+              </g>
+              <text class="aparece" x="150" y="472" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="15" fill="#495468">Frente del predio</text>
+              <!-- Numeros de lote -->
+              <g class="aparece a2" font-family="Georgia,serif" font-size="17" fill="#051958">
+                <text x="100" y="180">01</text><text x="198" y="176">02</text>
+                <text x="298" y="172">03</text><text x="100" y="345">04</text>
+                <text x="200" y="340">05</text><text x="300" y="335">06</text>
+              </g>
+              <!-- Norte -->
+              <g transform="translate(371,46)"><g class="aparece a3">
+                <path d="M0 -18 L7 8 L0 2 L-7 8 Z" fill="#051958"/>
+                <text x="0" y="26" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="12" fill="#051958">N</text>
+              </g></g>
+              <!-- Sello -->
+              <g transform="translate(320,452)"><g class="sello">
+                <circle r="40" fill="none" stroke="#051958" stroke-width="2.5"/>
+                <circle r="33" fill="none" stroke="#051958" stroke-width="1"/>
+                <text y="-4" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="13" fill="#051958">INSCRITO</text>
+                <text y="15" text-anchor="middle" font-family="Georgia,serif"
+                      font-size="10" fill="#0b2c7d" letter-spacing="1">CPM</text>
+              </g></g>
+            </svg>
+          </div>
+          <div class="escena-marco"></div>
         </div>
       </div>
 
@@ -42,64 +101,152 @@
 
       <div class="casos">
         <article class="caso rv d1">
-          <span class="caso-marca">El caso más frecuente</span>
-          <h3>Acabas de recibir tu terreno y todavía no está a tu nombre</h3>
-          <p>
-            Lo liquidaste en un desarrollo, te lo acaban de entregar, o se lo compraste a un
-            particular. Tienes tu contrato, tus recibos y quizá ya hasta la posesión física.
-          </p>
-          <p>
-            Pero mientras no exista <strong>escritura pública inscrita</strong>, en los registros
-            el terreno sigue sin ser tuyo: no lo puedes vender ni heredar con certeza, no sirve
-            como garantía de un crédito, y cualquier problema legal o fiscal del vendedor
-            todavía te puede alcanzar.
-          </p>
-          <p class="caso-hacemos">
-            <b>Lo que hacemos</b>
-            Revisamos el antecedente de propiedad y el estado del predio, tramitamos los
-            certificados que correspondan ante el INSEJUPY, coordinamos el avalúo y te
-            acompañamos hasta la firma ante notario y la entrega de tu escritura inscrita.
-          </p>
+          <div class="escena" data-foto="escritura" aria-label="Escritura pública">
+            <div class="escena-foto"></div>
+            <span class="caso-marca">El caso más frecuente</span>
+            <div class="arte">
+              <svg viewBox="0 0 400 200" width="100%" height="100%"
+                   preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <rect width="400" height="200" fill="#eef2f9"/>
+                <g stroke="#c3cbdc" stroke-width="1">
+                  <path d="M0 40h400M0 80h400M0 120h400M0 160h400"/>
+                </g>
+                <!-- Hoja de escritura -->
+                <g transform="translate(96,26) rotate(-3)">
+                  <rect x="8" y="8" width="150" height="160" fill="#0b2c7d" opacity=".9"/>
+                  <rect width="150" height="160" fill="#fff" stroke="#051958" stroke-width="1.5"/>
+                  <text x="18" y="30" font-family="Georgia,serif" font-size="11"
+                        fill="#6a7890">ESCRITURA PÚBLICA</text>
+                  <g class="aparece" stroke="#aeb8c8" stroke-width="1.5">
+                    <path d="M18 52h114M18 68h114M18 84h86M18 100h114M18 116h64"/>
+                  </g>
+                  <path class="trazo t2" style="--largo:130" d="M18 140 c14 -14 22 10 34 -2 c10 -10 20 8 32 -4"
+                        fill="none" stroke="#051958" stroke-width="2"/>
+                </g>
+                <!-- Sello -->
+                <g transform="translate(300,108)"><g class="sello">
+                  <circle r="40" fill="none" stroke="#051958" stroke-width="2.5"/>
+                  <circle r="32" fill="none" stroke="#051958" stroke-width="1"/>
+                  <text y="-2" text-anchor="middle" font-family="Georgia,serif"
+                        font-size="12" fill="#051958">A TU</text>
+                  <text y="14" text-anchor="middle" font-family="Georgia,serif"
+                        font-size="12" fill="#051958">NOMBRE</text>
+                </g></g>
+              </svg>
+            </div>
+            <div class="escena-marco"></div>
+          </div>
+          <div class="caso-cuerpo">
+            <h3>Acabas de recibir tu terreno y todavía no está a tu nombre</h3>
+            <p>
+              Lo liquidaste en un desarrollo, te lo acaban de entregar, o se lo compraste a un
+              particular. Tienes tu contrato, tus recibos y quizá ya hasta la posesión física.
+            </p>
+            <p>
+              Pero mientras no exista <strong>escritura pública inscrita</strong>, en los registros
+              el terreno sigue sin ser tuyo: no lo puedes vender ni heredar con certeza, no sirve
+              como garantía de un crédito, y cualquier problema legal o fiscal del vendedor
+              todavía te puede alcanzar.
+            </p>
+            <p class="caso-hacemos">
+              <b>Lo que hacemos</b>
+              Revisamos el antecedente de propiedad y el estado del predio, tramitamos los
+              certificados que correspondan ante el INSEJUPY, coordinamos el avalúo y te
+              acompañamos hasta la firma ante notario y la entrega de tu escritura inscrita.
+            </p>
+          </div>
         </article>
 
         <article class="caso rv d2">
-          <span class="caso-marca caso-marca--suave">El que casi nadie termina</span>
-          <h3>Ya liquidaste tu crédito, pero la hipoteca sigue inscrita</h3>
-          <p>
-            Terminaste de pagar con INFONAVIT, FOVISSSTE, un banco o un crédito directo.
-            Te dieron tu carta de no adeudo y ahí quedó la cosa.
-          </p>
-          <p>
-            El problema es que <strong>pagar el crédito no cancela la hipoteca</strong>. El
-            gravamen permanece anotado en tu propiedad hasta que se cancela formalmente, y
-            eso aparece el día que quieres vender, heredar o volver a pedir un crédito
-            —normalmente con prisa y con el comprador esperando.
-          </p>
-          <p class="caso-hacemos">
-            <b>Lo que hacemos</b>
-            Gestionamos ante la institución la carta o instrucción de cancelación, tramitamos
-            la cancelación del gravamen y, si hace falta, dejamos la propiedad escriturada a
-            tu nombre y libre de hipoteca.
-          </p>
+          <div class="escena" data-foto="hipoteca" aria-label="Cancelación de hipoteca">
+            <div class="escena-foto"></div>
+            <span class="caso-marca caso-marca--suave">El que casi nadie termina</span>
+            <div class="arte">
+              <svg viewBox="0 0 400 200" width="100%" height="100%"
+                   preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <rect width="400" height="200" fill="#eef2f9"/>
+                <g stroke="#c3cbdc" stroke-width="1">
+                  <path d="M0 40h400M0 80h400M0 120h400M0 160h400"/>
+                </g>
+                <g transform="translate(88,26) rotate(-2)">
+                  <rect x="8" y="8" width="150" height="160" fill="#0b2c7d" opacity=".9"/>
+                  <rect width="150" height="160" fill="#fff" stroke="#051958" stroke-width="1.5"/>
+                  <text x="18" y="30" font-family="Georgia,serif" font-size="11"
+                        fill="#6a7890">GRAVAMEN</text>
+                  <g class="aparece" stroke="#aeb8c8" stroke-width="1.5">
+                    <path d="M18 52h114M18 68h114M18 84h86M18 100h114"/>
+                  </g>
+                  <!-- La linea que tacha el gravamen -->
+                  <path class="trazo t3" style="--largo:150" d="M14 74 L140 58"
+                        stroke="#051958" stroke-width="3" fill="none"/>
+                  <text class="aparece a2" x="18" y="132" font-family="Georgia,serif"
+                        font-size="13" fill="#051958">CANCELADO</text>
+                </g>
+                <!-- Candado abierto -->
+                <g transform="translate(288,84)"><g class="aparece a3">
+                  <path class="trazo t4" style="--largo:110" d="M4 -6 v-14 a16 16 0 0 1 32 0"
+                        fill="none" stroke="#051958" stroke-width="4" stroke-linecap="round"/>
+                  <rect x="-14" y="-6" width="52" height="42" rx="4" fill="#051958"/>
+                  <circle cx="12" cy="15" r="5" fill="#fff"/>
+                </g></g>
+                <text class="aparece a3" x="308" y="150" text-anchor="middle"
+                      font-family="Georgia,serif" font-size="13" fill="#051958">Libre de gravamen</text>
+              </svg>
+            </div>
+            <div class="escena-marco"></div>
+          </div>
+          <div class="caso-cuerpo">
+            <h3>Ya liquidaste tu crédito, pero la hipoteca sigue inscrita</h3>
+            <p>
+              Terminaste de pagar con INFONAVIT, FOVISSSTE, un banco o un crédito directo.
+              Te dieron tu carta de no adeudo y ahí quedó la cosa.
+            </p>
+            <p>
+              El problema es que <strong>pagar el crédito no cancela la hipoteca</strong>. El
+              gravamen permanece anotado en tu propiedad hasta que se cancela formalmente, y
+              eso aparece el día que quieres vender, heredar o volver a pedir un crédito
+              —normalmente con prisa y con el comprador esperando.
+            </p>
+            <p class="caso-hacemos">
+              <b>Lo que hacemos</b>
+              Gestionamos ante la institución la carta o instrucción de cancelación, tramitamos
+              la cancelación del gravamen y, si hace falta, dejamos la propiedad escriturada a
+              tu nombre y libre de hipoteca.
+            </p>
+          </div>
         </article>
       </div>
 
       <div class="casos-menores">
         <article class="caso-menor rv d1">
-          <h3>Vas a vender</h3>
-          <p>
-            Preparamos el avalúo, revisamos que el expediente esté completo y, si quieres,
-            nosotros mismos comercializamos la propiedad y llevamos la compraventa de
-            principio a fin.
-          </p>
+          <div class="icono-marco">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 20h18M6 20V9l6-5 6 5v11M10 20v-6h4v6"/></svg>
+          </div>
+          <div>
+            <h3>Vas a vender</h3>
+            <p>
+              Preparamos el avalúo, revisamos que el expediente esté completo y, si quieres,
+              nosotros mismos comercializamos la propiedad y llevamos la compraventa de
+              principio a fin.
+            </p>
+          </div>
         </article>
         <article class="caso-menor rv d2">
-          <h3>Vas a dividir o fusionar</h3>
-          <p>
-            Subdivisión de un predio en lotes, división entre herederos o socios, o fusión de
-            predios colindantes: hacemos el trámite con la medición, los planos y la
-            inscripción que le corresponde a cada fracción.
-          </p>
+          <div class="icono-marco">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 4h18v16H3zM12 4v16M3 12h9"/></svg>
+          </div>
+          <div>
+            <h3>Vas a dividir o fusionar</h3>
+            <p>
+              Subdivisión de un predio en lotes, división entre herederos o socios, o fusión de
+              predios colindantes: hacemos el trámite con la medición, los planos y la
+              inscripción que le corresponde a cada fracción.
+            </p>
+          </div>
         </article>
       </div>
     </div>
@@ -118,42 +265,74 @@
       </div>
 
       <div class="servicios">
-        <article class="servicio rv"><span class="servicio-num">01</span>
+        <article class="servicio rv">
+          <div class="servicio-alto"><span class="servicio-num">01</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 3v18M5 8l7-5 7 5M3 14h6l-3 5zM15 14h6l-3 5z"/></svg></div>
           <h3>Avalúo</h3>
           <p>Avalúo de tu terreno o casa, tanto para conocer su valor real de venta como para
              el trámite que lo requiera.</p></article>
 
-        <article class="servicio rv d1"><span class="servicio-num">02</span>
+        <article class="servicio rv d1">
+          <div class="servicio-alto"><span class="servicio-num">02</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/></svg></div>
           <h3>Escrituración</h3>
           <p>Integración del expediente, coordinación con la notaría y seguimiento hasta que
              la escritura queda inscrita a tu nombre.</p></article>
 
-        <article class="servicio rv d2"><span class="servicio-num">03</span>
+        <article class="servicio rv d2">
+          <div class="servicio-alto"><span class="servicio-num">03</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M5 11h14v9H5zM8 11V7a4 4 0 0 1 8 0M4 4l16 16"/></svg></div>
           <h3>Cancelación de hipoteca</h3>
           <p>Carta de liberación con la institución acreedora y cancelación del gravamen para
              dejar la propiedad libre.</p></article>
 
-        <article class="servicio rv d3"><span class="servicio-num">04</span>
+        <article class="servicio rv d3">
+          <div class="servicio-alto"><span class="servicio-num">04</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M3 4h18v16H3zM12 4v16M3 12h9M16 8v8"/></svg></div>
           <h3>Subdivisión y fusión</h3>
           <p>División de un predio en lotes o macrolotes, y fusión de predios colindantes, con
              su medición y su plano.</p></article>
 
-        <article class="servicio rv"><span class="servicio-num">05</span>
+        <article class="servicio rv">
+          <div class="servicio-alto"><span class="servicio-num">05</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 7h10M4 12h7M4 17h10M17 5v14M14 8l3-3 3 3M14 16l3 3 3-3"/></svg></div>
           <h3>Compraventa</h3>
           <p>Revisión del antecedente, contrato, cálculo de lo que corresponde pagar y firma.
              Tanto si compras como si vendes.</p></article>
 
-        <article class="servicio rv d1"><span class="servicio-num">06</span>
+        <article class="servicio rv d1">
+          <div class="servicio-alto"><span class="servicio-num">06</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="10" r="6"/><path d="M9 15l-2 6 5-2 5 2-2-6"/></svg></div>
           <h3>Trámites ante el INSEJUPY</h3>
           <p>Certificados, inscripciones y constancias del instituto, gestionados por
              nosotros sin que tengas que ir.</p></article>
 
-        <article class="servicio rv d2"><span class="servicio-num">07</span>
+        <article class="servicio rv d2">
+          <div class="servicio-alto"><span class="servicio-num">07</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M3 20h18M6 20V10l6-4 6 4v10M9 20v-5h6v5M15 3h6v4"/></svg></div>
           <h3>Venta de tu propiedad</h3>
           <p>Si además quieres venderla, la comercializamos con la estructura inmobiliaria de
              CPM y cerramos la operación ya regularizada.</p></article>
 
-        <article class="servicio rv d3"><span class="servicio-num">08</span>
+        <article class="servicio rv d3">
+          <div class="servicio-alto"><span class="servicio-num">08</span>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h9M17 15l2.5 2.5L23 14"/></svg></div>
           <h3>Regularización de la tenencia</h3>
           <p>Cuando el antecedente está incompleto, el predio viene de una sucesión o la
              posesión no coincide con el papel.</p></article>
@@ -172,9 +351,7 @@
             El tamaño no cambia el procedimiento, cambia el expediente. Trabajamos operaciones
             de particulares y también carteras completas de desarrolladoras.
           </p>
-        </div>
-        <div class="rv d2">
-          <div class="fichas">
+          <div class="fichas rv d2">
             <span class="ficha">Lotes residenciales</span>
             <span class="ficha">Macrolotes</span>
             <span class="ficha">Casas</span>
@@ -184,11 +361,48 @@
             <span class="ficha">Fraccionamientos</span>
             <span class="ficha">Herencias y sucesiones</span>
           </div>
-          <p class="nota-alcance">
+          <p class="nota-alcance rv">
             Si no sabes en qué situación está tu propiedad, esa es justamente la primera
             consulta: revisamos tus documentos y te decimos qué tienes, qué te falta y qué
             trámite corresponde.
           </p>
+        </div>
+
+        <div class="escena rv d1" data-foto="alcance" aria-label="Predios de distintos tamaños">
+          <div class="escena-foto"></div>
+          <div class="arte">
+            <svg viewBox="0 0 400 320" width="100%" height="100%"
+                 preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <rect width="400" height="320" fill="#eef2f9"/>
+              <g stroke="#c3cbdc" stroke-width="1">
+                <path d="M0 50h400M0 100h400M0 150h400M0 200h400M0 250h400M0 300h400"/>
+                <path d="M50 0v320M100 0v320M150 0v320M200 0v320M250 0v320M300 0v320M350 0v320"/>
+              </g>
+              <path class="trazo" style="--largo:560" d="M40 40 h150 v110 h-150 Z"
+                    fill="rgba(5,25,88,.07)" stroke="#051958" stroke-width="2"/>
+              <text class="aparece" x="115" y="100" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="15" fill="#051958">Macrolote</text>
+
+              <path class="trazo t2" style="--largo:300" d="M210 40 h70 v110 h-70 Z"
+                    fill="rgba(5,25,88,.05)" stroke="#0b2c7d" stroke-width="1.8"/>
+              <text class="aparece a2" x="245" y="100" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="12" fill="#051958">Lote</text>
+
+              <path class="trazo t3" style="--largo:300" d="M300 40 h60 v110 h-60 Z"
+                    fill="rgba(5,25,88,.05)" stroke="#0b2c7d" stroke-width="1.8"/>
+              <g transform="translate(330,105)"><g class="aparece a2">
+                <path d="M-16 0 v-16 l16 -12 l16 12 v16 Z" fill="none" stroke="#051958" stroke-width="1.8"/>
+              </g></g>
+
+              <path class="trazo t4" style="--largo:640" d="M40 190 h320 v90 h-320 Z"
+                    fill="rgba(5,25,88,.04)" stroke="#051958" stroke-width="2"/>
+              <path class="trazo t5" style="--largo:280" d="M120 190 v90M200 190 v90M280 190 v90"
+                    stroke="#0b2c7d" stroke-width="1.4" fill="none"/>
+              <text class="aparece a3" x="200" y="303" text-anchor="middle"
+                    font-family="Georgia,serif" font-size="14" fill="#495468">Fraccionamiento</text>
+            </svg>
+          </div>
+          <div class="escena-marco"></div>
         </div>
       </div>
     </div>
@@ -202,7 +416,9 @@
         <h2 class="rv">Cinco pasos, y sabes en cuál estás</h2>
       </div>
 
-      <div class="pasos">
+      <div class="pasos" id="prediosPasos">
+        <div class="via" aria-hidden="true"></div>
+
         <div class="paso rv"><div class="paso-num">01</div>
           <div><h3>Revisión de tus documentos</h3>
             <p>Nos compartes lo que tengas —contrato, recibos, carta de no adeudo, escritura
@@ -237,27 +453,50 @@
   <section class="banda">
     <div class="env">
       <div class="institucional rv">
-        <p class="rotulo">Certeza jurídica</p>
-        <h2>Qué es el INSEJUPY y por qué importa</h2>
-        <p>
-          El Instituto de Seguridad Jurídica Patrimonial de Yucatán es la instancia estatal
-          donde se inscriben y se certifican los actos sobre inmuebles. Mientras una operación
-          no llega ahí, existe entre las partes pero no frente a terceros: es la diferencia
-          entre tener un contrato y tener una propiedad oponible a cualquiera.
-        </p>
-        <p>
-          Ahí es donde trabajamos. Y es también la razón por la que un trámite bien hecho se
-          nota años después —cuando vendes, cuando heredas o cuando pides un crédito— y uno
-          mal hecho también.
-        </p>
+        <div>
+          <p class="rotulo">Certeza jurídica</p>
+          <h2>Qué es el INSEJUPY y por qué importa</h2>
+          <p>
+            El Instituto de Seguridad Jurídica Patrimonial de Yucatán es la instancia estatal
+            donde se inscriben y se certifican los actos sobre inmuebles. Mientras una operación
+            no llega ahí, existe entre las partes pero no frente a terceros: es la diferencia
+            entre tener un contrato y tener una propiedad oponible a cualquiera.
+          </p>
+          <p>
+            Ahí es donde trabajamos. Y es también la razón por la que un trámite bien hecho se
+            nota años después —cuando vendes, cuando heredas o cuando pides un crédito— y uno
+            mal hecho también.
+          </p>
 
-        <div class="institucional-lista">
-          <div><h3>Se inscribe</h3><p>La operación queda anotada en el folio del inmueble y
-            surte efectos frente a terceros.</p></div>
-          <div><h3>Se certifica</h3><p>Constancias y certificados que acreditan quién es
-            el titular y si el predio tiene gravámenes.</p></div>
-          <div><h3>Se conserva</h3><p>El antecedente queda encadenado, que es lo que permite
-            demostrar la propiedad en el futuro.</p></div>
+          <div class="institucional-lista">
+            <div><h3>Se inscribe</h3><p>La operación queda anotada en el folio del inmueble y
+              surte efectos frente a terceros.</p></div>
+            <div><h3>Se certifica</h3><p>Constancias y certificados que acreditan quién es
+              el titular y si el predio tiene gravámenes.</p></div>
+            <div><h3>Se conserva</h3><p>El antecedente queda encadenado, que es lo que permite
+              demostrar la propiedad en el futuro.</p></div>
+          </div>
+        </div>
+
+        <div class="sello-caja" aria-hidden="true">
+          <svg class="sello-anillo" viewBox="0 0 200 200" width="100%" height="100%">
+            <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
+            <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(255,255,255,.18)"
+                    stroke-width="1" stroke-dasharray="3 7"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.5">
+              <path d="M100 4v12M100 184v12M4 100h12M184 100h12"/>
+              <path d="M32 32l8 8M160 160l8 8M168 32l-8 8M40 160l-8 8"/>
+            </g>
+          </svg>
+          <svg class="sello-nucleo" viewBox="0 0 120 120" width="100%" height="100%">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+            <path d="M60 18 L94 34 v30 c0 22 -18 34 -34 40 c-16 -6 -34 -18 -34 -40 V34 Z"
+                  fill="none" stroke="#fff" stroke-width="2"/>
+            <text x="60" y="66" text-anchor="middle" font-family="Georgia,serif"
+                  font-size="20" fill="#fff" letter-spacing="2">CPM</text>
+            <text x="60" y="82" text-anchor="middle" font-family="Georgia,serif"
+                  font-size="8" fill="rgba(255,255,255,.75)" letter-spacing="2">PREDIOS</text>
+          </svg>
         </div>
       </div>
     </div>
@@ -355,9 +594,10 @@
   </section>
 
   <!-- ============ CIERRE ============ -->
-  <section class="cierre banda--linea">
+  <section class="cierre banda--linea" data-foto-cierre>
+    <div class="cierre-fondo"></div>
     <div class="env">
-      <p class="rotulo rv" style="justify-content:center">Empecemos</p>
+      <p class="rotulo rv">Empecemos</p>
       <h2 class="rv">Mándanos tus documentos y te decimos qué falta</h2>
       <p class="entradilla rv d1">
         La primera revisión no tiene costo. Si tu caso no requiere trámite, también te lo
@@ -367,6 +607,9 @@
         <a class="btn btn--solido" data-cpm-wa
            data-cpm-destino="contacto|contactanos" data-cpm-respaldo="/contacto">
           Escribir a un asesor
+          <svg class="flecha" width="16" height="16" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M2 8h11M9 4l4 4-4 4"/></svg>
         </a>
         <a class="btn btn--linea"
            data-cpm-destino="regularizacion|regularizacion de predios|servicios inmobiliarios"

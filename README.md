@@ -70,11 +70,33 @@ del sistema para los títulos (formal, y sin depender de un CDN de fuentes) y
 como secundario el azul `#051958`, que es el que ya identifica a la división
 legal en el bloque de Divisiones. No se inventó un color nuevo.
 
-**Lo único que hay que editar a mano** es la constante `WHATSAPP` al principio
-del guion. Se dejó vacía a propósito: los dos números que hay en el sitio son
-de HEMCA y de HMS, y mandar ahí a alguien que quiere escriturar sería peor que
-no tener botón. Mientras esté vacía, los botones de WhatsApp llevan a la
-página de contacto y el bloque funciona igual.
+**Lo que hay que editar a mano** son dos cosas, las dos al principio del guion:
+
+- `WHATSAPP`. Se dejó vacía a propósito: los dos números que hay en el sitio
+  son de HEMCA y de HMS, y mandar ahí a alguien que quiere escriturar sería
+  peor que no tener botón. Mientras esté vacía, los botones de WhatsApp llevan
+  a la página de contacto y el bloque funciona igual.
+- `FOTOS`. Cinco huecos —`portada`, `escritura`, `hipoteca`, `alcance` y
+  `cierre`— donde va la dirección de cada imagen; las de Hostinger sirven tal
+  cual. **Un hueco vacío no se ve vacío:** debajo hay una ilustración
+  vectorial —el plano de subdivisión que se dibuja solo, la escritura con su
+  sello, el gravamen cancelándose— hecha para sostenerse sola, y la foto sólo
+  la sustituye cuando existe. Así la página se puede publicar hoy e ir
+  poniendo fotos después. Cuando hay foto, se le aplica un velo azul para que
+  el texto se lea venga la imagen que venga.
+
+Del movimiento: los trazos de los planos se dibujan con `stroke-dashoffset`,
+los sellos caen y se asientan, la línea del proceso se llena según avanzas
+—medida contra el recorrido de la sección por la pantalla, no contra su
+distancia al borde, que llenaba la barra de golpe— y las fotos llevan un
+paralaje corto. Nada de `backdrop-filter` ni de rotaciones sobre superficies
+grandes: medido en la réplica, 58 fps y 5 fotogramas lentos de 138.
+
+Un detalle de SVG que costó encontrar: un grupo que se posiciona con el
+atributo `transform` y además se anima por CSS **pierde la posición**, porque
+la propiedad CSS sustituye al atributo entero y la pieza salta al origen. Por
+eso cada sello y cada pieza animada va envuelta: el grupo de fuera coloca, el
+de dentro anima.
 
 Este bloque **escribe él mismo la altura del iframe** (`escribeAltura` en el
 motor), al revés que los demás. El motor evita hacerlo porque el runtime
