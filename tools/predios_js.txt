@@ -7,15 +7,13 @@
   raiz.setAttribute("data-init", "arrancando");
 
   /* ---------------------------------------------------------------
-     EL UNICO DATO QUE HAY QUE EDITAR A MANO
-     Numero de WhatsApp de la division, en formato internacional y sin
-     signos: 52 + lada + numero. Mientras este vacio, los botones de
-     WhatsApp no se rompen: se comportan como el resto y llevan a la
-     pagina de contacto del sitio. Se deja vacio a proposito -- los dos
-     numeros que hay en el sitio son de HEMCA y de HMS, y mandar ahi a
-     alguien que quiere escriturar seria peor que no tener boton.
+     WHATSAPP
+     Numero de la division en formato internacional y sin signos:
+     52 + lada + numero. Es el mismo que atiende HEMCA en el sitio.
+     Si algun dia se vacia, los botones no se rompen: se comportan como
+     el resto y llevan a la pagina de contacto.
      --------------------------------------------------------------- */
-  var WHATSAPP = "";                       /* p.ej. "529991234567" */
+  var WHATSAPP = "529995690047";           /* 999 569 0047 */
   var MENSAJE  = "Hola, quiero información sobre regularización y escrituración de mi propiedad.";
 
   /* ---------------------------------------------------------------

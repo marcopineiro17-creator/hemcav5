@@ -72,10 +72,9 @@ legal en el bloque de Divisiones. No se inventó un color nuevo.
 
 **Lo que hay que editar a mano** son dos cosas, las dos al principio del guion:
 
-- `WHATSAPP`. Se dejó vacía a propósito: los dos números que hay en el sitio
-  son de HEMCA y de HMS, y mandar ahí a alguien que quiere escriturar sería
-  peor que no tener botón. Mientras esté vacía, los botones de WhatsApp llevan
-  a la página de contacto y el bloque funciona igual.
+- `WHATSAPP`. Ya está puesto: `529995690047` (999 569 0047), el mismo número
+  que atiende HEMCA en el sitio. Si se vacía, los botones no se rompen: llevan
+  a la página de contacto.
 - `FOTOS`. Cinco huecos —`portada`, `escritura`, `hipoteca`, `alcance` y
   `cierre`— donde va la dirección de cada imagen; las de Hostinger sirven tal
   cual. **Un hueco vacío no se ve vacío:** debajo hay una ilustración
