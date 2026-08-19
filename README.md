@@ -75,21 +75,26 @@ legal en el bloque de Divisiones. No se inventó un color nuevo.
 - `WHATSAPP`. Ya está puesto: `529995690047` (999 569 0047), el mismo número
   que atiende HEMCA en el sitio. Si se vacía, los botones no se rompen: llevan
   a la página de contacto.
-- `FOTOS`. Cinco huecos —`portada`, `escritura`, `hipoteca`, `alcance` y
-  `cierre`— donde va la dirección de cada imagen; las de Hostinger sirven tal
-  cual. **Un hueco vacío no se ve vacío:** debajo hay una ilustración
-  vectorial —el plano de subdivisión que se dibuja solo, la escritura con su
-  sello, el gravamen cancelándose— hecha para sostenerse sola, y la foto sólo
-  la sustituye cuando existe. Así la página se puede publicar hoy e ir
-  poniendo fotos después. Cuando hay foto, se le aplica un velo azul para que
-  el texto se lea venga la imagen que venga.
+- `FOTOS`. Ocho huecos, ya con las imágenes del CDN de Hostinger puestas:
+  `portada`, `escritura`, `hipoteca`, `alcance`, `alcance2`, `cierre`,
+  `insejupy` y `desarrollo`. **Un hueco vacío no se ve vacío:** debajo hay una
+  ilustración vectorial —el plano de subdivisión que se dibuja solo, la
+  escritura con su sello, el gravamen cancelándose— hecha para sostenerse
+  sola, y la foto sólo la sustituye cuando existe. Vaciar `insejupy` y
+  `desarrollo` devuelve el sello giratorio del bloque azul.
+
+  **La maqueta está hecha para la orientación de cada foto**, así que cambiar
+  una por otra de orientación distinta obliga a revisar su hueco: `portada` es
+  horizontal, las de casos y alcance verticales, y `cierre` apaisada. Las
+  fotos llevan un tinte azul muy leve (20 %) para dar unidad de marca; la del
+  cierre no lleva ninguno —va como banda limpia, sin velo ni degradado—.
 
 Del movimiento: los trazos de los planos se dibujan con `stroke-dashoffset`,
 los sellos caen y se asientan, la línea del proceso se llena según avanzas
 —medida contra el recorrido de la sección por la pantalla, no contra su
 distancia al borde, que llenaba la barra de golpe— y las fotos llevan un
 paralaje corto. Nada de `backdrop-filter` ni de rotaciones sobre superficies
-grandes: medido en la réplica, 58 fps y 5 fotogramas lentos de 138.
+grandes: medido en la réplica y con las fotos puestas, 60 fps y 1 fotograma lento de 144.
 
 Un detalle de SVG que costó encontrar: un grupo que se posiciona con el
 atributo `transform` y además se anima por CSS **pierde la posición**, porque
