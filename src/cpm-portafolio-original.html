@@ -1,0 +1,1417 @@
+<!-- ============================================================
+     PORTAFOLIO CPM · ASESORES  (v2)
+     Pega TODO este bloque en el campo "Codigo personalizado" de Hostinger.
+     ------------------------------------------------------------
+     QUE SE ARREGLO RESPECTO A LA v1
+     1) LA FICHA SE ABRIA HASTA ABAJO. El overlay usaba
+        align-items:flex-end + position:fixed. Cuando Hostinger mete el
+        bloque en un iframe, "fixed" se ancla al IFRAME (que mide lo que
+        mide todo el contenido, miles de px), no a la pantalla: la ficha
+        aparecia al final del sitio. Ahora se calcula la BANDA VISIBLE
+        real y el panel queda centrado en pantalla, y se re-ancla
+        mientras haces scroll.
+     2) El boton dice "Duda de esta Propiedad".
+     3) BUSQUEDA TOLERANTE A ERRORES: "isamal" encuentra Izamal,
+        "hunuk" encuentra Hunucma, sin acentos ni mayusculas. Si no hay
+        nada, propone "quiza quisiste decir...".
+     4) FULL-BLEED SIN BARRA HORIZONTAL. Antes usaba 100vw, que INCLUYE
+        el ancho de la barra de scroll y por eso empujaba la pagina de
+        lado. Ahora se mide el ancho real del documento.
+     5) forzar() ya no pone width:100% en los contenedores padre: si el
+        contenedor traia padding con box-sizing:content-box, eso sumaba
+        el padding y desbordaba a la derecha.
+     6) Se quito orderBy('id') de la consulta: si algun documento no
+        tuviera el campo 'id', Firestore lo excluye en silencio. Ahora
+        se ordena en el navegador.
+     7) NUEVO boton de admin "Sincronizar catalogo publico": copia a la
+        coleccion 'catalogo_publico' SOLO los campos publicos (sin
+        comision ni comentario) y sin las propiedades marcadas
+        "Exclusivos (no publicar)". Eso es lo que hace que el catalogo
+        publico muestre datos y fotos reales sin exponer nada interno.
+
+     REGLAS DE FIREBASE que hay que tener puestas:
+         match /terrenos/{id} {
+           allow read, write: if request.auth != null;
+         }
+         match /catalogo_publico/{id} {
+           allow read: if true;
+           allow write: if request.auth != null;
+         }
+     ============================================================ -->
+<div id="cpm-portafolio"><div class="cpm-boot"><div class="cpm-spin"></div><span>Iniciando portafolio...</span></div></div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+#cpm-portafolio{
+  --cpm-blue:#3d7ab5; --cpm-blue-dark:#2d5f8f; --cpm-blue-light:#5a95cc; --cpm-blue-pale:#e8f2fb;
+  --cpm-navy:#1a2d42; --cpm-gray:#f4f6f9; --cpm-gray2:#e8ecf0; --cpm-text:#1e2d3d; --cpm-text2:#5a6a7a;
+  --cpm-gold:#c8a84b; --cpm-green:#27ae60; --cpm-red:#e74c3c;
+  font-family:'Montserrat',sans-serif; color:var(--cpm-text); background:var(--cpm-gray);
+  position:relative; overflow:hidden; min-height:520px;
+  width:100%;   /* el ancho completo lo calcula el JS midiendo el documento real */
+}
+#cpm-portafolio *{box-sizing:border-box;margin:0;padding:0}
+#cpm-portafolio button,#cpm-portafolio input,#cpm-portafolio select,#cpm-portafolio textarea{font-family:inherit}
+#cpm-portafolio button{cursor:pointer}
+/* arranque */
+#cpm-portafolio .cpm-boot{min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:linear-gradient(135deg,#1a2d42,#2d4a6e);color:#fff}
+#cpm-portafolio .cpm-boot span{font-size:13px;color:rgba(255,255,255,.7);letter-spacing:1px}
+#cpm-portafolio .cpm-spin{width:42px;height:42px;border:4px solid rgba(255,255,255,.2);border-top-color:#5a95cc;border-radius:50%;animation:cpmspin .9s linear infinite}
+@keyframes cpmspin{to{transform:rotate(360deg)}}
+/* login */
+#cpm-portafolio .cpm-login{min-height:560px;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(135deg,#1a2d42 0%,#2d4a6e 50%,#3d7ab5 100%)}
+#cpm-portafolio .cpm-login-card{background:#fff;border-radius:24px;padding:40px;width:100%;max-width:380px;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+#cpm-portafolio .cpm-login-card img{height:60px;display:block;margin:0 auto 16px}
+#cpm-portafolio .cpm-login-card .t1{text-align:center;font-size:18px;font-weight:700;color:#1a2d42;letter-spacing:1px}
+#cpm-portafolio .cpm-login-card .t2{text-align:center;font-size:18px;font-weight:700;color:#3d7ab5;letter-spacing:1px}
+#cpm-portafolio .cpm-login-card .t3{text-align:center;font-size:12px;color:#5a6a7a;margin:6px 0 26px;letter-spacing:1px}
+#cpm-portafolio .cpm-lbl{font-size:11px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block}
+#cpm-portafolio .cpm-inp{width:100%;padding:12px 16px;border:2px solid #e8ecf0;border-radius:12px;font-size:13px;outline:none;transition:border-color .15s}
+#cpm-portafolio .cpm-inp:focus{border-color:#3d7ab5}
+#cpm-portafolio .cpm-err{background:#fde8e8;color:#c0392b;padding:10px 14px;border-radius:10px;font-size:12px;margin:14px 0 0;text-align:center}
+#cpm-portafolio .cpm-btn-main{width:100%;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff;border:none;padding:14px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;margin-top:18px}
+#cpm-portafolio .cpm-btn-main:disabled{background:#a0b8d0}
+/* barra superior */
+#cpm-portafolio .cpm-bar{background:linear-gradient(135deg,#1a2d42,#2d4a6e);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#cpm-portafolio .cpm-bar img{height:34px}
+#cpm-portafolio .cpm-bar .cpm-title{color:#fff}
+#cpm-portafolio .cpm-bar .cpm-title b{display:block;font-size:15px;font-weight:700;letter-spacing:.5px;line-height:1.1}
+#cpm-portafolio .cpm-bar .cpm-title small{font-size:11px;color:rgba(255,255,255,.6)}
+#cpm-portafolio .cpm-bar .cpm-sp{flex:1}
+#cpm-portafolio .cpm-bar .cpm-user{font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase}
+#cpm-portafolio .cpm-mini{background:rgba(255,255,255,.12);border:none;border-radius:20px;padding:6px 13px;color:#fff;font-size:11px;font-weight:600}
+#cpm-portafolio .cpm-mini:hover{background:rgba(255,255,255,.2)}
+#cpm-portafolio .cpm-mini:disabled{opacity:.55}
+/* filtros */
+#cpm-portafolio .cpm-filtros{background:#fff;border-bottom:1px solid #e8ecf0;padding:12px 24px;display:flex;gap:8px;flex-wrap:wrap}
+#cpm-portafolio .cpm-pill{background:#f4f6f9;border:1px solid #e8ecf0;border-radius:24px;color:#5a6a7a;font-size:12px;font-weight:600;padding:7px 14px;white-space:nowrap;transition:all .15s}
+#cpm-portafolio .cpm-pill.on{background:linear-gradient(135deg,#3d7ab5,#2d5f8f);border-color:transparent;color:#fff}
+#cpm-portafolio .cpm-pill .cnt{opacity:.7;margin-left:4px}
+/* buscador */
+#cpm-portafolio .cpm-search-wrap{padding:16px 24px 0;position:relative}
+#cpm-portafolio .cpm-search-wrap .ico{position:absolute;left:38px;top:calc(50% + 8px);transform:translateY(-50%);color:#a0b0c0}
+#cpm-portafolio .cpm-search{width:100%;padding:11px 14px 11px 40px;border:2px solid #e8ecf0;border-radius:14px;font-size:13px;outline:none;background:#fff}
+#cpm-portafolio .cpm-search:focus{border-color:#3d7ab5}
+/* aviso de busqueda aproximada */
+#cpm-portafolio .cpm-hint{margin:10px 24px 0;background:#e8f2fb;border:1px solid #cfe3f6;border-radius:10px;
+  padding:9px 14px;font-size:12.5px;color:#2d5f8f;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#cpm-portafolio .cpm-hint b{font-weight:700}
+#cpm-portafolio .cpm-sugg{background:#fff;border:2px solid #3d7ab5;color:#2d5f8f;border-radius:8px;
+  padding:4px 12px;font-size:12.5px;font-weight:700}
+#cpm-portafolio .cpm-sugg:hover{background:#3d7ab5;color:#fff}
+/* grid */
+#cpm-portafolio .cpm-grid{padding:18px 24px 36px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+#cpm-portafolio .cpm-grid>*{min-width:0}
+#cpm-portafolio .cpm-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(61,122,181,.08);cursor:pointer;transition:all .2s;border:1px solid transparent}
+#cpm-portafolio .cpm-card:hover{box-shadow:0 8px 32px rgba(61,122,181,.18);transform:translateY(-2px)}
+#cpm-portafolio .cpm-card .ph{height:130px;position:relative;overflow:hidden;background:linear-gradient(135deg,#e8f2fb,#c5ddf5);display:flex;align-items:center;justify-content:center}
+#cpm-portafolio .cpm-card .ph img.cover{width:100%;height:100%;object-fit:cover}
+#cpm-portafolio .cpm-card .ph img.logo{height:40px;opacity:.5}
+#cpm-portafolio .cpm-card .tipo{position:absolute;top:10px;left:10px;background:rgba(26,45,66,.85);color:#fff;font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:1px;text-transform:uppercase}
+#cpm-portafolio .cpm-card .nfotos{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border-radius:20px;padding:2px 8px;font-size:9px}
+#cpm-portafolio .cpm-card .bd{padding:12px 14px}
+#cpm-portafolio .cpm-card .row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;gap:6px}
+#cpm-portafolio .cpm-card .cid{font-size:11px;color:#a0b0c0}
+#cpm-portafolio .cpm-card .nom{font-size:14px;font-weight:700;color:#1a2d42;margin-bottom:3px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#cpm-portafolio .cpm-card .ciu{font-size:11px;color:#7a8a9a;margin-bottom:10px}
+#cpm-portafolio .cpm-card .row2{display:flex;justify-content:space-between;align-items:center;gap:6px}
+#cpm-portafolio .cpm-card .pre{font-size:15px;font-weight:700;color:#3d7ab5}
+#cpm-portafolio .cpm-card .sup{font-size:11px;color:#7a8a9a;background:#f4f6f9;padding:3px 9px;border-radius:20px;white-space:nowrap}
+#cpm-portafolio .cpm-estado{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:2px 8px}
+#cpm-portafolio .cpm-estado i{width:6px;height:6px;border-radius:50%;display:inline-block}
+#cpm-portafolio .cpm-estado span{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+/* ═══════ TARJETA PREMIUM (Imperio Conkal) ═══════
+   Mismo tamaño y distribución; cambia solo el tratamiento.
+   Oro metálico: un color plano se ve mostaza. El barrido de 6 paradas
+   (sombra → luz → sombra) es lo que lo hace leer como metal, y el
+   degradado va en el border-box, no en un `border: solid`. */
+#cpm-portafolio{
+  --oro-grad:linear-gradient(135deg,#8f6d1a 0%,#c8a53f 18%,#f2dd9e 40%,#e0c46e 54%,#b0892b 76%,#8a681a 100%);
+  --oro-grad-sutil:linear-gradient(135deg,#c9a63f 0%,#eeda98 45%,#b48f2c 100%);
+}
+#cpm-portafolio .cpm-card.premium{
+  border:2px solid transparent;
+  background:
+    linear-gradient(180deg,#fffdf6 0%,#fff 46%) padding-box,
+    var(--oro-grad) border-box;
+  box-shadow:0 1px 3px rgba(122,92,18,.16),0 12px 30px rgba(26,45,66,.13);
+}
+#cpm-portafolio .cpm-card.premium:hover{
+  box-shadow:0 6px 16px rgba(122,92,18,.24),0 22px 46px rgba(26,45,66,.2);
+}
+#cpm-portafolio .cpm-card.premium .ph::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:56%;
+  background:linear-gradient(to top,rgba(9,20,32,.74),rgba(9,20,32,0));pointer-events:none;z-index:1;
+}
+#cpm-portafolio .cpm-card .flag{
+  position:absolute;top:10px;right:10px;z-index:3;
+  background:var(--oro-grad);color:#3a2c06;
+  font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  padding:4px 9px;border-radius:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.55);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+}
+#cpm-portafolio .cpm-card .capas{
+  position:absolute;left:9px;right:9px;bottom:8px;z-index:3;display:flex;gap:4px;flex-wrap:wrap;
+}
+#cpm-portafolio .cpm-card .capa{
+  background:rgba(10,22,36,.84);color:#f2dd9e;border:1px solid rgba(226,199,120,.42);
+  font-size:7.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 7px;border-radius:5px;white-space:nowrap;
+}
+#cpm-portafolio .cpm-card .capa.hot{
+  background:var(--oro-grad-sutil);color:#3a2c06;border-color:rgba(122,92,18,.5);
+  text-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+#cpm-portafolio .cpm-card.premium .cid{color:#9a7d28;font-weight:700}
+#cpm-portafolio .cpm-card.premium .pre{color:#1a2d42}
+#cpm-portafolio .cpm-card .desde{
+  display:block;font-size:8px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:#a0b0c0;margin-bottom:1px;
+}
+/* ── Ficha premium ── */
+.cpm-ov{
+  --oro-grad:linear-gradient(135deg,#8f6d1a 0%,#c8a53f 18%,#f2dd9e 40%,#e0c46e 54%,#b0892b 76%,#8a681a 100%);
+  --oro-grad-sutil:linear-gradient(135deg,#c9a63f 0%,#eeda98 45%,#b48f2c 100%);
+}
+.cpm-ov .cpm-sheet.premium{
+  border:2px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box, var(--oro-grad) border-box;
+}
+.cpm-ov .capas-ficha{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.cpm-ov .capa-b{
+  background:#fdf8ea;border:1px solid rgba(180,145,47,.45);color:#6d5410;
+  font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  padding:7px 12px;border-radius:8px;
+}
+.cpm-ov .capa-b.hot{
+  background:var(--oro-grad-sutil);color:#3a2c06;border-color:rgba(122,92,18,.45);
+  text-shadow:0 1px 0 rgba(255,255,255,.3);
+}
+.cpm-ov .btn-oro{
+  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  background:var(--oro-grad);color:#3a2c06;border:none;
+  border-radius:12px;padding:15px;font-size:13px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;text-decoration:none;
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+  box-shadow:0 6px 18px rgba(122,92,18,.32),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(88,66,12,.35);
+  margin-bottom:9px;transition:transform .18s,filter .18s;
+}
+.cpm-ov .btn-oro:hover{transform:translateY(-2px);filter:saturate(1.08) brightness(1.04)}
+.cpm-ov .btn-navy{
+  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  background:#1a2d42;color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  text-decoration:none;margin-bottom:9px;
+}
+.cpm-ov .btn-navy:hover{background:#2d4a6e}
+.cpm-ov .btn-wa{
+  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  background:#25d366;color:#fff;border:none;border-radius:12px;padding:14px;
+  font-size:12.5px;font-weight:700;text-decoration:none;
+}
+
+/* Los overlays viven en <body>, FUERA de #cpm-portafolio, así que las
+   reglas de formulario scopeadas a ese id no les llegan. Se repiten
+   aquí bajo .cpm-ov o los campos salen sin borde ni tipografía. */
+.cpm-ov .cpm-lbl{
+  font-size:11px;font-weight:600;color:#5a6a7a;letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:6px;display:block;font-family:'Montserrat',sans-serif;
+}
+.cpm-ov .cpm-inp{
+  width:100%;padding:12px 16px;border:2px solid #e8ecf0;border-radius:12px;
+  font-size:13px;outline:none;transition:border-color .15s;
+  font-family:'Montserrat',sans-serif;background:#fff;color:#1e2d3d;
+}
+.cpm-ov .cpm-inp:focus{border-color:#3d7ab5}
+.cpm-ov .cpm-btn-main{
+  width:100%;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff;border:none;
+  padding:14px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;
+  margin-top:18px;font-family:'Montserrat',sans-serif;cursor:pointer;
+}
+.cpm-ov .cpm-btn-main:disabled{background:#a0b8d0}
+.cpm-ov .cpm-err{
+  background:#fde8e8;color:#c0392b;padding:10px 14px;border-radius:10px;
+  font-size:12px;margin:14px 0 0;text-align:center;line-height:1.5;
+}
+/* ── Lista de asesores (panel de admin) ── */
+.cpm-ov .cpm-as-fila{
+  display:flex;align-items:center;gap:12px;padding:11px 13px;
+  border:1px solid #e8ecf0;border-radius:11px;margin-bottom:8px;background:#fff;
+}
+.cpm-ov .cpm-as-fila:hover{border-color:#3d7ab5;background:#f8fbfe}
+
+#cpm-portafolio .cpm-empty{grid-column:1/-1;text-align:center;padding:70px 0;color:#a0b0c0}
+#cpm-portafolio .cpm-empty .big{font-size:42px;margin-bottom:10px}
+#cpm-portafolio .cpm-empty b{font-size:16px;display:block}
+#cpm-portafolio .cpm-empty .suggs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+@media(max-width:600px){
+  #cpm-portafolio .cpm-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:14px}
+  #cpm-portafolio .cpm-filtros{padding:10px 14px}
+  #cpm-portafolio .cpm-search-wrap{padding:14px 14px 0}
+  #cpm-portafolio .cpm-search-wrap .ico{left:28px}
+  #cpm-portafolio .cpm-hint{margin:10px 14px 0}
+}
+/* ── Overlays (ficha, galeria, editor). Se inyectan en <body>. ── */
+.cpm-ov{
+  position:fixed; left:0; right:0; top:0; bottom:0;
+  background:rgba(26,45,66,.7); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  font-family:'Montserrat',sans-serif;
+  display:flex; align-items:center; justify-content:center; padding:16px;
+}
+/* El propio overlay TAMBIEN necesita border-box: el JS le fija una altura
+   igual a la banda visible, y con content-box el padding se le sumaba
+   encima y la ficha se salia por abajo de la pantalla. */
+.cpm-ov, .cpm-ov *{box-sizing:border-box}
+.cpm-ov .cpm-sheet{
+  background:#fff; width:100%; max-width:560px; max-height:100%;
+  overflow-y:auto; -webkit-overflow-scrolling:touch; border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+}
+/* En movil vuelve a ser hoja inferior, que ahi si es lo correcto */
+@media(max-width:600px){
+  .cpm-ov{ align-items:flex-end; padding:0; }
+  .cpm-ov .cpm-sheet{ max-width:100%; border-radius:22px 22px 0 0; }
+}
+</style>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== CONFIG ===================== */
+  var FB_CONFIG = {
+    apiKey: "AIzaSyChXbLFxpqAk6QryoNHaPeCA3ZYsxelPzw",
+    authDomain: "propiedades-cpm.firebaseapp.com",
+    projectId: "propiedades-cpm",
+    storageBucket: "propiedades-cpm.firebasestorage.app",
+    messagingSenderId: "320995468382",
+    appId: "1:320995468382:web:bf9e53a12dd4d4f1ce80cf"
+  };
+  var ADMINS = ["edgar@propiedades-cpm.com","marco@propiedades-cpm.com"];
+  var WA_TONNY = "5219999490874";
+  var COL_PRIVADA = "terrenos";
+  var COL_PUBLICA = "catalogo_publico";
+  /* Ficha de cada asesor: nombre y teléfono que se estampan en el PDF.
+     El documento se guarda con el UID de Firebase Auth como id. */
+  var COL_ASESORES = "asesores";
+  /* Campos que SI se copian al catalogo publico. Todo lo demas
+     (comision, comentario, etc.) se queda solo aqui adentro. */
+  var CAMPOS_PUBLICOS = ["id","nombre","tipo","ciudad","estado","descripcion",
+    "precio","precio_total","dimensiones_m2","hectareas","precio_m2",
+    "ubicacion_maps","fotos","estado_propiedad"];
+  /* Estados que se publican. 'vendido' y 'no_disponible' no se publican. */
+  var ESTADOS_PUBLICABLES = ["disponible","visitado"];
+  var LOGO_W = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65";
+  var LOGO_AZUL = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FLOGOTIPO%20AZUL.png?alt=media&token=ef71529d-7e86-4f08-b286-2dad5335e08c";
+  var CATS = ["Todos","Terrenos","Macrolotes","Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos"];
+  var CATEGORIAS_DISP = ["Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos (no publicar)"];
+  var ESTADOS = [
+    {value:"disponible",   label:"Disponible",    color:"#27ae60", bg:"rgba(39,174,96,.15)"},
+    {value:"visitado",     label:"Visitado",      color:"#e67e22", bg:"rgba(230,126,34,.15)"},
+    {value:"vendido",      label:"Vendido",       color:"#c8a84b", bg:"rgba(200,168,75,.15)"},
+    {value:"no_disponible",label:"No disponible", color:"#e74c3c", bg:"rgba(231,76,60,.15)"}
+  ];
+  /* ═══════════════════════════════════════════════════════
+     FICHA DESTACADA · IMPERIO CONKAL
+     No vive en Firestore: se inyecta aquí y siempre va primero.
+     Cifras tomadas de cotizador-imperio-conkal-v2.html (76 lotes,
+     precio_final desde $3,800,000, lotes 240–615 m², construcción
+     222–224 m², enganche fijo 15%).
+     Queda EXCLUIDA de "Sincronizar catálogo" y no es editable:
+     no es un documento de Firestore.
+     ═══════════════════════════════════════════════════════ */
+  var IMPERIO = {
+    id:'IMPERIO CONKAL',
+    nombre:'Imperio Conkal · Residencial Privado',
+    tipo:'Desarrollo',
+    ciudad:'Conkal',
+    estado:'Yucatan',
+    descripcion:'Residencial privado en Conkal con casas de 222 a 224 m² de construcción sobre lotes desde 240 m². Seis modelos arquitectónicos (Itzar, Akbal, Aruma, Atziri, Xareni y personalizado), casa club con alberca, gimnasio y lobby. Esquema de 15% de enganche, hasta 5 mensualidades y saldo contra entrega.',
+    precio:3800000,
+    dimensiones_m2:240,
+    hectareas:0,
+    precio_m2:0,
+    comision:0,
+    ubicacion_maps:'https://maps.app.goo.gl/NyWBRxtysDm8GLP48',
+    estado_propiedad:'disponible',
+    categorias:[],
+    /* Respaldo. Al apretar "Sincronizar catálogo" se sustituyen por las
+       de la carpeta imperio_conkal de Storage. */
+    fotos:[
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-itzar-dK7EpnNkEStZxdVh.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-akbal-148Mcmc4MjjK1mJe.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-aruma-L8WTeat4FKcoK4zf.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-atziri-JWYMO71YwrQVOaKS.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/alberca_-V2QEoDO2LOwg1gUH.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/lobby-y-sala3n_-4fjnpLGMUduMRgMs.jpg',
+      'https://assets.zyrosite.com/5MikVliRfr5rWuzU/gimnasio_-M8gwNcgYTESJjpKO.jpg'
+    ],
+    _premium:true,
+    _desde:true,
+    _etiqueta:'Residencial',   /* evita repetir "Desarrollo" junto al banderín */
+    _flag:'Desarrollo propio',
+    /* t = texto en la ficha · tc = texto corto para el chip de la tarjeta */
+    _capas:[
+      {t:'Acepta INFONAVIT',   tc:'INFONAVIT',          hot:true},
+      {t:'Entrega en 6 meses', tc:'Entrega en 6 meses', hot:true},
+      {t:'15% de enganche'},
+      {t:'Casa club y alberca'}
+    ],
+    /* Aquí "Más información" va a la página completa del desarrollo
+       (en el catálogo público va a la landing informativa). */
+    _acciones:[
+      {txt:'Ver disponibilidad',      url:'https://www.cpmempresarial.com/imperio-conkal-cotizador', estilo:'oro'},
+      {txt:'Ver más información',     url:'https://www.cpmempresarial.com/imperio-conkal',           estilo:'navy'},
+      {txt:'Contactar por WhatsApp',  url:'wa',                                                      estilo:'wa'}
+    ]
+  };
+
+  var FBV = "9.23.0";
+  var CDN = {
+    app:  ["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-app-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-app-compat.js"],
+    auth: ["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-auth-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-auth-compat.js"],
+    fs:   ["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-firestore-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-firestore-compat.js"],
+    store:["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-storage-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-storage-compat.js"]
+  };
+
+  /* ===================== ESTADO ===================== */
+  var root = document.getElementById("cpm-portafolio");
+  if(!root) return;
+  var user = null, terrenos = [], filtro = "Todos", q = "";
+  var unsubWatch = null, shellReady = false;
+  /* Ficha del asesor con sesión iniciada. Si existe, el PDF se estampa
+     con sus datos sin preguntar nada. Si no existe (cuenta genérica o
+     compartida), se piden nombre y teléfono una sola vez. */
+  var perfil = null;
+
+  /* ===================== HELPERS ===================== */
+  function fmt(n){ return n>0 ? new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(n) : 'A tratar'; }
+  function fmtSup(t){
+    if(t.hectareas>=1) return (t.hectareas).toLocaleString('es-MX')+' ha';
+    if(t.dimensiones_m2>0) return (t.dimensiones_m2).toLocaleString('es-MX')+' m²';
+    return 'Consultar';
+  }
+  function tipoCorto(tp){ return tp==='Terreno Particular' ? 'Particular' : tp; }
+  function getEstado(t){ for(var i=0;i<ESTADOS.length;i++){ if(ESTADOS[i].value===(t.estado_propiedad||'disponible')) return ESTADOS[i]; } return ESTADOS[0]; }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function isAdmin(){ return user && ADMINS.indexOf(user.email)>=0; }
+  function formatTel(raw){ var d=String(raw||'').replace(/\D/g,'').slice(0,10); return d.length===10 ? d.slice(0,3)+' '+d.slice(3,6)+' '+d.slice(6,10) : d; }
+  function telValido(v){ return String(v||'').replace(/\D/g,'').length===10; }
+
+  /* ═══════════════ DATOS DEL ASESOR PARA EL PDF ═══════════════
+     Orden de preferencia:
+       1. Ficha en Firestore (asesores/{uid})  -> no se pregunta nada
+       2. Lo que ya escribió en este navegador -> no se vuelve a preguntar
+       3. Nada -> se abre el formulario de una sola vez
+     La clave de localStorage lleva el correo para que dos personas que
+     comparten la cuenta genérica en el mismo equipo no hereden los datos
+     de la otra si cambian de sesión. */
+  function claveLocal(){ return 'cpm_asesor_'+((user&&user.email)||'anon'); }
+  function datosAsesor(){
+    if(perfil && perfil.nombre && perfil.telefono)
+      return {nombre:perfil.nombre, telefono:perfil.telefono, fuente:'ficha'};
+    try{
+      var g=JSON.parse(localStorage.getItem(claveLocal())||'null');
+      if(g && g.nombre && g.telefono) return {nombre:g.nombre, telefono:g.telefono, fuente:'local'};
+    }catch(e){}
+    return null;
+  }
+  function guardarLocal(nombre,telefono){
+    try{ localStorage.setItem(claveLocal(), JSON.stringify({nombre:nombre,telefono:telefono})); }catch(e){}
+  }
+
+  /* Formulario para las cuentas genéricas / compartidas */
+  function pedirDatosAsesor(alTerminar){
+    var ov=mkOverlay(2147483300);
+    ov.innerHTML=
+      '<div class="cpm-sheet" style="max-width:420px;padding:26px 24px 28px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px">'+
+          '<h3 style="font-size:16px;font-weight:700;color:#1a2d42;line-height:1.3">Antes de descargar la ficha</h3>'+
+          '<button id="cpm-da-x" style="background:#f0f4f8;border:none;border-radius:50%;width:32px;height:32px;font-size:17px;color:#5a6a7a;flex:0 0 32px">✕</button>'+
+        '</div>'+
+        '<p style="font-size:12.5px;color:#5a6a7a;line-height:1.6;margin-bottom:18px">Tus datos se imprimen en el PDF para que el cliente sepa con quién tratar. Solo se piden una vez en este dispositivo.</p>'+
+        '<label class="cpm-lbl">Tu nombre</label>'+
+        '<input id="cpm-da-nom" class="cpm-inp" type="text" placeholder="Nombre y apellido" autocomplete="name">'+
+        '<div style="height:14px"></div>'+
+        '<label class="cpm-lbl">Tu teléfono</label>'+
+        '<input id="cpm-da-tel" class="cpm-inp" type="tel" inputmode="numeric" placeholder="999 999 9999" autocomplete="tel">'+
+        '<div id="cpm-da-err"></div>'+
+        '<button id="cpm-da-ok" class="cpm-btn-main">DESCARGAR PDF</button>'+
+      '</div>';
+    var nom=ov.querySelector('#cpm-da-nom'), tel=ov.querySelector('#cpm-da-tel');
+    var prev=datosAsesor();
+    if(prev){ nom.value=prev.nombre; tel.value=prev.telefono; }
+    function err(m){ ov.querySelector('#cpm-da-err').innerHTML='<div class="cpm-err">'+esc(m)+'</div>'; }
+    function aceptar(){
+      var n=nom.value.trim(), t=tel.value.trim();
+      if(n.length<3){ err('Escribe tu nombre completo.'); nom.focus(); return; }
+      if(!telValido(t)){ err('El teléfono debe tener 10 dígitos.'); tel.focus(); return; }
+      guardarLocal(n,t);
+      closeOverlay(ov);
+      alTerminar(n,t);
+    }
+    ov.querySelector('#cpm-da-ok').addEventListener('click',aceptar);
+    ov.querySelector('#cpm-da-x').addEventListener('click',function(){ closeOverlay(ov); });
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+    tel.addEventListener('keydown',function(e){ if(e.key==='Enter') aceptar(); });
+    nom.addEventListener('keydown',function(e){ if(e.key==='Enter') tel.focus(); });
+    setTimeout(function(){ nom.focus(); },80);
+  }
+
+  /* Punto único de descarga: decide solo si hay que preguntar o no. */
+  function descargarFicha(t){
+    var d=datosAsesor();
+    if(d){ generarPDF(t, d.nombre, d.telefono); return; }
+    pedirDatosAsesor(function(n,tel){ generarPDF(t, n, tel); });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     BUSQUEDA TOLERANTE A ERRORES
+     ═══════════════════════════════════════════════════ */
+  /* Rango de diacriticos U+0300..U+036F por codigo numerico.
+     Escrito asi a proposito: un rango con caracteres literales se
+     corrompe si la pagina no se sirve como UTF-8 y lanza
+     "Range out of order in character class", que tumba TODO el script. */
+  var RE_DIACRITICOS = new RegExp('['+String.fromCharCode(0x300)+'-'+String.fromCharCode(0x36F)+']','g');
+  function norm(s){
+    s=String(s==null?'':s).toLowerCase();
+    try{ s=s.normalize('NFD').replace(RE_DIACRITICOS,''); }catch(e){}
+    return s.replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  }
+  function lev(a,b,max){
+    if(a===b) return 0;
+    var la=a.length, lb=b.length;
+    if(Math.abs(la-lb)>max) return max+1;
+    if(!la) return lb; if(!lb) return la;
+    var prev=new Array(lb+1), cur=new Array(lb+1), i, j;
+    for(j=0;j<=lb;j++) prev[j]=j;
+    for(i=1;i<=la;i++){
+      cur[0]=i; var best=cur[0];
+      for(j=1;j<=lb;j++){
+        var cost=(a.charCodeAt(i-1)===b.charCodeAt(j-1))?0:1;
+        var v=prev[j]+1;
+        if(cur[j-1]+1<v) v=cur[j-1]+1;
+        if(prev[j-1]+cost<v) v=prev[j-1]+cost;
+        cur[j]=v; if(v<best) best=v;
+      }
+      if(best>max) return max+1;
+      var t=prev; prev=cur; cur=t;
+    }
+    return prev[lb];
+  }
+  function tol(n){ return n<=3?0 : n<=5?1 : n<=8?2 : 3; }
+  function indexar(t){
+    var texto=norm([t.id,t.nombre,t.tipo,t.ciudad,t.estado,t.descripcion,(t.categorias||[]).join(' ')].join(' '));
+    var vistos={}, toks=[], parts=texto.split(' ');
+    for(var i=0;i<parts.length;i++){ var p=parts[i]; if(p.length>=3 && !vistos[p]){ vistos[p]=1; toks.push(p); } }
+    t._txt=texto; t._toks=toks;
+    return t;
+  }
+  var VOCAB=[];
+  function armarVocab(){
+    var peso={}, bonito={};
+    terrenos.forEach(function(t){
+      [t.ciudad,t.estado,t.tipo].forEach(function(v){
+        norm(v).split(' ').forEach(function(w){ if(w.length>=4) peso[w]=(peso[w]||0)+3; });
+      });
+      (t._toks||[]).forEach(function(w){ if(w.length>=4) peso[w]=(peso[w]||0)+1; });
+      [t.ciudad,t.estado,t.nombre,t.descripcion].forEach(function(v){
+        String(v||'').split(/[\s,.;:()]+/).forEach(function(w){
+          var k=norm(w); if(k.length>=4 && !bonito[k]) bonito[k]=w;
+        });
+      });
+    });
+    VOCAB=Object.keys(peso).map(function(k){ return {k:k,peso:peso[k],txt:bonito[k]||k}; })
+                 .sort(function(a,b){ return b.peso-a.peso; });
+  }
+  function scoreTok(tk,t){
+    if(t._txt.indexOf(tk)>=0) return 0;
+    var tt=tol(tk.length), mejor=-1;
+    for(var i=0;i<t._toks.length;i++){
+      var w=t._toks[i];
+      if(w.indexOf(tk)===0) return 0.4;
+      if(w.length>tk.length && tk.length>=4){
+        var dp=lev(tk,w.substr(0,tk.length),tt);
+        if(dp<=tt && (mejor<0 || 0.5+dp<mejor)) mejor=0.5+dp;
+      }
+      if(Math.abs(w.length-tk.length)<=tt){
+        var d=lev(tk,w,tt);
+        if(d<=tt && (mejor<0 || d<mejor)) mejor=d;
+        if(mejor===0) break;
+      }
+    }
+    return mejor<0 ? -1 : (mejor||0.2);
+  }
+  function sugerir(tk){
+    var tt=tol(tk.length)+1, mejor=null, mejorD=99;
+    for(var i=0;i<VOCAB.length;i++){
+      var v=VOCAB[i], d=99;
+      if(Math.abs(v.k.length-tk.length)<=tt) d=lev(tk,v.k,tt);
+      if(v.k.length>tk.length && tk.length>=4){
+        var dp=lev(tk,v.k.substr(0,tk.length),tt);
+        if(dp<d) d=dp;
+      }
+      if(d<mejorD || (d===mejorD && mejor && v.peso>mejor.peso)){ mejorD=d; mejor=v; }
+      if(mejorD===0) break;
+    }
+    return (mejor && mejorD<=tt) ? mejor.txt : null;
+  }
+  /* Devuelve {lista, aprox, sugerencias} */
+  function buscar(qRaw, base){
+    var s=norm(qRaw);
+    if(!s) return {lista:base,aprox:false,sugerencias:[]};
+    var toks=s.split(' ').filter(function(x){ return x.length>=2; });
+    if(!toks.length) return {lista:base,aprox:false,sugerencias:[]};
+    var estricto=base.filter(function(t){
+      for(var i=0;i<toks.length;i++){ if(t._txt.indexOf(toks[i])<0) return false; }
+      return true;
+    });
+    if(estricto.length) return {lista:estricto,aprox:false,sugerencias:[]};
+    var pts=[];
+    base.forEach(function(t){
+      var total=0;
+      for(var i=0;i<toks.length;i++){ var v=scoreTok(toks[i],t); if(v<0) return; total+=v; }
+      pts.push({t:t,s:total});
+    });
+    if(pts.length){
+      pts.sort(function(a,b){ return a.s-b.s || String(a.t.id).localeCompare(String(b.t.id)); });
+      return {lista:pts.map(function(x){return x.t;}),aprox:true,sugerencias:[]};
+    }
+    var sug=[];
+    toks.forEach(function(tk){ var x=sugerir(tk); if(x && sug.indexOf(x)<0) sug.push(x); });
+    return {lista:[],aprox:false,sugerencias:sug.slice(0,3)};
+  }
+
+  /* ═══════════════════════════════════════════════════
+     BANDA VISIBLE — para que los overlays queden centrados en
+     PANTALLA aunque Hostinger meta el bloque en un iframe.
+     ═══════════════════════════════════════════════════ */
+  var FRAME={el:null,win:null};
+  (function(){
+    var dentro=false;
+    try{ dentro=(window.self!==window.top); }catch(e){ dentro=true; }
+    if(!dentro) return;
+    try{
+      var fe=window.frameElement;
+      if(fe && typeof window.parent.innerHeight==='number'){ FRAME.el=fe; FRAME.win=window.parent; }
+    }catch(e){ FRAME.el=null; FRAME.win=null; }
+  })();
+  function banda(){
+    if(!FRAME.el) return null;              /* fuera de iframe, fixed ya sirve */
+    try{
+      var r=FRAME.el.getBoundingClientRect(), ph=FRAME.win.innerHeight;
+      var top=Math.max(0,-r.top);
+      var bot=Math.min(r.height, ph-r.top);
+      return {top:top, height:Math.max(220,bot-top)};
+    }catch(e){ return null; }
+  }
+  var anclados=[];
+  function anclar(el){
+    var b=banda();
+    if(!b){ el.style.top=''; el.style.bottom=''; el.style.height=''; return; }
+    el.style.top=b.top+'px'; el.style.bottom='auto'; el.style.height=b.height+'px';
+  }
+  (function(){
+    /* Directo, sin requestAnimationFrame: rAF se congela cuando la
+       pestaña no esta al frente y el panel se quedaria a la deriva. */
+    function ping(){ for(var i=0;i<anclados.length;i++) anclar(anclados[i]); }
+    window.addEventListener('scroll',ping,{passive:true});
+    window.addEventListener('resize',ping,{passive:true});
+    if(FRAME.win){ try{
+      FRAME.win.addEventListener('scroll',ping,{passive:true});
+      FRAME.win.addEventListener('resize',ping,{passive:true});
+    }catch(e){} }
+    setInterval(function(){ if(anclados.length) ping(); },250);
+  })();
+
+  /* ===================== CARGADOR FIREBASE ===================== */
+  function loadOne(urls,i,cb){
+    if(i>=urls.length){ cb(new Error('No se pudo cargar: '+urls[0])); return; }
+    var s=document.createElement('script'); s.src=urls[i]; s.async=false;
+    if(urls[i].indexOf('gstatic.com')===-1) s.crossOrigin='anonymous';
+    s.onload=function(){cb(null)};
+    s.onerror=function(){ loadOne(urls,i+1,cb); };
+    document.head.appendChild(s);
+  }
+  function load(urls){ return new Promise(function(res,rej){ loadOne(urls,0,function(e){ e?rej(e):res(); }); }); }
+
+  function fatal(msg){
+    root.innerHTML='<div class="cpm-boot"><b style="font-size:16px;max-width:420px;line-height:1.4">'+esc(msg)+'</b>'+
+      '<button class="cpm-mini" style="padding:10px 22px;font-size:13px" id="cpm-reload">Reintentar</button></div>';
+    var b=root.querySelector('#cpm-reload'); if(b) b.addEventListener('click',function(){ location.reload(); });
+  }
+
+  Promise.resolve()
+    .then(function(){ return load(CDN.app); })
+    .then(function(){ return Promise.all([load(CDN.auth),load(CDN.fs),load(CDN.store)]); })
+    .then(function(){
+      try{ if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG); }
+      catch(e){ throw new Error('Firebase init: '+e.message); }
+      firebase.auth().onAuthStateChanged(function(u){
+        user=u;
+        if(unsubWatch){ unsubWatch(); unsubWatch=null; }
+        shellReady=false;
+        if(!u){ perfil=null; renderLogin(); return; }
+        renderApp();
+        /* Ficha del asesor. Si la tiene, el PDF sale con sus datos
+           automáticamente y nunca se le pide nada. */
+        perfil=null;
+        var refFicha=firebase.firestore().collection(COL_ASESORES).doc(u.uid);
+        refFicha.get()
+          .then(function(d){
+            if(d.exists){
+              var p=d.data()||{};
+              if(p.nombre && p.telefono && !p.generico) perfil=p;
+              return;
+            }
+            /* Primera vez que entra esta cuenta: se deja una ficha vacía
+               para que el admin pueda completarla desde el panel. Sin
+               esto, las cuentas creadas antes de esta versión no
+               aparecerían en la lista y no habría forma de darles datos
+               (desde el navegador no se puede buscar un uid por correo). */
+            return refFicha.set({
+              uid:u.uid, email:u.email||'', nombre:'', telefono:'', generico:true
+            },{merge:true});
+          })
+          .catch(function(e){ console.warn('[CPM] ficha de asesor:',e.code||e.message); });
+        /* Fotos de Imperio Conkal ya importadas en una sincronización
+           previa. Si no existen todavía, se quedan las de respaldo. */
+        firebase.firestore().collection(COL_PUBLICA).doc('IMPERIO CONKAL').get()
+          .then(function(d){
+            var f=d.exists && (d.data()||{}).fotos;
+            if(Array.isArray(f) && f.length){ IMPERIO.fotos=f; renderGrid(); }
+          }).catch(function(){});
+        /* Sin orderBy: si a un documento le faltara el campo 'id',
+           Firestore lo dejaria fuera en silencio. Se ordena aqui. */
+        unsubWatch = firebase.firestore().collection(COL_PRIVADA).onSnapshot(function(snap){
+          terrenos = snap.docs.map(function(d){
+            var o=d.data()||{};
+            if(!o.id) o.id=d.id;
+            return indexar(o);
+          }).sort(function(a,b){ return String(a.id).localeCompare(String(b.id)); });
+          /* La destacada va al frente. Se indexa igual para que también
+             responda a la búsqueda y a los filtros. */
+          terrenos.unshift(indexar(IMPERIO));
+          armarVocab();
+          renderGrid();
+        }, function(err){
+          console.warn('[CPM] Firestore:',err.code,err.message);
+          renderGrid();
+        });
+      });
+    })
+    .catch(function(e){
+      fatal('No se pudieron cargar los recursos. Revisa tu conexión a internet e inténtalo de nuevo.');
+    });
+
+  setTimeout(function(){
+    if(root.querySelector('.cpm-boot') && !user && !shellReady){
+      fatal('La aplicación tardó demasiado en iniciar. Recarga la página.');
+    }
+  }, 22000);
+
+  /* ===================== LOGIN ===================== */
+  function renderLogin(){
+    root.innerHTML =
+      '<div class="cpm-login"><div class="cpm-login-card">'+
+        '<img src="'+LOGO_AZUL+'" alt="CPM">'+
+        '<div class="t1">CORPORATIVO</div><div class="t2">PIÑEIRO-MEDINA</div>'+
+        '<div class="t3">Cartera de Terrenos · Acceso Privado</div>'+
+        '<label class="cpm-lbl">Correo</label>'+
+        '<input id="cpm-email" class="cpm-inp" type="email" placeholder="usuario@propiedades-cpm.com" autocomplete="username">'+
+        '<div style="height:14px"></div>'+
+        '<label class="cpm-lbl">Contraseña</label>'+
+        '<input id="cpm-pass" class="cpm-inp" type="password" placeholder="••••••••" autocomplete="current-password">'+
+        '<div id="cpm-login-err"></div>'+
+        '<button id="cpm-login-btn" class="cpm-btn-main">INGRESAR</button>'+
+        '<div style="text-align:center;margin-top:18px;font-size:11px;color:#a0b0c0">Solo usuarios autorizados</div>'+
+      '</div></div>';
+    var em=root.querySelector('#cpm-email'), pa=root.querySelector('#cpm-pass'), bt=root.querySelector('#cpm-login-btn');
+    function doLogin(){
+      var e=em.value.trim(), p=pa.value;
+      if(!e||!p) return;
+      bt.disabled=true; bt.textContent='Entrando...';
+      firebase.auth().signInWithEmailAndPassword(e,p).catch(function(){
+        bt.disabled=false; bt.textContent='INGRESAR';
+        root.querySelector('#cpm-login-err').innerHTML='<div class="cpm-err">Usuario o contraseña incorrectos</div>';
+      });
+    }
+    bt.addEventListener('click',doLogin);
+    pa.addEventListener('keydown',function(ev){ if(ev.key==='Enter') doLogin(); });
+    em.addEventListener('keydown',function(ev){ if(ev.key==='Enter') pa.focus(); });
+    liberar();
+  }
+
+  /* ===================== APP (shell) ===================== */
+  function visibles(){
+    var base = terrenos.slice();
+    if(!isAdmin()) base = base.filter(function(t){ return !(t.categorias && t.categorias.indexOf('Exclusivos (no publicar)')>=0); });
+    return base;
+  }
+  function count(cat){
+    var base = visibles();
+    if(cat==='Todos') return base.length;
+    if(cat==='Terrenos') return base.filter(function(t){return t.tipo==='Terreno Particular'}).length;
+    if(cat==='Macrolotes') return base.filter(function(t){return t.tipo==='Macrolote'}).length;
+    if(cat==='Exclusivos') return terrenos.filter(function(t){return t.categorias && t.categorias.indexOf('Exclusivos (no publicar)')>=0}).length;
+    return base.filter(function(t){return t.categorias && t.categorias.indexOf(cat)>=0}).length;
+  }
+  /* Filtro por categoria (sin texto). El texto lo aplica buscar(). */
+  function porCategoria(){
+    return terrenos.filter(function(t){
+      if(filtro==='Exclusivos'){ return isAdmin() && t.categorias && t.categorias.indexOf('Exclusivos (no publicar)')>=0; }
+      if(!isAdmin() && t.categorias && t.categorias.indexOf('Exclusivos (no publicar)')>=0) return false;
+      if(filtro==='Terrenos' && t.tipo!=='Terreno Particular') return false;
+      if(filtro==='Macrolotes' && t.tipo!=='Macrolote') return false;
+      if(['Playa','Casas','Departamentos','Ranchos y Haciendas'].indexOf(filtro)>=0){
+        if(!t.categorias || t.categorias.indexOf(filtro)<0) return false;
+      }
+      return true;
+    });
+  }
+  function renderApp(){
+    shellReady=true;
+    var admin=isAdmin();
+    var pills = CATS.filter(function(c){ return c!=='Exclusivos' || admin; }).map(function(c){
+      return '<button class="cpm-pill'+(c===filtro?' on':'')+'" data-cat="'+esc(c)+'">'+esc(c)+' <span class="cnt" data-cnt="'+esc(c)+'"></span></button>';
+    }).join('');
+    root.innerHTML =
+      '<div class="cpm-bar">'+
+        '<img src="'+LOGO_W+'" alt="CPM">'+
+        '<div class="cpm-title"><b id="cpm-htitle">Todas las Propiedades</b><small id="cpm-hcount"></small></div>'+
+        '<div class="cpm-sp"></div>'+
+        (admin?'<button class="cpm-mini" id="cpm-team" title="Crear y administrar cuentas de asesores">👤 Asesores</button>':'')+
+        (admin?'<button class="cpm-mini" id="cpm-sync" title="Copia los campos públicos a la colección catalogo_publico">↻ Sincronizar catálogo</button>':'')+
+        (admin?'<button class="cpm-mini" id="cpm-new">+ Nueva</button>':'')+
+        '<span class="cpm-user">'+esc((user.email||'').split('@')[0])+'</span>'+
+        '<button class="cpm-mini" id="cpm-logout">Salir</button>'+
+      '</div>'+
+      '<div class="cpm-filtros" id="cpm-filtros">'+pills+'</div>'+
+      '<div class="cpm-search-wrap"><span class="ico">🔍</span>'+
+        '<input id="cpm-q" class="cpm-search" placeholder="Buscar por ciudad, ID, descripción..." value="'+esc(q)+'"></div>'+
+      '<div id="cpm-hint-slot"></div>'+
+      '<div class="cpm-grid" id="cpm-grid"></div>';
+
+    root.querySelector('#cpm-logout').addEventListener('click',function(){ firebase.auth().signOut(); });
+    if(admin){
+      root.querySelector('#cpm-new').addEventListener('click',function(){ openEditor(null); });
+      root.querySelector('#cpm-sync').addEventListener('click',sincronizarPublico);
+      root.querySelector('#cpm-team').addEventListener('click',openAsesores);
+    }
+    root.querySelector('#cpm-filtros').addEventListener('click',function(ev){
+      var b=ev.target.closest('.cpm-pill'); if(!b) return;
+      filtro=b.getAttribute('data-cat');
+      root.querySelectorAll('.cpm-pill').forEach(function(x){ x.classList.toggle('on', x===b); });
+      renderGrid();
+    });
+    var qi=root.querySelector('#cpm-q');
+    qi.addEventListener('input',function(){ q=qi.value; renderGrid(); });
+    renderGrid();
+    liberar();
+  }
+
+  function estadoBadgeHTML(t,small){
+    var e=getEstado(t);
+    return '<span class="cpm-estado" style="background:'+e.bg+';border:1px solid '+e.color+'30"><i style="background:'+e.color+'"></i>'+
+      '<span style="color:'+e.color+(small?';font-size:9px':'')+'">'+esc(e.label)+'</span></span>';
+  }
+
+  function renderGrid(){
+    var grid=root.querySelector('#cpm-grid'); if(!grid) return;
+    CATS.forEach(function(c){
+      var el=root.querySelector('.cnt[data-cnt="'+(window.CSS&&CSS.escape?CSS.escape(c):c)+'"]');
+      if(el) el.textContent=count(c);
+    });
+    var res=buscar(q, porCategoria());
+    var arr=res.lista;
+    var ht=root.querySelector('#cpm-htitle'), hc=root.querySelector('#cpm-hcount');
+    if(ht) ht.textContent = (filtro==='Todos'?'Todas las Propiedades':filtro);
+    if(hc) hc.textContent = arr.length+' propiedad'+(arr.length!==1?'es':'')+' encontrada'+(arr.length!==1?'s':'');
+
+    /* aviso de busqueda aproximada */
+    var slot=root.querySelector('#cpm-hint-slot');
+    if(slot){
+      if(res.aprox){
+        slot.innerHTML='<div class="cpm-hint">ℹ️ <span>No hay coincidencias exactas para <b>'+esc(q.trim())+
+          '</b>. Te mostramos lo más parecido.</span></div>';
+      } else slot.innerHTML='';
+    }
+
+    if(!arr.length){
+      var sug=res.sugerencias.length
+        ? '<div style="font-size:13px;margin-top:6px">¿Quizá quisiste decir…?</div><div class="suggs">'+
+          res.sugerencias.map(function(s){ return '<button class="cpm-sugg" data-sug="'+esc(s)+'">'+esc(s)+'</button>'; }).join('')+'</div>'
+        : '<div style="font-size:13px;margin-top:6px">Prueba con otro filtro o búsqueda</div>';
+      grid.innerHTML='<div class="cpm-empty"><div class="big">🔍</div><b>Sin resultados</b>'+sug+'</div>';
+      grid.querySelectorAll('.cpm-sugg').forEach(function(b){
+        b.addEventListener('click',function(){
+          q=b.getAttribute('data-sug');
+          var qi=root.querySelector('#cpm-q'); if(qi) qi.value=q;
+          renderGrid();
+        });
+      });
+      return;
+    }
+    /* La destacada siempre encabeza, pase lo que pase con el orden */
+    arr = arr.slice().sort(function(a,b){ return (b._premium?1:0)-(a._premium?1:0); });
+    grid.innerHTML = arr.map(function(t){
+      var precio=t.precio_total||t.precio;
+      var hasFotos=t.fotos&&t.fotos.length>0;
+      var capas = (t._premium&&t._capas) ? '<div class="capas">'+t._capas.slice(0,2).map(function(c){
+            return '<span class="capa'+(c.hot?' hot':'')+'">'+esc(c.tc||c.t)+'</span>'; }).join('')+'</div>' : '';
+      var flag  = (t._premium&&t._flag) ? '<div class="flag">'+esc(t._flag)+'</div>' : '';
+      var precioHTML = (t._desde?'<span class="desde">Desde</span>':'')+fmt(precio);
+      return '<div class="cpm-card'+(t._premium?' premium':'')+'" data-id="'+esc(t.id)+'">'+
+        '<div class="ph">'+
+          (hasFotos?'<img class="cover" src="'+esc(t.fotos[0])+'" alt="">':'<img class="logo" src="'+LOGO_AZUL+'" alt="CPM">')+
+          '<div class="tipo">'+esc(t._etiqueta||tipoCorto(t.tipo))+'</div>'+ flag +
+          (hasFotos&&t.fotos.length>1?'<div class="nfotos">📷 '+t.fotos.length+'</div>':'')+ capas +
+        '</div>'+
+        '<div class="bd">'+
+          '<div class="row1"><span class="cid">'+esc(t.id)+'</span>'+estadoBadgeHTML(t,true)+'</div>'+
+          '<div class="nom">'+esc(t.nombre)+'</div>'+
+          '<div class="ciu">📍 '+esc(t.ciudad)+'</div>'+
+          '<div class="row2"><span class="pre">'+precioHTML+'</span><span class="sup">'+esc(fmtSup(t))+(t._desde?'+':'')+'</span></div>'+
+        '</div></div>';
+    }).join('');
+    grid.querySelectorAll('.cpm-card').forEach(function(card){
+      card.addEventListener('click',function(){
+        var t=terrenos.find(function(x){return x.id===card.getAttribute('data-id')});
+        if(t) openFicha(t);
+      });
+    });
+  }
+
+  /* ===================== OVERLAY util ===================== */
+  function mkOverlay(z){
+    var ov=document.createElement('div');
+    ov.className='cpm-ov cpm-ov-live';
+    ov.style.zIndex=(z||2147483000);
+    document.body.appendChild(ov);
+    anclados.push(ov);
+    anclar(ov);                       /* centrado en la PANTALLA, no en el iframe */
+    document.body.style.overflow='hidden';
+    return ov;
+  }
+  function closeOverlay(ov){
+    var i=anclados.indexOf(ov); if(i>=0) anclados.splice(i,1);
+    if(ov&&ov.parentNode) ov.parentNode.removeChild(ov);
+    if(!document.querySelector('.cpm-ov-live')) document.body.style.overflow='';
+  }
+
+  /* ===================== FICHA ===================== */
+  function openFicha(t){
+    var precio=t.precio_total||t.precio, admin=isAdmin();
+    var ov=mkOverlay(2147483000);
+    var fotos=t.fotos&&t.fotos.length?t.fotos:[];
+    var specs=[['Superficie',fmtSup(t)],['Ciudad',t.ciudad],['Estado',t.estado],['Tipo',t.tipo]];
+    if(t.dimensiones_m2>0) specs.push(['m²',(t.dimensiones_m2).toLocaleString('es-MX')]);
+    var specsHTML=specs.map(function(p){ return '<div style="background:#f4f6f9;border-radius:10px;padding:10px 12px"><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#7a8a9a;margin-bottom:3px">'+esc(p[0])+'</div><div style="font-size:13px;font-weight:600;color:#1e2d3d">'+esc(p[1])+'</div></div>'; }).join('');
+    var cats=(t.categorias&&t.categorias.length)?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+t.categorias.map(function(c){return '<span style="background:#1a2d42;color:#aac4e0;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px">'+esc(c)+'</span>'}).join('')+'</div>':'';
+    var comision=(t.comision>0)?'<div style="background:#f0faf4;border-radius:10px;padding:12px 14px;margin-bottom:16px;border:1px solid #a9dfbf;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#1e8449;font-weight:700">💰 Comisión del Asesor</div><div style="font-size:15px;font-weight:700;color:#1e8449">'+(t.comision*100).toFixed(1)+'% &nbsp;·&nbsp; '+fmt(precio*t.comision)+'</div></div>':'';
+    var maps=(t.ubicacion_maps&&/^http/.test(t.ubicacion_maps))?'<a href="'+esc(t.ubicacion_maps)+'" target="_blank" rel="noreferrer" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);border-radius:12px;padding:14px 18px;text-decoration:none;color:#fff;margin-bottom:16px;font-size:14px;font-weight:700"><span style="font-size:22px">🗺</span><span>Ver Ubicación</span><span style="margin-left:auto;font-size:18px">→</span></a>':'';
+    var notas=t.comentario?'<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#3d7ab5;margin-bottom:8px;font-weight:600">Notas</div><div style="background:#e8f2fb;border-left:4px solid #3d7ab5;border-radius:0 10px 10px 0;padding:12px 14px;color:#2d5f8f;font-size:12px;line-height:1.7;margin-bottom:16px">'+esc(t.comentario)+'</div>':'';
+    var photoHTML = fotos.length
+      ? '<div id="cpm-f-photo" style="cursor:pointer;position:relative;margin:0 16px;border-radius:16px;overflow:hidden;height:200px"><img src="'+esc(fotos[0])+'" style="width:100%;height:100%;object-fit:cover">'+(fotos.length>1?'<div style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px">+'+(fotos.length-1)+' fotos</div>':'')+'</div>'
+      : '<div style="margin:0 16px;border-radius:16px;height:120px;background:linear-gradient(135deg,#e8f2fb,#c5ddf5);display:flex;align-items:center;justify-content:center"><img src="'+LOGO_AZUL+'" style="height:52px;opacity:.5"></div>';
+    /* Capas informativas y botonera de la ficha destacada */
+    var capasF = (t._premium&&t._capas)
+      ? '<div class="capas-ficha">'+t._capas.map(function(c){
+          return '<span class="capa-b'+(c.hot?' hot':'')+'">'+esc(c.t)+'</span>'; }).join('')+'</div>'
+      : '';
+    var waMsg = t._premium
+      ? 'Hola, me interesa Imperio Conkal. Quiero información de disponibilidad y precios.'
+      : 'Tonny tengo una duda sobre: '+t.nombre+' ('+t.id+')';
+    var waHref = 'https://wa.me/'+WA_TONNY+'?text='+encodeURIComponent(waMsg);
+
+    var actions;
+    if(t._premium){
+      /* La destacada no es un documento de Firestore: sin PDF ni Editar. */
+      actions = (t._acciones||[]).map(function(a){
+        var href=(a.url==='wa')?waHref:a.url;
+        var cls =(a.estilo==='oro')?'btn-oro':(a.estilo==='wa'?'btn-wa':'btn-navy');
+        var ico =(a.estilo==='oro')?'🗂':(a.estilo==='wa'?'💬':'ℹ️');
+        return '<a class="'+cls+'" href="'+esc(href)+'" target="_blank" rel="noopener">'+ico+' '+esc(a.txt)+'</a>';
+      }).join('');
+    } else {
+      actions = admin
+      ? '<div style="display:flex;gap:10px"><button id="cpm-f-pdf" style="flex:1;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff;border:none;padding:14px;border-radius:12px;font-size:13px;font-weight:700">⬇ Descargar PDF</button><button id="cpm-f-edit" style="background:#f4f6f9;border:none;padding:14px 16px;border-radius:12px;font-size:13px;color:#3d7ab5;font-weight:600">✏️ Editar</button></div>'
+      : '<button id="cpm-f-pdf" style="width:100%;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff;border:none;padding:14px;border-radius:12px;font-size:13px;font-weight:700">⬇ Descargar PDF</button>'+
+        '<button id="cpm-f-wa" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#25d366;color:#fff;border-radius:12px;padding:13px;border:none;font-weight:700;font-size:13px;margin-top:10px;width:100%">💬 Duda de esta Propiedad</button>';
+    }
+
+    ov.innerHTML =
+      '<div class="cpm-sheet'+(t._premium?' premium':'')+'" style="padding-bottom:32px">'+
+        '<div style="display:flex;justify-content:center;padding:12px 16px 4px;position:relative"><div style="width:40px;height:4px;background:#d0d8e0;border-radius:2px"></div>'+
+          '<button id="cpm-f-x" style="position:absolute;top:12px;right:14px;background:#f0f4f8;border:none;border-radius:50%;width:34px;height:34px;color:#5a6a7a;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12)">✕</button></div>'+
+        photoHTML+
+        '<div style="padding:20px 20px 0">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:8px;flex-wrap:wrap"><span style="background:#e8f2fb;color:#3d7ab5;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px">'+esc(t.tipo)+'</span><div style="display:flex;align-items:center;gap:6px">'+estadoBadgeHTML(t,false)+'<span style="font-size:11px;color:#a0b0c0;font-weight:500">'+esc(t.id)+'</span></div></div>'+
+          cats+
+          '<h2 style="font-size:18px;font-weight:700;color:#1a2d42;margin:8px 0 4px;line-height:1.3">'+esc(t.nombre)+'</h2>'+
+          '<div style="font-size:13px;color:#5a6a7a;margin-bottom:16px">📍 '+esc(t.ciudad)+', '+esc(t.estado)+'</div>'+
+          capasF+
+          '<div style="background:linear-gradient(135deg,#1a2d42,#2d4a6e);border-radius:16px;padding:16px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><div style="font-size:10px;color:#7a9ab8;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Precio</div><div style="font-size:22px;font-weight:700;color:#5a95cc">'+fmt(precio)+'</div></div>'+(t.precio_m2>0?'<div style="text-align:right"><div style="font-size:10px;color:#7a9ab8;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Por m²</div><div style="font-size:14px;color:#aac4e0">'+fmt(t.precio_m2)+'</div></div>':'')+'</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">'+specsHTML+'</div>'+
+          comision+
+          '<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#3d7ab5;margin-bottom:8px;font-weight:600">Descripción</div>'+
+          '<p style="color:#3a4a5a;line-height:1.8;font-size:13px;margin-bottom:16px">'+esc(t.descripcion)+'</p>'+
+          notas+ maps+ actions+
+        '</div>'+
+      '</div>';
+
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+    ov.querySelector('#cpm-f-x').addEventListener('click',function(){ closeOverlay(ov); });
+    if(fotos.length){ var fp=ov.querySelector('#cpm-f-photo'); if(fp) fp.addEventListener('click',function(){ openGaleria(fotos); }); }
+    /* En la ficha destacada estos botones no existen: se consulta antes
+       de enlazar para no lanzar un TypeError que dejaría el resto muerto. */
+    var bPdf=ov.querySelector('#cpm-f-pdf');
+    if(bPdf) bPdf.addEventListener('click',function(){ descargarFicha(t); });
+    var bEdit=ov.querySelector('#cpm-f-edit');
+    if(bEdit) bEdit.addEventListener('click',function(){ closeOverlay(ov); openEditor(t); });
+    var bWa=ov.querySelector('#cpm-f-wa');
+    if(bWa) bWa.addEventListener('click',function(){ window.open(waHref,'_blank'); });
+  }
+
+  /* ===================== GALERIA ===================== */
+  function openGaleria(fotos){
+    var idx=0;
+    var ov=mkOverlay(2147483200);
+    ov.style.background='rgba(0,0,0,.95)';
+    ov.style.padding='0';
+    function draw(){
+      ov.innerHTML='<button id="cpm-g-x" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;border-radius:50%;width:36px;height:36px;color:#fff;font-size:18px;z-index:3">✕</button>'+
+        /* Nada de unidades vh aqui: dentro de un iframe 1vh es el 1% del
+           IFRAME entero (miles de px), no de la pantalla. Se usa flex con
+           porcentajes sobre la altura real del overlay. */
+        '<div style="width:100%;max-width:680px;height:100%;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">'+
+        '<img src="'+esc(fotos[idx])+'" style="max-width:100%;max-height:100%;min-height:0;object-fit:contain;border-radius:12px">'+
+        (fotos.length>1?'<div style="display:flex;justify-content:center;gap:8px;flex:0 0 auto">'+fotos.map(function(f,i){return '<i data-i="'+i+'" style="width:10px;height:10px;border-radius:50%;background:'+(i===idx?'#3d7ab5':'rgba(255,255,255,.4)')+';cursor:pointer;display:inline-block"></i>'}).join('')+'</div>':'')+'</div>'+
+        (fotos.length>1?'<button id="cpm-g-prev" style="position:absolute;left:18px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:22px">‹</button><button id="cpm-g-next" style="position:absolute;right:18px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:none;border-radius:50%;width:44px;height:44px;color:#fff;font-size:22px">›</button>':'');
+      ov.querySelector('#cpm-g-x').addEventListener('click',function(){ closeOverlay(ov); });
+      if(fotos.length>1){
+        ov.querySelector('#cpm-g-prev').addEventListener('click',function(){ idx=(idx-1+fotos.length)%fotos.length; draw(); });
+        ov.querySelector('#cpm-g-next').addEventListener('click',function(){ idx=(idx+1)%fotos.length; draw(); });
+        ov.querySelectorAll('i[data-i]').forEach(function(d){ d.addEventListener('click',function(){ idx=+d.getAttribute('data-i'); draw(); }); });
+      }
+    }
+    draw();
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+  }
+
+  /* ===================== SINCRONIZAR CATALOGO PUBLICO ===================== */
+  /* ─────────────────────────────────────────────────────────
+     Importa la carpeta imperio_conkal de Storage.
+     El catálogo público NO puede hacerlo: listar Storage exige sesión
+     (probado: devuelve 403). Aquí sí hay sesión, así que se listan los
+     archivos, se obtienen sus URL de descarga y se guardan en el
+     documento "IMPERIO CONKAL" de catalogo_publico, de donde las lee
+     el catálogo. Se ordenan por nombre para que el orden sea estable.
+     ───────────────────────────────────────────────────────── */
+  function importarFotosImperio(){
+    var rutas=['imperio_conkal','fotos/imperio_conkal'];
+    function intentar(i){
+      if(i>=rutas.length) return Promise.resolve([]);
+      return firebase.storage().ref(rutas[i]).listAll()
+        .then(function(res){
+          if(!res.items.length) return intentar(i+1);
+          var items=res.items.slice().sort(function(a,b){ return a.name.localeCompare(b.name,'es',{numeric:true}); });
+          return Promise.all(items.map(function(it){ return it.getDownloadURL(); }));
+        })
+        .catch(function(){ return intentar(i+1); });
+    }
+    return intentar(0);
+  }
+
+  function sincronizarPublico(){
+    if(!isAdmin()) return;
+    var btn=root.querySelector('#cpm-sync');
+    var publicables=terrenos.filter(function(t){
+      /* La ficha destacada vive en el código, no en Firestore: escribirla
+         al espejo crearía un documento fantasma que luego saldría dos
+         veces en el catálogo público. */
+      if(t._premium) return false;
+      if(t.categorias && t.categorias.indexOf('Exclusivos (no publicar)')>=0) return false;
+      return ESTADOS_PUBLICABLES.indexOf(t.estado_propiedad||'disponible')>=0;
+    });
+    var totalReal=terrenos.filter(function(t){ return !t._premium; }).length;
+    if(!confirm('Se publicarán '+publicables.length+' de '+totalReal+' propiedades en el catálogo público.\n\n'+
+                'NO se copian: comisión, comentarios, exclusivas, vendidas ni no disponibles.\n\n¿Continuar?')) return;
+    if(btn){ btn.disabled=true; btn.textContent='Sincronizando...'; }
+    var db=firebase.firestore(), col=db.collection(COL_PUBLICA);
+    var nFotos=0;
+    Promise.all([col.get(), importarFotosImperio()]).then(function(r){
+      var snap=r[0], fotosImp=r[1]||[];
+      nFotos=fotosImp.length;
+      var batch=db.batch(), quedan={};
+      publicables.forEach(function(t){
+        var pub={};
+        CAMPOS_PUBLICOS.forEach(function(k){ if(t[k]!==undefined) pub[k]=t[k]; });
+        if(t.categorias) pub.categorias=t.categorias.filter(function(c){ return c!=='Exclusivos (no publicar)'; });
+        quedan[t.id]=1;
+        batch.set(col.doc(String(t.id)), pub);
+      });
+      /* Documento puente con las fotos de Imperio Conkal. El catálogo lo
+         detecta por su id, toma las fotos y NO lo pinta como propiedad. */
+      if(fotosImp.length){
+        quedan['IMPERIO CONKAL']=1;
+        batch.set(col.doc('IMPERIO CONKAL'), {id:'IMPERIO CONKAL', fotos:fotosImp});
+        IMPERIO.fotos=fotosImp;      /* también se ven ya en este portafolio */
+      }
+      snap.docs.forEach(function(d){ if(!quedan[d.id]) batch.delete(d.ref); });
+      return batch.commit();
+    }).then(function(){
+      renderGrid();
+      if(btn){ btn.disabled=false; btn.textContent='✓ Listo'+(nFotos?' · '+nFotos+' fotos':' · 0 fotos Imperio'); }
+      if(!nFotos) alert('El catálogo se sincronizó, pero no se encontró ninguna foto en la carpeta "imperio_conkal" de Storage.\n\nRevisa que la carpeta exista con ese nombre exacto y que tenga imágenes.');
+      setTimeout(function(){ if(btn) btn.textContent='↻ Sincronizar catálogo'; },4000);
+    }).catch(function(err){
+      if(btn){ btn.disabled=false; btn.textContent='↻ Sincronizar catálogo'; }
+      alert('No se pudo sincronizar: '+err.message+
+        '\n\nRevisa que las reglas de Firestore permitan escribir en "'+COL_PUBLICA+'" a usuarios autenticados.');
+    });
+  }
+
+  /* ═══════════════ ASESORES (solo admin) ═══════════════
+     Alta de cuentas y ficha de cada asesor.
+
+     OJO CON UN DETALLE DE FIREBASE: crear un usuario con
+     createUserWithEmailAndPassword() en la app por defecto CAMBIA la
+     sesión activa al usuario recién creado, o sea que al admin lo saca.
+     Por eso el alta se hace en una segunda instancia de Firebase
+     ("alta"), que se cierra en cuanto termina. La sesión del admin en
+     la instancia principal ni se entera. */
+  function appAlta(){
+    try{ return firebase.app('alta'); }
+    catch(e){ return firebase.initializeApp(FB_CONFIG,'alta'); }
+  }
+
+  function openAsesores(){
+    if(!isAdmin()) return;
+    var ov=mkOverlay(2147483350);
+    var db=firebase.firestore();
+
+    function pinta(lista){
+      var filas = lista.length ? lista.map(function(a){
+        return '<div class="cpm-as-fila" data-uid="'+esc(a.uid)+'">'+
+          '<div style="min-width:0;flex:1">'+
+            '<div style="font-size:13px;font-weight:700;color:#1a2d42;overflow:hidden;text-overflow:ellipsis">'+esc(a.nombre||'(sin nombre)')+
+              (a.generico?' <span style="background:#fff3cd;color:#856404;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px">GENÉRICA</span>':'')+'</div>'+
+            '<div style="font-size:11.5px;color:#7a8a9a;overflow:hidden;text-overflow:ellipsis">'+esc(a.email||'')+'</div>'+
+            '<div style="font-size:11.5px;color:#3d7ab5;font-weight:600">'+esc(formatTel(a.telefono)||'sin teléfono')+'</div>'+
+          '</div>'+
+          '<button class="cpm-as-ed" data-uid="'+esc(a.uid)+'" style="background:#e8f2fb;border:none;border-radius:8px;padding:7px 11px;font-size:11px;color:#3d7ab5;font-weight:700">Editar</button>'+
+        '</div>';
+      }).join('') : '<div style="text-align:center;color:#a0b0c0;font-size:12.5px;padding:22px 0">Todavía no hay fichas de asesor.</div>';
+
+      ov.innerHTML=
+      '<div class="cpm-sheet" style="max-width:520px;padding:24px 22px 30px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+          '<h3 style="font-size:16px;font-weight:700;color:#1a2d42">Asesores</h3>'+
+          '<button id="cpm-as-x" style="background:#f0f4f8;border:none;border-radius:50%;width:34px;height:34px;font-size:18px;color:#5a6a7a">✕</button>'+
+        '</div>'+
+        '<p style="font-size:12px;color:#5a6a7a;line-height:1.6;margin-bottom:18px">Quien tenga ficha aquí descarga el PDF con sus datos ya puestos, sin llenar nada. Quien no la tenga, o esté marcado como cuenta genérica, verá el formulario.</p>'+
+
+        '<div style="max-height:230px;overflow-y:auto;margin-bottom:22px">'+filas+'</div>'+
+
+        '<div style="border-top:1px solid #e8ecf0;padding-top:18px">'+
+          '<div style="font-size:11px;font-weight:700;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Crear cuenta nueva</div>'+
+          '<label class="cpm-lbl">Nombre completo</label>'+
+          '<input id="cpm-as-nom" class="cpm-inp" type="text" placeholder="Nombre y apellido">'+
+          '<div style="height:12px"></div>'+
+          '<label class="cpm-lbl">Correo</label>'+
+          '<input id="cpm-as-mail" class="cpm-inp" type="email" placeholder="asesor@propiedades-cpm.com" autocomplete="off">'+
+          '<div style="height:12px"></div>'+
+          '<label class="cpm-lbl">Contraseña</label>'+
+          '<input id="cpm-as-pass" class="cpm-inp" type="text" placeholder="mínimo 6 caracteres" autocomplete="new-password">'+
+          '<div style="height:12px"></div>'+
+          '<label class="cpm-lbl">Teléfono (10 dígitos)</label>'+
+          '<input id="cpm-as-tel" class="cpm-inp" type="tel" inputmode="numeric" placeholder="999 999 9999">'+
+          '<div id="cpm-as-err"></div>'+
+          '<button id="cpm-as-crear" class="cpm-btn-main">CREAR ASESOR</button>'+
+          '<div style="font-size:10.5px;color:#a0b0c0;margin-top:10px;line-height:1.5">Anota la contraseña antes de crear: no se puede volver a consultar, solo restablecer.</div>'+
+        '</div>'+
+      '</div>';
+
+      ov.querySelector('#cpm-as-x').addEventListener('click',function(){ closeOverlay(ov); });
+      ov.querySelectorAll('.cpm-as-ed').forEach(function(b){
+        b.addEventListener('click',function(){
+          var a=lista.filter(function(x){ return x.uid===b.getAttribute('data-uid'); })[0];
+          if(a) editarAsesor(a, function(){ cargar(); });
+        });
+      });
+      ov.querySelector('#cpm-as-crear').addEventListener('click',crear);
+    }
+
+    function err(m){ var e=ov.querySelector('#cpm-as-err'); if(e) e.innerHTML='<div class="cpm-err">'+esc(m)+'</div>'; }
+
+    function crear(){
+      var nom=ov.querySelector('#cpm-as-nom').value.trim();
+      var mail=ov.querySelector('#cpm-as-mail').value.trim();
+      var pass=ov.querySelector('#cpm-as-pass').value;
+      var tel=ov.querySelector('#cpm-as-tel').value.trim();
+      if(nom.length<3) return err('Escribe el nombre completo.');
+      if(!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(mail)) return err('Correo no válido.');
+      if(pass.length<6) return err('La contraseña necesita al menos 6 caracteres.');
+      if(!telValido(tel)) return err('El teléfono debe tener 10 dígitos.');
+
+      var btn=ov.querySelector('#cpm-as-crear');
+      btn.disabled=true; btn.textContent='Creando...';
+      var secundaria=appAlta();
+      secundaria.auth().createUserWithEmailAndPassword(mail,pass)
+        .then(function(cred){
+          var uid=cred.user.uid;
+          return db.collection(COL_ASESORES).doc(uid).set({
+            uid:uid, nombre:nom, email:mail, telefono:tel.replace(/\D/g,''),
+            generico:false, creadoPor:(user&&user.email)||''
+          }).then(function(){ return secundaria.auth().signOut(); });
+        })
+        .then(function(){ btn.disabled=false; btn.textContent='CREAR ASESOR'; cargar(); })
+        .catch(function(e){
+          btn.disabled=false; btn.textContent='CREAR ASESOR';
+          var m=e.code||e.message;
+          if(m==='auth/email-already-in-use') m='Ese correo ya tiene cuenta. Usa "Editar" en la lista si solo quieres cambiar sus datos.';
+          else if(m==='auth/weak-password') m='Contraseña demasiado débil.';
+          else if(m==='auth/operation-not-allowed') m='Firebase tiene deshabilitado el alta por correo. Actívalo en Authentication > Sign-in method.';
+          else if(m==='permission-denied') m='Las reglas de Firestore no permiten escribir en "'+COL_ASESORES+'".';
+          err(m);
+          try{ secundaria.auth().signOut(); }catch(_){}
+        });
+    }
+
+    function cargar(){
+      db.collection(COL_ASESORES).get().then(function(s){
+        var lista=s.docs.map(function(d){ var o=d.data()||{}; o.uid=d.id; return o; })
+                        .sort(function(a,b){ return String(a.nombre||'').localeCompare(String(b.nombre||''),'es'); });
+        pinta(lista);
+      }).catch(function(e){
+        pinta([]);
+        err('No se pudo leer "'+COL_ASESORES+'": '+(e.code||e.message));
+      });
+    }
+
+    pinta([]);
+    cargar();
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+  }
+
+  /* Editar la ficha (no toca la contraseña: eso se restablece por correo) */
+  function editarAsesor(a, alGuardar){
+    var ov=mkOverlay(2147483380);
+    ov.innerHTML=
+      '<div class="cpm-sheet" style="max-width:420px;padding:24px 22px 28px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+          '<h3 style="font-size:15px;font-weight:700;color:#1a2d42">Editar asesor</h3>'+
+          '<button id="cpm-ea-x" style="background:#f0f4f8;border:none;border-radius:50%;width:32px;height:32px;font-size:17px;color:#5a6a7a">✕</button>'+
+        '</div>'+
+        '<div style="font-size:12px;color:#7a8a9a;margin-bottom:16px;overflow-wrap:anywhere">'+esc(a.email||'')+'</div>'+
+        '<label class="cpm-lbl">Nombre</label>'+
+        '<input id="cpm-ea-nom" class="cpm-inp" type="text" value="'+esc(a.nombre||'')+'">'+
+        '<div style="height:12px"></div>'+
+        '<label class="cpm-lbl">Teléfono</label>'+
+        '<input id="cpm-ea-tel" class="cpm-inp" type="tel" inputmode="numeric" value="'+esc(a.telefono||'')+'">'+
+        '<div style="height:14px"></div>'+
+        '<label style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#5a6a7a;cursor:pointer">'+
+          '<input id="cpm-ea-gen" type="checkbox" '+(a.generico?'checked':'')+' style="width:17px;height:17px">'+
+          'Es una cuenta genérica o compartida (siempre pedir datos al descargar)</label>'+
+        '<div id="cpm-ea-err"></div>'+
+        '<button id="cpm-ea-ok" class="cpm-btn-main">GUARDAR</button>'+
+        '<button id="cpm-ea-del" style="width:100%;background:#fde8e8;color:#e74c3c;border:none;padding:11px;border-radius:12px;font-size:12px;font-weight:700;margin-top:9px">Borrar ficha</button>'+
+        '<div style="font-size:10.5px;color:#a0b0c0;margin-top:10px;line-height:1.5">Borrar la ficha solo quita nombre y teléfono: la cuenta sigue pudiendo entrar. Para eliminar el acceso hay que borrar el usuario en Firebase &gt; Authentication.</div>'+
+      '</div>';
+    var db=firebase.firestore();
+    function err(m){ ov.querySelector('#cpm-ea-err').innerHTML='<div class="cpm-err">'+esc(m)+'</div>'; }
+    ov.querySelector('#cpm-ea-x').addEventListener('click',function(){ closeOverlay(ov); });
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+    ov.querySelector('#cpm-ea-ok').addEventListener('click',function(){
+      var n=ov.querySelector('#cpm-ea-nom').value.trim();
+      var t=ov.querySelector('#cpm-ea-tel').value.trim();
+      var g=ov.querySelector('#cpm-ea-gen').checked;
+      if(n.length<3) return err('Escribe el nombre completo.');
+      if(!g && !telValido(t)) return err('El teléfono debe tener 10 dígitos.');
+      db.collection(COL_ASESORES).doc(a.uid)
+        .set({uid:a.uid,nombre:n,email:a.email||'',telefono:t.replace(/\D/g,''),generico:g},{merge:true})
+        .then(function(){ closeOverlay(ov); if(alGuardar) alGuardar(); })
+        .catch(function(e){ err('No se pudo guardar: '+(e.code||e.message)); });
+    });
+    ov.querySelector('#cpm-ea-del').addEventListener('click',function(){
+      if(!confirm('¿Borrar la ficha de '+(a.nombre||a.email)+'?\n\nLa cuenta seguirá pudiendo entrar, pero al descargar el PDF se le pedirán sus datos.')) return;
+      db.collection(COL_ASESORES).doc(a.uid).delete()
+        .then(function(){ closeOverlay(ov); if(alGuardar) alGuardar(); })
+        .catch(function(e){ err('No se pudo borrar: '+(e.code||e.message)); });
+    });
+  }
+
+  /* ===================== EDITOR (admin) ===================== */
+  function openEditor(t){
+    var isNew=!t;
+    var f = t ? JSON.parse(JSON.stringify(t)) : {id:'',nombre:'',tipo:'Terreno Particular',ciudad:'',estado:'Yucatan',descripcion:'',comentario:'',precio:0,dimensiones_m2:0,hectareas:0,precio_m2:0,comision:0.02,ubicacion_maps:'',fotos:[],categorias:[],estado_propiedad:'disponible'};
+    if(!f.fotos) f.fotos=[]; if(!f.categorias) f.categorias=[];
+    delete f._txt; delete f._toks;               /* no guardar el indice de busqueda */
+    var ov=mkOverlay(2147483400);
+
+    function txt(label,key){ return '<div style="margin-bottom:10px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px">'+label+'</label><input data-k="'+key+'" class="cpm-ed-f" value="'+esc(f[key]||'')+'" style="width:100%;padding:9px 12px;border:2px solid #e8ecf0;border-radius:10px;font-size:13px;outline:none"></div>'; }
+    function num(label,key){ return '<div style="margin-bottom:10px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px">'+label+'</label><input data-k="'+key+'" data-num="1" class="cpm-ed-f" inputmode="decimal" value="'+esc(f[key]===0||f[key]==null?'':String(f[key]))+'" placeholder="0" style="width:100%;padding:9px 12px;border:2px solid #e8ecf0;border-radius:10px;font-size:13px;outline:none"></div>'; }
+    function area(label,key){ return '<div style="margin-bottom:10px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px">'+label+'</label><textarea data-k="'+key+'" class="cpm-ed-f" rows="2" style="width:100%;padding:9px 12px;border:2px solid #e8ecf0;border-radius:10px;font-size:13px;outline:none;resize:vertical">'+esc(f[key]||'')+'</textarea></div>'; }
+
+    var estadoRadios = ESTADOS.map(function(e){ var on=(f.estado_propiedad||'disponible')===e.value; return '<div class="cpm-ed-est" data-v="'+e.value+'" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:2px solid '+(on?e.color:'#e8ecf0')+';background:'+(on?e.bg:'#fff')+';cursor:pointer"><div style="width:10px;height:10px;border-radius:50%;background:'+e.color+'"></div><span style="font-size:11px;font-weight:700;color:'+(on?e.color:'#5a6a7a')+'">'+e.label+'</span></div>'; }).join('');
+    var catChecks = CATEGORIAS_DISP.map(function(c){ var on=f.categorias.indexOf(c)>=0; return '<div class="cpm-ed-cat" data-c="'+esc(c)+'" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:2px solid '+(on?'#3d7ab5':'#e8ecf0')+';background:'+(on?'#e8f2fb':'#fff')+';cursor:pointer"><div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(on?'#3d7ab5':'#c0c8d4')+';background:'+(on?'#3d7ab5':'#fff')+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+(on?'✓':'')+'</div><span style="font-size:11px;font-weight:600;color:'+(on?'#2d5f8f':'#5a6a7a')+'">'+esc(c)+'</span></div>'; }).join('');
+
+    ov.innerHTML =
+      '<div class="cpm-sheet" style="padding:20px 20px 40px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:16px;font-weight:700;color:#1a2d42">'+(isNew?'Nueva Propiedad':'Editar Propiedad')+'</h3><button id="cpm-ed-x" style="background:#f0f4f8;border:none;border-radius:50%;width:34px;height:34px;font-size:18px;color:#5a6a7a">✕</button></div>'+
+        txt('ID','id')+txt('Nombre','nombre')+txt('Ciudad','ciudad')+txt('Estado','estado')+txt('URL Maps','ubicacion_maps')+
+        '<div style="margin-bottom:10px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px">Tipo</label><select id="cpm-ed-tipo" style="width:100%;padding:9px 12px;border:2px solid #e8ecf0;border-radius:10px;font-size:13px"><option'+(f.tipo==='Terreno Particular'?' selected':'')+'>Terreno Particular</option><option'+(f.tipo==='Macrolote'?' selected':'')+'>Macrolote</option></select></div>'+
+        '<div style="margin-bottom:14px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px">Estado de la propiedad</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="cpm-ed-estados">'+estadoRadios+'</div></div>'+
+        '<div style="margin-bottom:14px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px">Categorías adicionales</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="cpm-ed-cats">'+catChecks+'</div></div>'+
+        area('Descripción','descripcion')+area('Comentario','comentario')+
+        num('Precio','precio')+num('m²','dimensiones_m2')+num('Hectáreas','hectareas')+num('Precio/m²','precio_m2')+num('Comisión (ej. 0.02)','comision')+
+        '<div style="margin-bottom:16px"><label style="font-size:10px;font-weight:600;color:#5a6a7a;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Fotos <span id="cpm-ed-upst" style="color:#3d7ab5"></span></label>'+
+          '<div id="cpm-ed-warnid" style="display:'+(f.id?'none':'block')+';background:#fff8e1;color:#856404;padding:8px 12px;border-radius:8px;font-size:11px;margin-bottom:8px">⚠️ Asigna un ID primero para poder subir fotos</div>'+
+          '<input id="cpm-ed-file" type="file" accept="image/*" multiple style="display:none">'+
+          '<button id="cpm-ed-addfoto" style="background:#e8f2fb;color:#3d7ab5;border:none;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:600">📷 Agregar fotos</button>'+
+          '<div id="cpm-ed-fotos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px"></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px"><button id="cpm-ed-save" style="flex:1;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff;border:none;padding:13px;border-radius:12px;font-size:13px;font-weight:700">'+(isNew?'✚ Crear':'✔ Guardar')+'</button>'+(isNew?'':'<button id="cpm-ed-del" style="background:#fde8e8;color:#e74c3c;border:none;padding:13px 16px;border-radius:12px;font-size:13px;font-weight:600">🗑</button>')+'</div>'+
+      '</div>';
+
+    function renderFotos(){
+      var c=ov.querySelector('#cpm-ed-fotos');
+      c.innerHTML=f.fotos.map(function(u,i){ return '<div style="position:relative;border-radius:8px;overflow:hidden;height:70px"><img src="'+esc(u)+'" style="width:100%;height:100%;object-fit:cover"><button data-rm="'+i+'" style="position:absolute;top:2px;right:2px;background:rgba(231,76,60,.9);border:none;border-radius:50%;width:20px;height:20px;color:#fff;font-size:10px">✕</button></div>'; }).join('');
+      c.querySelectorAll('button[data-rm]').forEach(function(b){ b.addEventListener('click',function(){ f.fotos.splice(+b.getAttribute('data-rm'),1); renderFotos(); }); });
+    }
+    renderFotos();
+
+    ov.querySelector('#cpm-ed-x').addEventListener('click',function(){ closeOverlay(ov); });
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+    ov.querySelectorAll('.cpm-ed-f').forEach(function(inp){
+      inp.addEventListener('input',function(){ f[inp.getAttribute('data-k')]=inp.value; });
+      if(inp.getAttribute('data-num')){
+        inp.addEventListener('blur',function(){ var n=parseFloat(inp.value); f[inp.getAttribute('data-k')]=isNaN(n)?0:n; });
+      }
+    });
+    ov.querySelector('#cpm-ed-tipo').addEventListener('change',function(e){ f.tipo=e.target.value; });
+    ov.querySelector('#cpm-ed-estados').addEventListener('click',function(e){
+      var d=e.target.closest('.cpm-ed-est'); if(!d) return; f.estado_propiedad=d.getAttribute('data-v');
+      ov.querySelectorAll('.cpm-ed-est').forEach(function(x){ var es=ESTADOS.find(function(z){return z.value===x.getAttribute('data-v')}); var on=x===d; x.style.border='2px solid '+(on?es.color:'#e8ecf0'); x.style.background=on?es.bg:'#fff'; x.querySelector('span').style.color=on?es.color:'#5a6a7a'; });
+    });
+    ov.querySelector('#cpm-ed-cats').addEventListener('click',function(e){
+      var d=e.target.closest('.cpm-ed-cat'); if(!d) return; var c=d.getAttribute('data-c'); var i=f.categorias.indexOf(c);
+      if(i>=0) f.categorias.splice(i,1); else f.categorias.push(c);
+      var on=f.categorias.indexOf(c)>=0;
+      d.style.border='2px solid '+(on?'#3d7ab5':'#e8ecf0'); d.style.background=on?'#e8f2fb':'#fff';
+      var box=d.querySelector('div'); box.style.border='2px solid '+(on?'#3d7ab5':'#c0c8d4'); box.style.background=on?'#3d7ab5':'#fff'; box.textContent=on?'✓':'';
+      d.querySelector('span').style.color=on?'#2d5f8f':'#5a6a7a';
+    });
+    var fileInp=ov.querySelector('#cpm-ed-file');
+    ov.querySelector('#cpm-ed-addfoto').addEventListener('click',function(){ if(!f.id){ ov.querySelector('#cpm-ed-warnid').style.display='block'; return; } fileInp.click(); });
+    fileInp.addEventListener('change',function(e){
+      var files=Array.prototype.slice.call(e.target.files); if(!files.length) return;
+      if(!f.id){ ov.querySelector('#cpm-ed-warnid').style.display='block'; return; }
+      var st=ov.querySelector('#cpm-ed-upst'); st.textContent='● Subiendo a Firebase...';
+      var chain=Promise.resolve();
+      files.forEach(function(file){
+        chain=chain.then(function(){
+          var path='fotos/'+f.id+'/'+Date.now()+'_'+file.name;
+          return firebase.storage().ref(path).put(file).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){ f.fotos.push(url); renderFotos(); });
+        });
+      });
+      chain.then(function(){ st.textContent=''; e.target.value=''; }).catch(function(){ st.textContent=''; alert('Error al subir una foto. Verifica permisos de Firebase Storage.'); });
+    });
+    ov.querySelector('#cpm-ed-save').addEventListener('click',function(){
+      if(!f.id){ alert('La propiedad necesita un ID.'); return; }
+      ['precio','dimensiones_m2','hectareas','precio_m2','comision'].forEach(function(k){ var n=parseFloat(f[k]); f[k]=isNaN(n)?0:n; });
+      firebase.firestore().collection(COL_PRIVADA).doc(String(f.id)).set(f).then(function(){ closeOverlay(ov); }).catch(function(err){ alert('No se pudo guardar: '+err.message); });
+    });
+    if(!isNew){
+      ov.querySelector('#cpm-ed-del').addEventListener('click',function(){
+        if(!confirm('¿Eliminar esta propiedad?')) return;
+        firebase.firestore().collection(COL_PRIVADA).doc(String(f.id)).delete().then(function(){ closeOverlay(ov); }).catch(function(err){ alert('No se pudo eliminar: '+err.message); });
+      });
+    }
+  }
+
+  /* ===================== PDF (ventana de impresion) ===================== */
+  function generarPDF(t, asesorNombre, asesorTel){
+    var w=window.open('','_blank'); if(!w) return;
+    var precio=t.precio_total||t.precio;
+    var tel=formatTel(asesorTel||'');
+    var nombreArchivo=[t.nombre,t.id,asesorNombre].filter(Boolean).join(' - ');
+    var fotosHTML=(t.fotos&&t.fotos.length>0)?'<div class="sec" style="margin-bottom:10px">Fotografías</div><div class="foto-grid">'+t.fotos.slice(0,6).map(function(f){return '<img src="'+f+'" alt="foto">'}).join('')+'</div>':'';
+    var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>'+nombreArchivo+'</title>'+
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>'+
+    '*{margin:0;padding:0;box-sizing:border-box}body{font-family:Montserrat,sans-serif;background:#fff;color:#1e2d3d;font-size:12px}'+
+    '.page{max-width:780px;margin:0 auto}.hdr{background:#1a2d42;padding:18px 32px;display:flex;justify-content:space-between;align-items:center}'+
+    '.logo{height:38px}.badge{background:#3d7ab5;color:#fff;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border-radius:20px}'+
+    '.hero{background:#3d7ab5;padding:16px 32px;color:#fff}.hero-id{font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:4px}'+
+    '.hero-nom{font-size:20px;font-weight:700;margin-bottom:2px}.hero-ubi{font-size:11px;opacity:.8}'+
+    '.precio-bar{background:#1a2d42;padding:14px 32px;display:flex;justify-content:space-between;color:#fff}'+
+    '.pl{font-size:9px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:2px}.pv{font-size:22px;font-weight:700;color:#5a95cc}.pm2{font-size:14px;color:#aac4e0}'+
+    '.body{padding:18px 32px}.sec{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#3d7ab5;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #e8f2fb}'+
+    '.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#e8ecf0;border:1px solid #e8ecf0;border-radius:8px;overflow:hidden;margin-bottom:14px}'+
+    '.gi{background:#fff;padding:9px 12px}.gl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#5a6a7a;margin-bottom:2px}.gv{font-size:12px;font-weight:600}'+
+    '.desc{color:#3a4a5a;line-height:1.7;font-size:11px;margin-bottom:14px}'+
+    '.asesor-box{background:#1a2d42;border-radius:8px;padding:14px 20px;color:#fff;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}'+
+    '.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}.foto-grid img{width:100%;height:130px;object-fit:cover;border-radius:6px}'+
+    '.foot{background:#f4f6f9;padding:10px 32px;display:flex;justify-content:space-between;font-size:9px;color:#5a6a7a;letter-spacing:1px}'+
+    '.cta-ubicacion{display:inline-block;background:#3d7ab5;color:#fff;padding:9px 20px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:1px;margin-bottom:14px}'+
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{max-width:100%}@page{margin:0;size:A4}}</style></head><body>'+
+    '<div class="page"><div class="hdr"><img src="'+LOGO_W+'" class="logo" alt="CPM"><div class="badge">'+esc(t.tipo)+'</div></div>'+
+    '<div class="hero"><div class="hero-id">ID: '+esc(t.id)+'</div><div class="hero-nom">'+esc(t.nombre)+'</div><div class="hero-ubi">📍 '+esc(t.ciudad)+', '+esc(t.estado)+'</div></div>'+
+    '<div class="precio-bar"><div><div class="pl">Precio de lista</div><div class="pv">'+fmt(precio)+'</div></div>'+(t.precio_m2>0?'<div style="text-align:right"><div class="pl">Precio por m²</div><div class="pm2">'+fmt(t.precio_m2)+'/m²</div></div>':'')+'</div>'+
+    '<div class="body">'+fotosHTML+
+    '<div class="sec">Datos Generales</div><div class="grid">'+
+    '<div class="gi"><div class="gl">Superficie</div><div class="gv">'+esc(fmtSup(t))+'</div></div>'+
+    '<div class="gi"><div class="gl">Ciudad</div><div class="gv">'+esc(t.ciudad)+'</div></div>'+
+    '<div class="gi"><div class="gl">Estado</div><div class="gv">'+esc(t.estado)+'</div></div>'+
+    (t.dimensiones_m2>0?'<div class="gi"><div class="gl">Dimensiones</div><div class="gv">'+(t.dimensiones_m2).toLocaleString('es-MX')+' m²</div></div>':'')+
+    (t.hectareas>0?'<div class="gi"><div class="gl">Hectáreas</div><div class="gv">'+t.hectareas+' ha</div></div>':'')+
+    '<div class="gi"><div class="gl">Tipo</div><div class="gv">'+esc(t.tipo)+'</div></div></div>'+
+    '<div class="sec">Descripción</div><div class="desc">'+esc(t.descripcion||'')+'</div>'+
+    ((asesorNombre||tel)?'<div class="sec">Contacto del Asesor</div><div class="asesor-box"><div>'+(asesorNombre?'<div style="font-size:9px;opacity:.6;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Asesor</div><div style="font-size:16px;font-weight:700;color:#5a95cc">'+esc(asesorNombre)+'</div>':'')+'</div><div style="text-align:right">'+(tel?'<div style="font-size:9px;opacity:.6;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Teléfono</div><div style="font-size:16px;font-weight:700;color:#aac4e0">'+tel+'</div>':'')+'</div></div>':'')+
+    ((t.ubicacion_maps&&/^http/.test(t.ubicacion_maps))?'<div class="sec">Ubicación</div><a href="'+esc(t.ubicacion_maps)+'" class="cta-ubicacion">🗺 Ver Ubicación en Google Maps</a>':'')+
+    '</div><div class="foot"><span>CORPORATIVO PIÑEIRO-MEDINA · Documento confidencial</span><span>Generado: '+new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})+'</span></div></div>'+
+    '<scr'+'ipt>document.title='+JSON.stringify(nombreArchivo)+';window.onload=function(){window.print()};</scr'+'ipt></body></html>';
+    w.document.write(html); w.document.close();
+  }
+
+  /* ===================== CONTENEDOR HOSTINGER ===================== */
+  var FULL_BLEED = true;   /* false = respeta el ancho de la columna del sitio */
+  function liberar(){
+    var el=root.parentElement, n=0;
+    while(el && el!==document.body && n<8){
+      var s=el.style;
+      /* Solo se quitan las restricciones que cortan el contenido.
+         NO poner width:'100%': si el contenedor trae padding con
+         box-sizing:content-box, width:100%+padding desborda a la derecha
+         y toda la pagina se recorre de lado. */
+      s.maxWidth='none';
+      s.boxSizing='border-box';
+      s.height='auto'; s.minHeight='0'; s.maxHeight='none';
+      s.overflow='visible';
+      el=el.parentElement; n++;
+    }
+    if(FULL_BLEED) bleed();
+  }
+  /* Ancho completo medido con clientWidth (excluye la barra de scroll).
+     100vw la INCLUYE, y por eso la version anterior empujaba la pagina. */
+  function bleed(){
+    root.style.width=''; root.style.marginLeft=''; root.style.marginRight='';
+    var vw=document.documentElement.clientWidth;
+    var r=root.getBoundingClientRect();
+    var w0=r.width, left=r.left;
+    if(vw<=w0+1) return;
+    root.style.marginLeft=(-left)+'px';
+    root.style.width=vw+'px';
+    root.style.marginRight=(w0-vw+left)+'px';
+  }
+  liberar();
+  window.addEventListener('load',liberar);
+  window.addEventListener('resize',liberar,{passive:true});
+  [200,500,1000,1800].forEach(function(t){ setTimeout(liberar,t); });
+})();
+</script>
+<!-- ===== FIN PORTAFOLIO CPM ASESORES v2 ===== -->

@@ -41,11 +41,11 @@ public_html/
 
 ## Bloques para el contenedor de código de Hostinger
 
-Además de la página suelta de HEMCA, hay siete bloques pensados para pegarse
+Además de la página suelta de HEMCA, hay ocho bloques pensados para pegarse
 en un contenedor de código del constructor. No llevan etiquetas de documento
 y todo su CSS está acotado a su propio contenedor. Seis no dependen de ningún
-recurso externo; el séptimo —el mapa— sí, y por eso lleva su propia lista
-blanca de orígenes (ver más abajo).
+recurso externo; el mapa y el portafolio de asesores sí —Leaflet y Firebase—,
+y por eso el del mapa lleva su propia lista blanca de orígenes.
 
 | Archivo | Va en | Contenedor |
 | --- | --- | --- |
@@ -56,9 +56,10 @@ blanca de orígenes (ver más abajo).
 | `catalogo-embed-hostinger.html` | `/catalogo-de-propiedades` | `#cpm-catalogo` |
 | `predios-embed-hostinger.html` | `/regularizacion-predios` | `#cpm-predios` |
 | `mapa-embed-hostinger.html` | el mapa de la cartera | `#cpm-mapa` |
+| `portafolio-asesores-embed-hostinger.html` | el portafolio privado de asesores | `#cpm-portafolio` |
 
 Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `home_prep.py`,
-`cat_prep.py`, `predios.py`, `mapa.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
+`cat_prep.py`, `predios.py`, `mapa.py`, `portafolio_prep.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
 original. Los originales de partida están en `src/`.
 
 ### Regularización de Predios
@@ -111,6 +112,72 @@ producían la vibración; pero ese runtime sólo reconoce `#hb-lp`, `#ic-lp` y
 `#cpm-divisiones`, así que a `#cpm-predios` no le contesta nadie: sin escribirla,
 el iframe se queda en 150 px sobre un contenido de 7 000. Como aquí no hay dos
 escritores, no hay pugna posible.
+
+### Portafolio de asesores
+
+Es la cartera privada: se entra con una cuenta de CPM y de ahí salen las
+fichas en PDF. `tools/portafolio_prep.py` parte de
+`src/cpm-portafolio-original.html` y le hace cuatro cosas.
+
+**Coordenadas.** Junto al enlace de Maps hay ahora un campo propio. Acepta
+las tres formas en que se puede copiar una ubicación:
+
+| Lo que se pega | Ejemplo |
+| --- | --- |
+| dos números | `21.067187, -89.504562` |
+| un Plus Code | `3F8W+V5` (lo que se copia del móvil) |
+| un enlace **largo** de Maps | `.../@21.0203,-89.5871,15z` |
+
+Los enlaces cortos (`maps.app.goo.gl`) no llevan las coordenadas dentro, así
+que de ellos no se puede sacar nada; el campo lo dice en vez de callarse. El
+Plus Code corto se completa con la localidad de la propiedad, y por eso la
+ciudad tiene que estar escrita: si no está en el cuadro, el aviso lo explica y
+pide el código completo. El cálculo y las tablas de localidades son
+literalmente los del mapa —`tools/portafolio_prep.py` los saca de
+`tools/mapa_js.txt` al construir—, para que las dos páginas no se desajusten.
+
+Lo capturado se guarda como `lat`/`lng` en el documento del inmueble, y esos
+dos campos están ya en `CAMPOS_PUBLICOS`: al sincronizar viajan a
+`catalogo_publico`, que es de donde los lee el mapa. Si una propiedad tenía
+coordenadas puestas antes desde el mapa, la sincronización **las adopta** en
+vez de borrarlas —el espejo se escribe con `set()`, que reemplaza el
+documento entero— y las sube al inmueble, que manda desde entonces.
+
+**Exclusivas.** Se ven en la vista del asesor, con las mismas fichas y el
+mismo PDF que las demás, y con un sello de *Exclusiva* en la tarjeta y una
+línea en la ficha diciendo lo único que hay que saber: que no se publican.
+Antes solo las veía un administrador.
+
+Y una propiedad cuenta como exclusiva si **cualquiera** de sus categorías
+contiene «exclusiv», no solo si dice exactamente `Exclusivos (no publicar)`.
+Esto importa: las etiquetadas antes de que existiera esa opción —`Exclusiva`,
+`EXCLUSIVOS`— contaban como normales, así que **se publicaban**. La
+sincronización las saca del catálogo público en la siguiente pasada.
+
+**Revisión** (botón de administrador). Un cuadro por propiedad con lo que hay
+guardado de verdad: el campo `categorias` tal cual, si cuenta como exclusiva,
+su estado, si es publicable, si está ahora mismo en el catálogo público y si
+tiene coordenadas. Debajo, el informe en texto para copiar. Es la forma de
+contestar «¿qué pasó con esa propiedad?» con datos y no con suposiciones.
+
+**Un dato mal puesto ya no esconde la cartera entera.** El listado de
+Firestore recorría los documentos sin red: si uno solo hacía saltar una
+excepción —por ejemplo `categorias` guardado como texto en vez de arreglo—,
+la excepción salía del *callback* de `onSnapshot`, la lista se quedaba como
+estaba y la rejilla no se volvía a pintar. Ahora el documento malo se salta,
+se cuenta y aparece en el panel de revisión.
+
+También se corrigió que `isAdmin()` comparaba el correo distinguiendo
+mayúsculas contra una lista en minúsculas: una cuenta dada de alta como
+`Marco@…` se quedaba sin ser administradora.
+
+Comprobado con Firebase imitado —no hay salida a internet desde donde se
+construye— sobre una cartera con los casos que importan: una exclusiva con la
+etiqueta de hoy, otra con la etiqueta vieja ya colada en el catálogo público,
+una con `categorias` guardado como texto, una con coordenadas solo en el
+espejo, un huérfano en el catálogo y un documento ilegible. Con sesión de
+administrador y con sesión de asesor, en escritorio y en móvil, y dentro de
+una réplica del contenedor de Hostinger.
 
 ### Mapa de propiedades
 
@@ -172,8 +239,12 @@ tarjeta y un aviso arriba de la lista con el recuento. Varias propiedades de
 la misma localidad no se apilan: se reparten en espiral con el ángulo dorado,
 siempre igual para la misma propiedad.
 
-**Modo edición** es la vía para pasar de aproximada a exacta sin tocar el
-portafolio de asesores: se entra con una cuenta de CPM, se elige la propiedad
+**Modo edición** es la otra vía para pasar de aproximada a exacta. La de
+todos los días es el campo de coordenadas del portafolio de asesores, que las
+guarda en el inmueble y no vuelve a pedir la contraseña; esta de aquí sigue
+sirviendo para un arreglo rápido sobre el mapa, y lo que fije se conserva: la
+sincronización del portafolio adopta esas coordenadas en vez de pisarlas. Se
+entra con una cuenta de CPM, se elige la propiedad
 y se fija su ubicación de dos formas —haciendo clic en el mapa, o pegando en
 la caja **las coordenadas** (`21.0672, -89.5046`) **o el Plus Code**
 (`3F8W+V5`)—. Eso guarda `lat`/`lng` en su documento de `catalogo_publico` y
