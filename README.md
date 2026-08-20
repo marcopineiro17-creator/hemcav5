@@ -41,7 +41,7 @@ public_html/
 
 ## Bloques para el contenedor de código de Hostinger
 
-Además de la página suelta de HEMCA, hay seis bloques pensados para pegarse
+Además de la página suelta de HEMCA, hay siete bloques pensados para pegarse
 en un contenedor de código del constructor. No llevan etiquetas de documento,
 todo su CSS está acotado a su propio contenedor y no dependen de ningún CDN
 de scripts.
@@ -54,9 +54,10 @@ de scripts.
 | `inicio-embed-hostinger.html` | la portada | `#cpm-home` |
 | `catalogo-embed-hostinger.html` | `/catalogo-de-propiedades` | `#cpm-catalogo` |
 | `predios-embed-hostinger.html` | `/regularizacion-predios` | `#cpm-predios` |
+| `mapa-embed-hostinger.html` | el mapa de la cartera | `#cpm-mapa` |
 
 Se construyen con `tools/` (`css_prep.py`, `div_prep.py`, `home_prep.py`,
-`cat_prep.py`, `predios.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
+`cat_prep.py`, `predios.py`, `mapa.py`, `build.py`); no se editan a mano, porque el guion vuelve a generarlos desde el
 original. Los originales de partida están en `src/`.
 
 ### Regularización de Predios
@@ -109,6 +110,60 @@ producían la vibración; pero ese runtime sólo reconoce `#hb-lp`, `#ic-lp` y
 `#cpm-divisiones`, así que a `#cpm-predios` no le contesta nadie: sin escribirla,
 el iframe se queda en 150 px sobre un contenido de 7 000. Como aquí no hay dos
 escritores, no hay pugna posible.
+
+### Mapa de propiedades
+
+Lee la colección pública `catalogo_publico` de Firebase —la misma que el
+catálogo— y pinta la cartera sobre un mapa navegable con la lista
+sincronizada: al pasar por una tarjeta se resalta su alfiler, al pulsar un
+alfiler se resalta y se trae su tarjeta, y **Buscar en esta área** acota la
+lista a lo que se ve en el mapa. Se escribe en `tools/mapa_css.txt`,
+`mapa_html.txt` y `mapa_js.txt`, y `tools/mapa.py` las une y las revisa.
+
+Es el único bloque que **sí depende de recursos externos**: Firebase para
+leer la cartera y Leaflet con teselas de OpenStreetMap para el mapa. La
+revisión los permite por lista blanca, con su motivo cada uno, y sigue
+rechazando cualquier otro origen. Si Leaflet no carga, el bloque no se queda
+en blanco: pasa a lista y lo dice.
+
+También es el único de **altura fija** en vez de documento alto: un mapa
+necesita altura real, y la lista tiene su propio scroll interno. Esa altura
+se **mide** —barra + filtros + pie descontados de la ventana real— porque
+adivinarla dejaba el bloque 100 px más alto que la pantalla de un teléfono,
+donde los filtros se reparten en más filas.
+
+#### El problema de las coordenadas
+
+Todos los `ubicacion_maps` de la cartera son enlaces **cortos**
+(`maps.app.goo.gl/…`), y un enlace corto **no contiene las coordenadas**:
+hay que seguir su redirección para saberlas, y un navegador no puede
+seguirla contra el dominio de Google. Sin resolverlo no habría ni un
+alfiler.
+
+Se resuelve con una cadena de precedencia, de más fiable a menos:
+
+| Orden | De dónde salen | Precisión |
+| --- | --- | --- |
+| 1 | campos `lat`/`lng` del documento (o `latitud`/`longitud`, `geo`, GeoPoint) | exacta |
+| 2 | coordenadas dentro del enlace, si es un enlace **largo** (`@lat,lng`, `!3d!4d`, `q=`) | exacta |
+| 3 | centroide de la localidad, del cuadro `LOCALIDADES` | **aproximada** |
+| 4 | nada: la propiedad sale en la lista pero no en el mapa | sin ubicar |
+
+Lo aproximado se marca: alfiler de borde discontinuo dorado, etiqueta en la
+tarjeta y un aviso arriba de la lista con el recuento. Varias propiedades de
+la misma localidad no se apilan: se reparten en espiral con el ángulo dorado,
+siempre igual para la misma propiedad.
+
+**Modo edición** es la vía para pasar de aproximada a exacta sin tocar el
+portafolio de asesores: se entra con una cuenta de CPM, se elige la
+propiedad y se hace clic en el mapa sobre el predio; eso guarda `lat`/`lng`
+en su documento de `catalogo_publico` y el alfiler pasa a exacto para
+siempre. Las reglas ya exigen sesión para escribir, así que el modo sólo
+funciona con credenciales válidas.
+
+Si algún día crece el tráfico, las teselas de OpenStreetMap tienen política
+de uso razonable y conviene pasar a un proveedor de pago; el cambio es una
+línea (`L.tileLayer`).
 
 ### Destinos de los enlaces
 

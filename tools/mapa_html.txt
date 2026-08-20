@@ -1,0 +1,77 @@
+<div id="cpm-mapa" class="ver-mapa">
+
+  <div class="barra">
+    <img id="cpmMpLogo" alt="CPM">
+    <div class="barra-tit">
+      <b>Mapa de propiedades</b>
+      <small id="cpmMpCuenta">Cargando cartera…</small>
+    </div>
+    <div class="barra-sp"></div>
+    <div class="vista" role="tablist" aria-label="Cambiar vista">
+      <button id="cpmMpVerLista" type="button" role="tab">Lista</button>
+      <button id="cpmMpVerMapa" type="button" role="tab" class="on">Mapa</button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <div class="fila">
+      <div class="busca-caja">
+        <span class="lupa" aria-hidden="true">🔍</span>
+        <input id="cpmMpBusca" class="busca" type="search"
+               placeholder="Buscar por ciudad, ID o descripción…" autocomplete="off">
+      </div>
+      <select id="cpmMpCiudad" class="sel" aria-label="Ciudad"></select>
+      <select id="cpmMpPrecio" class="sel" aria-label="Precio">
+        <option value="">Precio: cualquiera</option>
+        <option value="0-500000">Hasta $500 mil</option>
+        <option value="500000-1000000">$500 mil – $1 M</option>
+        <option value="1000000-3000000">$1 M – $3 M</option>
+        <option value="3000000-8000000">$3 M – $8 M</option>
+        <option value="8000000-0">Más de $8 M</option>
+      </select>
+      <select id="cpmMpSup" class="sel" aria-label="Superficie">
+        <option value="">Superficie: cualquiera</option>
+        <option value="0-300">Hasta 300 m²</option>
+        <option value="300-1000">300 – 1 000 m²</option>
+        <option value="1000-5000">1 000 – 5 000 m²</option>
+        <option value="5000-20000">5 000 – 20 000 m²</option>
+        <option value="20000-0">Más de 2 ha</option>
+      </select>
+      <button id="cpmMpLimpiar" class="limpiar" type="button">Limpiar filtros</button>
+    </div>
+    <div class="fila" id="cpmMpTipos"></div>
+  </div>
+
+  <div class="cuerpo">
+    <div class="panel" id="cpmMpPanel">
+      <div class="cargando"><div class="spin"></div><span>Cargando propiedades…</span></div>
+    </div>
+
+    <div class="mapa-wrap" id="cpmMpWrap">
+      <div class="lienzo" id="cpmMpLienzo"></div>
+      <div class="mapa-botones">
+        <button id="cpmMpAqui" class="mbtn oculto" type="button">
+          <span aria-hidden="true">⟳</span> Buscar en esta área
+        </button>
+        <button id="cpmMpTodo" class="mbtn oculto" type="button">
+          <span aria-hidden="true">⤢</span> Ver toda la cartera
+        </button>
+      </div>
+      <div class="mapa-caido">
+        <div>
+          <b>El mapa no se pudo cargar</b>
+          Revisa la conexión y recarga la página. Las propiedades siguen
+          disponibles en la lista.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pie">
+    <span id="cpmMpAtrib"></span>
+    <span class="sp"></span>
+    <span id="cpmMpPrecision"></span>
+    <button id="cpmMpEditar" type="button" title="Ajustar la ubicación exacta de cada propiedad">Modo edición</button>
+  </div>
+
+</div>

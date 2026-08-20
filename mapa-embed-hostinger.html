@@ -1,0 +1,1726 @@
+<!-- =====================================================================
+     CPM · MAPA DE PROPIEDADES
+     Bloque para el contenedor de codigo de Hostinger.
+     Lee la coleccion publica 'catalogo_publico' de Firebase y pinta la
+     cartera sobre un mapa navegable, con su lista sincronizada.
+     Se pega tal cual: no lleva etiquetas de documento y todo su CSS esta
+     acotado a #cpm-mapa (y a .cpm-mp-* para las capas).
+     Generado por tools/mapa.py -- no editar a mano.
+     ===================================================================== -->
+<script>
+/* Primera linea del bloque: fija --vh-real en la raiz del documento antes de
+   que el CSS se aplique a nada. Las propiedades personalizadas se heredan, asi
+   que el valor llega a todo el bloque. Sin esto, 100svh se evaluaria una vez
+   contra el viewport del iframe -- que puede medir miles de pixeles -- y el
+   anfitrion dimensionaria el iframe con ese valor inflado: de ahi la franja
+   blanca interminable al final. */
+(function () {
+  var H = 0;
+  try { H = (window.self !== window.top && window.parent.innerHeight) || window.innerHeight; }
+  catch (e) { H = window.innerHeight; }
+  if (H > 0) try { document.documentElement.style.setProperty('--vh-real', H + 'px'); } catch (e) {}
+  /* Solo se reajusta ante cambios grandes (girar el telefono). Los pequenos
+     -- la barra de direcciones al desplazarse -- se ignoran a proposito: si
+     este valor se mueve, cambian las alturas, el anfitrion redimensiona el
+     iframe y aparece el temblor. */
+  function s() {
+    var h = 0;
+    try { h = (window.self !== window.top && window.parent.innerHeight) || window.innerHeight; }
+    catch (e) { h = window.innerHeight; }
+    if (h > 0 && Math.abs(h - H) > 80) {
+      H = h;
+      try { document.documentElement.style.setProperty('--vh-real', h + 'px'); } catch (e) {}
+    }
+  }
+  window.addEventListener('resize', s, { passive: true });
+  try { if (window.self !== window.top) window.parent.addEventListener('resize', s, { passive: true }); } catch (e) {}
+})();
+</script>
+<style>
+/* ===================================================================
+   CPM · MAPA DE PROPIEDADES
+   Todo el CSS va acotado a #cpm-mapa (y a .cpm-mp-ov para las capas que
+   se inyectan en <body>, que no pueden heredar del contenedor).
+
+   A diferencia de los otros bloques, este NO es un documento alto: es un
+   panel de ALTURA FIJA. Un mapa necesita altura real para existir, y la
+   lista tiene su propio scroll interno -- que dentro de un iframe si
+   funciona, porque es un scroller del propio elemento. De paso desaparece
+   el problema de la altura reservada por el constructor: el bloque siempre
+   mide lo mismo.
+   =================================================================== */
+#cpm-mapa {
+  --azul:#3d7ab5;
+  --azul-osc:#2d5f8f;
+  --navy:#1a2d42;
+  --navy-2:#2d4a6e;
+  --tinta:#1e2d3d;
+  --texto:#5a6a7a;
+  --suave:#7a8a9a;
+  --linea:#e8ecf0;
+  --linea-2:#d6dde6;
+  --gris:#f4f6f9;
+  --pale:#e8f2fb;
+  --oro:#c8a84b;
+  --verde:#27ae60;
+  --sans:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+
+  /* Altura del CUERPO (lista + mapa). Dentro del iframe, --vh-real es la
+     altura de la ventana de VERDAD -- la fija el guion de cabecera --, no la
+     del marco, que mide miles de pixeles.
+     Se le descuentan 320px porque encima y debajo van la barra, los filtros
+     y el pie: sin descontarlos el bloque salia ~200px mas alto que la
+     pantalla y habia que hacer scroll para ver el mapa completo. */
+  --alto:clamp(400px,calc(var(--vh-real,820px) - 320px),700px);
+
+  position:relative;
+  font-family:var(--sans);
+  color:var(--tinta);
+  background:#fff;
+  border:1px solid var(--linea);
+  border-radius:16px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#cpm-mapa *,#cpm-mapa *::before,#cpm-mapa *::after { box-sizing:border-box }
+#cpm-mapa button,#cpm-mapa input,#cpm-mapa select { font-family:inherit }
+#cpm-mapa button { cursor:pointer }
+#cpm-mapa img { display:block;max-width:100% }
+#cpm-mapa p,#cpm-mapa h1,#cpm-mapa h2,#cpm-mapa h3,#cpm-mapa h4 { margin:0 }
+#cpm-mapa a { color:inherit;text-decoration:none }
+/* El tema del sitio pone reglas sobre button/a que se cuelan aqui */
+#cpm-mapa button {
+  border:0;background:none;padding:0;margin:0;color:inherit;
+  text-transform:none;letter-spacing:normal;box-shadow:none;border-radius:0;
+  text-align:left;
+}
+
+/* ---------- Barra ---------- */
+#cpm-mapa .barra {
+  background:linear-gradient(135deg,var(--navy),var(--navy-2));
+  padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex:0 0 auto;
+}
+#cpm-mapa .barra img { height:28px;flex:0 0 auto }
+#cpm-mapa .barra-tit { color:#fff;min-width:0 }
+#cpm-mapa .barra-tit b { display:block;font-size:14px;font-weight:700;line-height:1.2 }
+#cpm-mapa .barra-tit small { font-size:11px;color:rgba(255,255,255,.62) }
+#cpm-mapa .barra-sp { flex:1 }
+#cpm-mapa .vista {
+  display:none;background:rgba(255,255,255,.12);border-radius:22px;padding:3px;gap:2px;flex:0 0 auto;
+}
+#cpm-mapa .vista button {
+  border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:rgba(255,255,255,.75);
+  transition:background .18s,color .18s;
+}
+#cpm-mapa .vista button.on { background:#fff;color:var(--navy) }
+
+/* ---------- Filtros ---------- */
+#cpm-mapa .filtros { padding:12px 16px;border-bottom:1px solid var(--linea);flex:0 0 auto;background:#fff }
+#cpm-mapa .fila { display:flex;gap:8px;flex-wrap:wrap;align-items:center }
+#cpm-mapa .fila + .fila { margin-top:9px }
+#cpm-mapa .busca-caja { position:relative;flex:1 1 240px;min-width:0 }
+#cpm-mapa .busca-caja .lupa {
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#a0b0c0;font-size:13px;
+  pointer-events:none;
+}
+#cpm-mapa .busca {
+  width:100%;padding:10px 12px 10px 34px;border:2px solid var(--linea);border-radius:12px;
+  font-size:13px;outline:none;background:#fff;color:var(--tinta);
+}
+#cpm-mapa .busca:focus { border-color:var(--azul) }
+#cpm-mapa .sel {
+  padding:9px 12px;border:2px solid var(--linea);border-radius:12px;font-size:12.5px;
+  background:#fff;color:var(--tinta);outline:none;max-width:100%;
+}
+#cpm-mapa .sel:focus { border-color:var(--azul) }
+#cpm-mapa .pill {
+  background:var(--gris);border:1px solid var(--linea);border-radius:22px;color:var(--texto);
+  font-size:12px;font-weight:600;padding:7px 14px;white-space:nowrap;transition:all .15s;
+}
+#cpm-mapa .pill.on { background:linear-gradient(135deg,var(--azul),var(--azul-osc));border-color:transparent;color:#fff }
+#cpm-mapa .pill .n { opacity:.72;margin-left:4px }
+#cpm-mapa .limpiar { font-size:12px;font-weight:600;color:var(--azul);padding:7px 4px }
+#cpm-mapa .limpiar:hover { text-decoration:underline }
+
+/* ---------- Cuerpo: lista + mapa ---------- */
+#cpm-mapa .cuerpo {
+  flex:1 1 auto;min-height:0;height:var(--alto);
+  display:grid;grid-template-columns:minmax(0,412px) minmax(0,1fr);
+}
+#cpm-mapa .panel {
+  min-width:0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  border-right:1px solid var(--linea);background:var(--gris);
+}
+/* overflow:hidden aqui es red de seguridad: Leaflet ya recorta sus capas,
+   pero si por lo que sea un alfiler quedara fuera de la caja, no debe poder
+   pintarse encima de los filtros ni robarles el clic. */
+#cpm-mapa .mapa-wrap { position:relative;min-width:0;min-height:0;background:#e8eef4;overflow:hidden }
+#cpm-mapa .lienzo { position:absolute;inset:0 }
+/* Leaflet dibuja dentro; sus propias clases no se pueden acotar, asi que
+   se le pone la tipografia al contenedor y basta. */
+#cpm-mapa .lienzo { font-family:var(--sans);font-size:12px }
+
+/* ---------- Aviso de precisión ---------- */
+#cpm-mapa .aviso {
+  margin:12px 12px 0;background:#fff8e1;border:1px solid #f0e0a8;border-radius:11px;
+  padding:10px 13px;font-size:12px;color:#8a6d1f;line-height:1.55;
+}
+#cpm-mapa .aviso b { font-weight:700 }
+
+/* ---------- Tarjetas ---------- */
+#cpm-mapa .tarjetas { padding:12px;display:flex;flex-direction:column;gap:10px }
+#cpm-mapa .tar {
+  background:#fff;border:1px solid transparent;border-radius:14px;overflow:hidden;
+  display:grid;grid-template-columns:118px minmax(0,1fr);
+  box-shadow:0 1px 6px rgba(26,45,66,.07);cursor:pointer;
+  transition:box-shadow .18s,border-color .18s,transform .18s;
+}
+#cpm-mapa .tar:hover { box-shadow:0 8px 24px rgba(61,122,181,.18);transform:translateY(-1px) }
+#cpm-mapa .tar.sel { border-color:var(--azul);box-shadow:0 8px 26px rgba(61,122,181,.26) }
+#cpm-mapa .tar-foto { position:relative;background:linear-gradient(135deg,#e8f2fb,#c5ddf5);min-height:104px }
+#cpm-mapa .tar-foto img { width:100%;height:100%;object-fit:cover;position:absolute;inset:0 }
+#cpm-mapa .tar-foto .sinfoto {
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+}
+#cpm-mapa .tar-foto .sinfoto img { position:static;width:auto;height:32px;opacity:.45;object-fit:contain }
+#cpm-mapa .tar-foto .nf {
+  position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;
+  border-radius:20px;padding:1px 7px;font-size:9px;
+}
+#cpm-mapa .tar-cuerpo { padding:11px 13px;min-width:0;display:flex;flex-direction:column;gap:3px }
+#cpm-mapa .tar-precio { font-size:15px;font-weight:700;color:var(--azul);line-height:1.2 }
+#cpm-mapa .tar-precio .desde { font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--suave);display:block }
+#cpm-mapa .tar-nom {
+  font-size:12.5px;font-weight:600;color:var(--navy);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+#cpm-mapa .tar-meta { font-size:11px;color:var(--suave);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px }
+#cpm-mapa .tar-meta i { font-style:normal;color:var(--linea-2) }
+#cpm-mapa .tar-pie { display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:5px;flex-wrap:wrap }
+#cpm-mapa .chip {
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;background:var(--pale);color:var(--azul-osc);
+}
+#cpm-mapa .chip.aprox { background:#fff3d6;color:#8a6d1f }
+#cpm-mapa .chip.oro { background:linear-gradient(135deg,#c9a63f,#eeda98);color:#3a2c06 }
+#cpm-mapa .tar.premium { border-color:#d9bd6b }
+
+#cpm-mapa .vacio { text-align:center;padding:52px 18px;color:#a0b0c0 }
+#cpm-mapa .vacio .big { font-size:34px;margin-bottom:8px }
+#cpm-mapa .vacio b { display:block;font-size:15px;color:var(--texto) }
+#cpm-mapa .vacio p { font-size:12.5px;margin-top:6px;line-height:1.6 }
+#cpm-mapa .sug {
+  background:#fff;border:2px solid var(--azul);color:var(--azul-osc);border-radius:8px;
+  padding:4px 12px;font-size:12.5px;font-weight:700;margin:4px 3px 0;
+}
+#cpm-mapa .sug:hover { background:var(--azul);color:#fff }
+
+/* ---------- Controles del mapa ---------- */
+#cpm-mapa .mapa-botones {
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:500;
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);
+}
+#cpm-mapa .mbtn {
+  background:#fff;border:1px solid var(--linea-2);border-radius:22px;padding:8px 15px;
+  font-size:12px;font-weight:700;color:var(--navy);box-shadow:0 2px 10px rgba(26,45,66,.18);
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+#cpm-mapa .mbtn:hover { border-color:var(--azul);color:var(--azul-osc) }
+#cpm-mapa .mbtn.oculto { display:none }
+#cpm-mapa .mapa-caido {
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  padding:26px;text-align:center;background:#eef2f7;
+}
+#cpm-mapa .mapa-wrap.caido .mapa-caido { display:flex }
+#cpm-mapa .mapa-caido div { max-width:320px;font-size:13px;color:var(--texto);line-height:1.6 }
+#cpm-mapa .mapa-caido b { display:block;font-size:14px;color:var(--navy);margin-bottom:6px }
+
+/* Alfiler de precio. Es un divIcon de Leaflet, asi que su caja la fija el
+   propio Leaflet; aqui solo se pinta lo de dentro. */
+.cpm-mp-pin {
+  background:#fff;border:2px solid var(--cpm-mp-azul,#3d7ab5);border-radius:20px;
+  padding:3px 9px;font:700 11.5px/1.2 'Montserrat',system-ui,sans-serif;color:#1a2d42;
+  box-shadow:0 2px 8px rgba(26,45,66,.3);white-space:nowrap;text-align:center;
+  transform:translate(-50%,-100%);position:relative;
+}
+.cpm-mp-pin::after {
+  content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--cpm-mp-azul,#3d7ab5);
+}
+.cpm-mp-pin.aprox { border-style:dashed;border-color:#c8a84b }
+.cpm-mp-pin.aprox::after { border-top-color:#c8a84b }
+.cpm-mp-pin.sel { background:#3d7ab5;color:#fff;border-color:#1a2d42;z-index:900 }
+.cpm-mp-pin.sel::after { border-top-color:#1a2d42 }
+.cpm-mp-pin.premium { border-color:#c8a84b;background:linear-gradient(135deg,#fffdf6,#fff) }
+.cpm-mp-grupo {
+  background:#3d7ab5;color:#fff;border:3px solid rgba(255,255,255,.9);border-radius:50%;
+  width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  font:800 13px/1 'Montserrat',system-ui,sans-serif;box-shadow:0 3px 12px rgba(26,45,66,.35);
+  transform:translate(-50%,-50%);
+}
+
+/* ---------- Pie ---------- */
+#cpm-mapa .pie {
+  flex:0 0 auto;padding:9px 16px;border-top:1px solid var(--linea);background:#fff;
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:10.5px;color:var(--suave);
+}
+#cpm-mapa .pie a { color:var(--azul) }
+#cpm-mapa .pie .sp { flex:1 }
+#cpm-mapa .pie button { font-size:10.5px;color:var(--suave) }
+#cpm-mapa .pie button:hover { color:var(--azul) }
+
+/* ---------- Arranque ---------- */
+#cpm-mapa .cargando {
+  flex:1 1 auto;min-height:360px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;color:var(--texto);font-size:13px;
+}
+#cpm-mapa .spin {
+  width:36px;height:36px;border:4px solid var(--linea);border-top-color:var(--azul);
+  border-radius:50%;animation:cpmMpSpin .9s linear infinite;
+}
+@keyframes cpmMpSpin { to{transform:rotate(360deg)} }
+
+/* ---------- Adaptable ---------- */
+@media (max-width:860px) {
+  #cpm-mapa { border-radius:12px }
+  #cpm-mapa .vista { display:flex }
+  #cpm-mapa .cuerpo { grid-template-columns:1fr }
+  #cpm-mapa .panel { border-right:0 }
+  /* Una vista a la vez: con las dos apiladas el mapa quedaba a 200px y
+     no se podia navegar, que es justo el punto de la pagina. */
+  #cpm-mapa.ver-mapa .panel { display:none }
+  #cpm-mapa.ver-lista .mapa-wrap { display:none }
+  #cpm-mapa .tar { grid-template-columns:104px minmax(0,1fr) }
+  #cpm-mapa .filtros { padding:10px 12px }
+  #cpm-mapa .barra { padding:10px 12px }
+
+  /* Filtros compactos. Sin esto, en un telefono estrecho los cuatro
+     controles se reparten en cinco filas y se comen 307px de una pantalla
+     de 640: mas espacio que el propio mapa. El buscador va en su fila, los
+     tres selectores en una rejilla de tres columnas y las pastillas de tipo
+     en una sola fila que se desliza a lo ancho. */
+  #cpm-mapa .filtros .fila:first-child {
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;align-items:stretch;
+  }
+  #cpm-mapa .busca-caja { grid-column:1/-1 }
+  #cpm-mapa .sel { width:100%;padding:8px 8px;font-size:12px }
+  #cpm-mapa .limpiar { grid-column:1/-1;text-align:center;padding:2px }
+  #cpm-mapa #cpmMpTipos {
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;
+  }
+  #cpm-mapa #cpmMpTipos::-webkit-scrollbar { display:none }
+  #cpm-mapa #cpmMpTipos .pill { flex:0 0 auto;padding:6px 12px;font-size:11.5px }
+}
+@media (max-width:520px) {
+  #cpm-mapa .barra-tit small { display:none }
+  #cpm-mapa .sel { flex:1 1 46%;min-width:0 }
+}
+
+/* =====================================================================
+   CAPAS (ficha y galeria). Se inyectan en <body>, fuera de #cpm-mapa,
+   asi que llevan su propio prefijo .cpm-mp-ov y repiten lo que necesitan.
+   ===================================================================== */
+.cpm-mp-ov {
+  position:fixed;left:0;right:0;top:0;bottom:0;z-index:2147483000;
+  background:rgba(26,45,66,.72);
+  font-family:'Montserrat',system-ui,-apple-system,'Segoe UI',sans-serif;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.cpm-mp-ov,.cpm-mp-ov * { box-sizing:border-box }
+.cpm-mp-ov .hoja {
+  background:#fff;width:100%;max-width:560px;max-height:100%;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.4);
+}
+.cpm-mp-ov .hoja::-webkit-scrollbar { width:10px }
+.cpm-mp-ov .hoja::-webkit-scrollbar-thumb { background:#cfd8e2;border-radius:8px }
+.cpm-mp-ov .cerrar {
+  background:#f0f4f8;border:0;border-radius:50%;width:34px;height:34px;color:#5a6a7a;
+  font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 34px;
+}
+.cpm-mp-ov .etq {
+  font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#3d7ab5;font-weight:700;
+}
+.cpm-mp-ov h3 { font-size:18px;font-weight:700;color:#1a2d42;line-height:1.3;margin:0 }
+.cpm-mp-ov .dato-caja {
+  background:#f4f6f9;border-radius:10px;padding:9px 12px;
+}
+.cpm-mp-ov .dato-caja span {
+  display:block;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#7a8a9a;margin-bottom:2px;
+}
+.cpm-mp-ov .dato-caja b { font-size:12.5px;font-weight:600;color:#1e2d3d }
+.cpm-mp-ov .cta {
+  display:flex;align-items:center;justify-content:center;gap:9px;width:100%;
+  border:0;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;
+  text-decoration:none;margin-top:9px;font-family:inherit;
+}
+.cpm-mp-ov .cta-wa { background:#25d366;color:#fff }
+.cpm-mp-ov .cta-maps { background:linear-gradient(135deg,#3d7ab5,#2d5f8f);color:#fff }
+.cpm-mp-ov .cta-oro { background:linear-gradient(135deg,#c9a63f,#eeda98);color:#3a2c06 }
+.cpm-mp-ov .cta-navy { background:#1a2d42;color:#fff }
+.cpm-mp-ov .lbl {
+  font-size:11px;font-weight:600;color:#5a6a7a;letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:6px;display:block;
+}
+.cpm-mp-ov .inp {
+  width:100%;padding:11px 14px;border:2px solid #e8ecf0;border-radius:11px;font-size:13px;
+  outline:none;font-family:inherit;background:#fff;color:#1e2d3d;
+}
+.cpm-mp-ov .inp:focus { border-color:#3d7ab5 }
+.cpm-mp-ov .err {
+  background:#fde8e8;color:#c0392b;padding:9px 13px;border-radius:9px;font-size:12px;
+  margin-top:12px;text-align:center;line-height:1.5;
+}
+.cpm-mp-ov .ok {
+  background:#eafaf1;color:#1e8449;padding:9px 13px;border-radius:9px;font-size:12px;
+  margin-top:12px;text-align:center;line-height:1.5;
+}
+@media (max-width:600px) {
+  .cpm-mp-ov { align-items:flex-end;padding:0 }
+  .cpm-mp-ov .hoja { max-width:100%;border-radius:18px 18px 0 0 }
+}
+</style>
+<div id="cpm-mapa" class="ver-mapa">
+
+  <div class="barra">
+    <img id="cpmMpLogo" alt="CPM">
+    <div class="barra-tit">
+      <b>Mapa de propiedades</b>
+      <small id="cpmMpCuenta">Cargando cartera…</small>
+    </div>
+    <div class="barra-sp"></div>
+    <div class="vista" role="tablist" aria-label="Cambiar vista">
+      <button id="cpmMpVerLista" type="button" role="tab">Lista</button>
+      <button id="cpmMpVerMapa" type="button" role="tab" class="on">Mapa</button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <div class="fila">
+      <div class="busca-caja">
+        <span class="lupa" aria-hidden="true">🔍</span>
+        <input id="cpmMpBusca" class="busca" type="search"
+               placeholder="Buscar por ciudad, ID o descripción…" autocomplete="off">
+      </div>
+      <select id="cpmMpCiudad" class="sel" aria-label="Ciudad"></select>
+      <select id="cpmMpPrecio" class="sel" aria-label="Precio">
+        <option value="">Precio: cualquiera</option>
+        <option value="0-500000">Hasta $500 mil</option>
+        <option value="500000-1000000">$500 mil – $1 M</option>
+        <option value="1000000-3000000">$1 M – $3 M</option>
+        <option value="3000000-8000000">$3 M – $8 M</option>
+        <option value="8000000-0">Más de $8 M</option>
+      </select>
+      <select id="cpmMpSup" class="sel" aria-label="Superficie">
+        <option value="">Superficie: cualquiera</option>
+        <option value="0-300">Hasta 300 m²</option>
+        <option value="300-1000">300 – 1 000 m²</option>
+        <option value="1000-5000">1 000 – 5 000 m²</option>
+        <option value="5000-20000">5 000 – 20 000 m²</option>
+        <option value="20000-0">Más de 2 ha</option>
+      </select>
+      <button id="cpmMpLimpiar" class="limpiar" type="button">Limpiar filtros</button>
+    </div>
+    <div class="fila" id="cpmMpTipos"></div>
+  </div>
+
+  <div class="cuerpo">
+    <div class="panel" id="cpmMpPanel">
+      <div class="cargando"><div class="spin"></div><span>Cargando propiedades…</span></div>
+    </div>
+
+    <div class="mapa-wrap" id="cpmMpWrap">
+      <div class="lienzo" id="cpmMpLienzo"></div>
+      <div class="mapa-botones">
+        <button id="cpmMpAqui" class="mbtn oculto" type="button">
+          <span aria-hidden="true">⟳</span> Buscar en esta área
+        </button>
+        <button id="cpmMpTodo" class="mbtn oculto" type="button">
+          <span aria-hidden="true">⤢</span> Ver toda la cartera
+        </button>
+      </div>
+      <div class="mapa-caido">
+        <div>
+          <b>El mapa no se pudo cargar</b>
+          Revisa la conexión y recarga la página. Las propiedades siguen
+          disponibles en la lista.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pie">
+    <span id="cpmMpAtrib"></span>
+    <span class="sp"></span>
+    <span id="cpmMpPrecision"></span>
+    <button id="cpmMpEditar" type="button" title="Ajustar la ubicación exacta de cada propiedad">Modo edición</button>
+  </div>
+
+</div>
+<script>
+(function () {
+  "use strict";
+
+  var raiz = document.getElementById("cpm-mapa");
+  if (!raiz || raiz.getAttribute("data-init")) return;
+  raiz.setAttribute("data-init", "arrancando");
+
+  /* ===================================================================
+     CONFIGURACION
+     La misma que usa el catalogo publico: lectura abierta de
+     'catalogo_publico'. Aqui NO se lee 'terrenos' (esa es la coleccion
+     privada del portafolio de asesores y exige sesion).
+     =================================================================== */
+  var FB_CONFIG = {
+    apiKey: "AIzaSyChXbLFxpqAk6QryoNHaPeCA3ZYsxelPzw",
+    authDomain: "propiedades-cpm.firebaseapp.com",
+    projectId: "propiedades-cpm",
+    storageBucket: "propiedades-cpm.firebasestorage.app",
+    messagingSenderId: "320995468382",
+    appId: "1:320995468382:web:bf9e53a12dd4d4f1ce80cf"
+  };
+  var COL = "catalogo_publico";
+  var WA = "5219999490874";
+  var LOGO_W = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65";
+  var LOGO_AZUL = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FLOGOTIPO%20AZUL.png?alt=media&token=ef71529d-7e86-4f08-b286-2dad5335e08c";
+  var TIPOS = ["Todos", "Terrenos", "Macrolotes", "Playa", "Casas", "Departamentos", "Ranchos y Haciendas"];
+  var CENTRO = [20.97, -89.35];   /* Yucatan, con Merida e Izamal en cuadro */
+  var ZOOM_INI = 9;
+
+  var FBV = "9.23.0";
+  var CDN = {
+    app:  ["https://www.gstatic.com/firebasejs/" + FBV + "/firebase-app-compat.js",
+           "https://cdn.jsdelivr.net/npm/firebase@" + FBV + "/firebase-app-compat.js"],
+    fs:   ["https://www.gstatic.com/firebasejs/" + FBV + "/firebase-firestore-compat.js",
+           "https://cdn.jsdelivr.net/npm/firebase@" + FBV + "/firebase-firestore-compat.js"],
+    auth: ["https://www.gstatic.com/firebasejs/" + FBV + "/firebase-auth-compat.js",
+           "https://cdn.jsdelivr.net/npm/firebase@" + FBV + "/firebase-auth-compat.js"],
+    lmap: ["https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+           "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"],
+    lcss: ["https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+           "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"]
+  };
+
+  /* ===================================================================
+     LOCALIDADES
+     Centroide aproximado de cada localidad, para poder situar en el mapa
+     una propiedad que todavia no tiene coordenadas propias.
+
+     POR QUE HACE FALTA ESTO: todos los enlaces de 'ubicacion_maps' que hay
+     hoy en la cartera son enlaces CORTOS (maps.app.goo.gl/...), y un enlace
+     corto no lleva las coordenadas dentro: hay que seguir su redireccion
+     para saberlas, y un navegador no puede seguirla contra el dominio de
+     Google. Asi que sin este cuadro no habria ni un solo alfiler.
+     Lo que se pinta con esto queda marcado como APROXIMADO, y el modo
+     edicion permite fijar la posicion exacta de cada predio.
+     =================================================================== */
+  var LOCALIDADES = {
+    "merida":[20.9674,-89.5926], "conkal":[21.0756,-89.5197], "izamal":[20.9297,-89.0175],
+    "progreso":[21.2833,-89.6647], "valladolid":[20.6896,-88.2019], "tizimin":[21.1417,-88.1514],
+    "motul":[21.0950,-89.2842], "hunucma":[21.0139,-89.8744], "uman":[20.8833,-89.7472],
+    "kanasin":[20.9344,-89.5578], "ticul":[20.3958,-89.5347], "tekax":[20.2000,-89.2833],
+    "oxkutzcab":[20.3006,-89.4189], "maxcanu":[20.5833,-90.0000], "espita":[20.9500,-88.3000],
+    "dzidzantun":[21.2500,-89.0333], "telchac puerto":[21.3400,-89.2700],
+    "telchac pueblo":[21.2000,-89.2667], "sisal":[21.1639,-90.0308], "celestun":[20.8583,-90.4000],
+    "chicxulub pueblo":[21.1333,-89.5167], "chicxulub puerto":[21.2944,-89.5361],
+    "ucu":[21.0333,-89.7500], "tixkokob":[21.0000,-89.3917], "acanceh":[20.8117,-89.4522],
+    "tecoh":[20.7444,-89.4744], "cuzama":[20.7333,-89.3167], "homun":[20.7419,-89.2794],
+    "seye":[20.8333,-89.3833], "abala":[20.6500,-89.6833], "chochola":[20.7333,-89.8167],
+    "muna":[20.4869,-89.7147], "mani":[20.3833,-89.3833], "peto":[20.1250,-88.9219],
+    "tzucacab":[20.0714,-89.0508], "chemax":[20.6544,-87.9319], "yaxkukul":[21.0500,-89.4667],
+    "baca":[21.1000,-89.4000], "cansahcab":[21.1667,-89.1000], "temax":[21.1500,-88.9333],
+    "tunkas":[20.9000,-88.7500], "dzitas":[20.8333,-88.5333], "tinum":[20.7500,-88.6167],
+    "sotuta":[20.5967,-89.0028], "yaxcaba":[20.5500,-88.8167], "kantunil":[20.7833,-89.0333],
+    "hoctun":[20.8667,-89.1833], "tahmek":[20.8833,-89.2833], "tekanto":[20.9333,-89.0667],
+    "tekit":[20.5333,-89.3167], "teabo":[20.4000,-89.2833], "mama":[20.4667,-89.3833],
+    "dzan":[20.3500,-89.4667], "santa elena":[20.3333,-89.6500], "halacho":[20.4833,-90.0833],
+    "opichen":[20.5667,-89.8500], "kopoma":[20.6500,-89.8833], "samahil":[20.8500,-89.8833],
+    "kinchil":[20.9167,-89.9500], "tetiz":[20.9667,-89.9333], "dzemul":[21.2000,-89.3000],
+    "ixil":[21.1333,-89.4833], "mocacha":[21.1000,-89.4500], "mococha":[21.1000,-89.4500],
+    "panaba":[21.3000,-88.2667], "rio lagartos":[21.5931,-88.1600], "san felipe":[21.5667,-88.2333],
+    "el cuyo":[21.5167,-87.6833], "buctzotz":[21.2000,-88.7833],
+    "dzilam de bravo":[21.3917,-88.8933], "dzilam gonzalez":[21.2833,-88.9333],
+    "yobain":[21.3333,-89.0500], "sucila":[21.1500,-88.3167], "calotmul":[21.0333,-88.1833],
+    "cenotillo":[21.0000,-88.6000], "sudzal":[20.8667,-88.9833], "xocchel":[20.8500,-89.1667],
+    "bokoba":[20.9833,-89.1833], "teya":[21.0333,-89.0667], "tepakan":[21.0500,-89.0500],
+    "suma de hidalgo":[21.0833,-89.1667], "muxupip":[21.0500,-89.2833],
+    "cacalchen":[21.0167,-89.2333], "chankom":[20.5500,-88.5000], "chichimila":[20.6333,-88.2167],
+    "kaua":[20.6667,-88.4167], "cuncunul":[20.6500,-88.3667], "temozon":[20.8000,-88.2000],
+    "uayma":[20.7000,-88.3000], "tixcacalcupul":[20.6167,-88.1500],
+    /* Fuera de Yucatan, por si aparece cartera en otros estados */
+    "cancun":[21.1619,-86.8515], "playa del carmen":[20.6296,-87.0739],
+    "tulum":[20.2114,-87.4654], "puerto morelos":[20.8481,-86.8750],
+    "bacalar":[18.6767,-88.3958], "chetumal":[18.5002,-88.2961],
+    "cozumel":[20.4230,-86.9223], "isla mujeres":[21.2311,-86.7311],
+    "campeche":[19.8301,-90.5349], "ciudad del carmen":[18.6333,-91.8333]
+  };
+  var CENTRO_ESTADO = {
+    "yucatan":[20.9674,-89.5926], "quintana roo":[20.6296,-87.0739],
+    "campeche":[19.8301,-90.5349]
+  };
+
+  /* ===================== HELPERS ===================== */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function $(id) { return document.getElementById(id); }
+  function safe(fn) { try { return fn(); } catch (e) { return undefined; } }
+
+  function fmt(n) {
+    n = Number(n) || 0;
+    return n > 0
+      ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n)
+      : "A tratar";
+  }
+  /* Precio corto para el alfiler: $16.3M / $850k */
+  function fmtCorto(n) {
+    n = Number(n) || 0;
+    if (n <= 0) return "A tratar";
+    if (n >= 1000000) {
+      var m = n / 1000000;
+      return "$" + (m >= 10 ? Math.round(m) : (Math.round(m * 10) / 10)) + "M";
+    }
+    if (n >= 1000) return "$" + Math.round(n / 1000) + "k";
+    return "$" + n;
+  }
+  function precioDe(t) { return Number(t.precio_total || t.precio) || 0; }
+  function supM2(t) {
+    var m = Number(t.dimensiones_m2) || 0;
+    if (m > 0) return m;
+    var ha = Number(t.hectareas) || 0;
+    return ha > 0 ? ha * 10000 : 0;
+  }
+  function fmtSup(t) {
+    var ha = Number(t.hectareas) || 0, m = Number(t.dimensiones_m2) || 0;
+    if (ha >= 1) return ha.toLocaleString("es-MX") + " ha";
+    if (m > 0) return m.toLocaleString("es-MX") + " m²";
+    return "Consultar";
+  }
+  function tipoCorto(tp) { return tp === "Terreno Particular" ? "Terreno" : (tp || "Propiedad"); }
+
+  /* Rango U+0300..U+036F por codigo: escrito con caracteres literales se
+     corrompe si la pagina no llega como UTF-8 y tumba todo el guion. */
+  var RE_DIA = new RegExp("[" + String.fromCharCode(0x300) + "-" + String.fromCharCode(0x36F) + "]", "g");
+  function norm(s) {
+    s = String(s == null ? "" : s).toLowerCase();
+    try { s = s.normalize("NFD").replace(RE_DIA, ""); } catch (e) {}
+    return s.replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  /* ===================================================================
+     COORDENADAS
+     Cadena de precedencia, de mas fiable a menos. Cada propiedad queda
+     con {lat,lng,precision} donde precision es 'exacta' o 'aproximada'.
+     =================================================================== */
+  function valida(lat, lng) {
+    lat = Number(lat); lng = Number(lng);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    if (lat === 0 && lng === 0) return null;      /* el 0,0 es dato vacio */
+    return [lat, lng];
+  }
+
+  /* 1. Campos explicitos. Se aceptan varios nombres porque el dato lo
+        pueden haber capturado de formas distintas. */
+  function coordsDeCampos(o) {
+    var pares = [["lat", "lng"], ["lat", "lon"], ["latitud", "longitud"],
+                 ["latitude", "longitude"]];
+    for (var i = 0; i < pares.length; i++) {
+      var v = valida(o[pares[i][0]], o[pares[i][1]]);
+      if (v) return v;
+    }
+    var anid = [o.coords, o.coordenadas, o.geo, o.ubicacion, o.punto, o.latlng];
+    for (var j = 0; j < anid.length; j++) {
+      var c = anid[j];
+      if (!c) continue;
+      if (typeof c === "string") {
+        var m = c.match(/(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/);
+        if (m) { var v2 = valida(m[1], m[2]); if (v2) return v2; }
+      } else if (typeof c === "object") {
+        var v3 = valida(c.lat != null ? c.lat : c.latitude,
+                        c.lng != null ? c.lng : (c.lon != null ? c.lon : c.longitude));
+        if (v3) return v3;
+        /* GeoPoint de Firestore */
+        var v4 = valida(c._lat, c._long);
+        if (v4) return v4;
+      }
+    }
+    return null;
+  }
+
+  /* 2. Coordenadas dentro del enlace de Maps. Solo funciona con enlaces
+        LARGOS; los cortos (maps.app.goo.gl) no las llevan. */
+  function coordsDeUrl(url) {
+    var u = String(url || "");
+    if (!/^https?:/i.test(u)) return null;
+    var pats = [
+      /!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/,          /* .../data=!3d..!4d.. */
+      /@(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)/,               /* /@lat,lng,15z     */
+      /[?&](?:q|query|ll|center|daddr|sll)=(-?\d{1,3}\.\d+)%2C(-?\d{1,3}\.\d+)/i,
+      /[?&](?:q|query|ll|center|daddr|sll)=(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/i,
+      /\/(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)(?:[/?#]|$)/     /* .../20.9,-89.5   */
+    ];
+    for (var i = 0; i < pats.length; i++) {
+      var m = u.match(pats[i]);
+      if (m) { var v = valida(m[1], m[2]); if (v) return v; }
+    }
+    return null;
+  }
+
+  /* 3. Centroide de la localidad. */
+  function coordsDeLocalidad(ciudad, estado) {
+    var c = norm(ciudad);
+    if (c && LOCALIDADES[c]) return LOCALIDADES[c];
+    /* "merida, yucatan" / "col. x, merida" -> se prueban los trozos */
+    if (c) {
+      var partes = c.split(" ");
+      for (var n = partes.length; n >= 1; n--) {
+        for (var i = 0; i + n <= partes.length; i++) {
+          var frag = partes.slice(i, i + n).join(" ");
+          if (frag.length >= 4 && LOCALIDADES[frag]) return LOCALIDADES[frag];
+        }
+      }
+    }
+    var e = norm(estado);
+    if (e && CENTRO_ESTADO[e]) return CENTRO_ESTADO[e];
+    return null;
+  }
+
+  /* Dispersion determinista: varias propiedades de la misma localidad no
+     pueden quedar exactamente en el mismo punto o se tapan entre si. Se
+     reparten en espiral con el angulo dorado -- siempre igual para la
+     misma propiedad, porque el indice sale del orden estable de la lista. */
+  function dispersa(base, k) {
+    if (!k) return [base[0], base[1]];
+    var ang = k * 2.399963229728653;                  /* angulo dorado en rad */
+    var rad = 0.0045 * Math.sqrt(k);                  /* ~500 m por unidad    */
+    return [base[0] + rad * Math.sin(ang), base[1] + rad * Math.cos(ang) * 1.05];
+  }
+
+  /* Resuelve una propiedad. `usados` cuenta cuantas van ya en esa
+     localidad, para la dispersion. */
+  function resolver(t, usados) {
+    var v = coordsDeCampos(t);
+    if (v) return { lat: v[0], lng: v[1], precision: "exacta", fuente: "campo" };
+    v = coordsDeUrl(t.ubicacion_maps);
+    if (v) return { lat: v[0], lng: v[1], precision: "exacta", fuente: "enlace" };
+    var base = coordsDeLocalidad(t.ciudad, t.estado);
+    if (base) {
+      var clave = norm(t.ciudad) || norm(t.estado) || "?";
+      var k = usados[clave] || 0;
+      usados[clave] = k + 1;
+      var p = dispersa(base, k);
+      return { lat: p[0], lng: p[1], precision: "aproximada", fuente: "localidad" };
+    }
+    return null;
+  }
+
+  /* ===================================================================
+     BUSQUEDA TOLERANTE
+     Mismo criterio que el catalogo: primero coincidencia exacta; si no hay,
+     se acepta parecido por distancia de edicion y se avisa de que el
+     resultado es aproximado.
+     =================================================================== */
+  function lev(a, b, max) {
+    if (a === b) return 0;
+    var la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > max) return max + 1;
+    if (!la) return lb;
+    if (!lb) return la;
+    var prev = [], cur = [], i, j;
+    for (j = 0; j <= lb; j++) prev[j] = j;
+    for (i = 1; i <= la; i++) {
+      cur[0] = i;
+      var best = cur[0];
+      for (j = 1; j <= lb; j++) {
+        var cost = (a.charCodeAt(i - 1) === b.charCodeAt(j - 1)) ? 0 : 1;
+        var v = prev[j] + 1;
+        if (cur[j - 1] + 1 < v) v = cur[j - 1] + 1;
+        if (prev[j - 1] + cost < v) v = prev[j - 1] + cost;
+        cur[j] = v;
+        if (v < best) best = v;
+      }
+      if (best > max) return max + 1;
+      var tmp = prev; prev = cur; cur = tmp;
+    }
+    return prev[lb];
+  }
+  function tol(n) { return n <= 3 ? 0 : n <= 5 ? 1 : n <= 8 ? 2 : 3; }
+  function indexar(t) {
+    var texto = norm([t.id, t.nombre, t.tipo, t.ciudad, t.estado, t.descripcion,
+                      (t.categorias || []).join(" ")].join(" "));
+    var vistos = {}, toks = [], parts = texto.split(" ");
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p.length >= 3 && !vistos[p]) { vistos[p] = 1; toks.push(p); }
+    }
+    t._txt = texto; t._toks = toks;
+    return t;
+  }
+  var VOCAB = [];
+  function armarVocab(lista) {
+    var peso = {}, bonito = {};
+    lista.forEach(function (t) {
+      [t.ciudad, t.estado, t.tipo].forEach(function (v) {
+        norm(v).split(" ").forEach(function (w) { if (w.length >= 4) peso[w] = (peso[w] || 0) + 3; });
+      });
+      (t._toks || []).forEach(function (w) { if (w.length >= 4) peso[w] = (peso[w] || 0) + 1; });
+      [t.ciudad, t.estado, t.nombre].forEach(function (v) {
+        String(v || "").split(/[\s,.;:()]+/).forEach(function (w) {
+          var k = norm(w);
+          if (k.length >= 4 && !bonito[k]) bonito[k] = w;
+        });
+      });
+    });
+    VOCAB = Object.keys(peso).map(function (k) {
+      return { k: k, peso: peso[k], txt: bonito[k] || k };
+    }).sort(function (a, b) { return b.peso - a.peso; });
+  }
+  function scoreTok(tk, t) {
+    if (t._txt.indexOf(tk) >= 0) return 0;
+    var tt = tol(tk.length), mejor = -1;
+    for (var i = 0; i < t._toks.length; i++) {
+      var w = t._toks[i];
+      if (w.indexOf(tk) === 0) return 0.4;
+      if (w.length > tk.length && tk.length >= 4) {
+        var dp = lev(tk, w.substr(0, tk.length), tt);
+        if (dp <= tt && (mejor < 0 || 0.5 + dp < mejor)) mejor = 0.5 + dp;
+      }
+      if (Math.abs(w.length - tk.length) <= tt) {
+        var d = lev(tk, w, tt);
+        if (d <= tt && (mejor < 0 || d < mejor)) mejor = d;
+        if (mejor === 0) break;
+      }
+    }
+    return mejor < 0 ? -1 : (mejor || 0.2);
+  }
+  function sugerir(tk) {
+    var tt = tol(tk.length) + 1, mejor = null, mejorD = 99;
+    for (var i = 0; i < VOCAB.length; i++) {
+      var v = VOCAB[i], d = 99;
+      if (Math.abs(v.k.length - tk.length) <= tt) d = lev(tk, v.k, tt);
+      if (v.k.length > tk.length && tk.length >= 4) {
+        var dp = lev(tk, v.k.substr(0, tk.length), tt);
+        if (dp < d) d = dp;
+      }
+      if (d < mejorD || (d === mejorD && mejor && v.peso > mejor.peso)) { mejorD = d; mejor = v; }
+      if (mejorD === 0) break;
+    }
+    return (mejor && mejorD <= tt) ? mejor.txt : null;
+  }
+  function buscar(qRaw, base) {
+    var s = norm(qRaw);
+    if (!s) return { lista: base, aprox: false, sug: [] };
+    var toks = s.split(" ").filter(function (x) { return x.length >= 2; });
+    if (!toks.length) return { lista: base, aprox: false, sug: [] };
+    var estricto = base.filter(function (t) {
+      for (var i = 0; i < toks.length; i++) { if (t._txt.indexOf(toks[i]) < 0) return false; }
+      return true;
+    });
+    if (estricto.length) return { lista: estricto, aprox: false, sug: [] };
+    var pts = [];
+    base.forEach(function (t) {
+      var total = 0;
+      for (var i = 0; i < toks.length; i++) {
+        var v = scoreTok(toks[i], t);
+        if (v < 0) return;
+        total += v;
+      }
+      pts.push({ t: t, s: total });
+    });
+    if (pts.length) {
+      pts.sort(function (a, b) { return a.s - b.s || String(a.t.id).localeCompare(String(b.t.id)); });
+      return { lista: pts.map(function (x) { return x.t; }), aprox: true, sug: [] };
+    }
+    var sug = [];
+    toks.forEach(function (tk) { var x = sugerir(tk); if (x && sug.indexOf(x) < 0) sug.push(x); });
+    return { lista: [], aprox: false, sug: sug.slice(0, 3) };
+  }
+
+  /* ===================================================================
+     AGRUPACION DE ALFILERES
+     A poco zoom, varios alfileres se solapan y el mapa se vuelve ilegible.
+     Se agrupan por celda de pixeles: la celda con dos o mas propiedades se
+     dibuja como un circulo con el numero, y al pulsarlo se acerca.
+     Se hace por PIXELES y no por grados porque un grado de longitud no mide
+     lo mismo que uno de latitud, y por zoom porque lo que importa es lo que
+     se solapa EN PANTALLA.
+     =================================================================== */
+  function agrupar(items, proyecta, celda) {
+    celda = celda || 64;
+    var cubos = {}, orden = [];
+    items.forEach(function (it) {
+      var p = proyecta(it.coord.lat, it.coord.lng);
+      var cx = Math.floor(p.x / celda), cy = Math.floor(p.y / celda);
+      var k = cx + ":" + cy;
+      if (!cubos[k]) { cubos[k] = { items: [], sx: 0, sy: 0 }; orden.push(k); }
+      cubos[k].items.push(it);
+      cubos[k].sx += it.coord.lat;
+      cubos[k].sy += it.coord.lng;
+    });
+    return orden.map(function (k) {
+      var c = cubos[k], n = c.items.length;
+      return {
+        grupo: n > 1,
+        n: n,
+        items: c.items,
+        lat: n > 1 ? c.sx / n : c.items[0].coord.lat,
+        lng: n > 1 ? c.sy / n : c.items[0].coord.lng
+      };
+    });
+  }
+
+  /* ===================== CARGA DE RECURSOS ===================== */
+  function unScript(urls, i) {
+    return new Promise(function (res, rej) {
+      if (i >= urls.length) { rej(new Error("no se pudo cargar " + urls[0])); return; }
+      var s = document.createElement("script");
+      s.src = urls[i]; s.async = false;
+      if (urls[i].indexOf("gstatic.com") === -1) s.crossOrigin = "anonymous";
+      s.onload = function () { res(); };
+      s.onerror = function () { unScript(urls, i + 1).then(res, rej); };
+      document.head.appendChild(s);
+    });
+  }
+  function unaHoja(urls, i) {
+    return new Promise(function (res) {
+      if (i >= urls.length) { res(false); return; }
+      var l = document.createElement("link");
+      l.rel = "stylesheet"; l.href = urls[i];
+      l.onload = function () { res(true); };
+      l.onerror = function () { unaHoja(urls, i + 1).then(res); };
+      document.head.appendChild(l);
+    });
+  }
+  function cargar(urls) { return unScript(urls, 0); }
+
+  /* ===================== ESTADO ===================== */
+  var DATOS = [];            /* todas las propiedades, ya indexadas       */
+  var VISTA = [];            /* las que pasan los filtros                */
+  var tipoAct = "Todos", q = "", ciudadAct = "", precioAct = "", supAct = "";
+  var limite = null;         /* recuadro del mapa cuando se busca "en esta area" */
+  var selId = null;
+  var mapa = null, capaPins = null, pinPorId = {}, leafletOk = false;
+  var edicion = false, usuarioEd = null;
+
+  /* Ficha destacada. No vive en Firestore, igual que en el catalogo: se
+     inyecta aqui y va primero. Sus fotos, si ya se importaron, llegan en el
+     documento puente 'IMPERIO CONKAL'. */
+  var IMPERIO = {
+    id: "IMPERIO CONKAL",
+    nombre: "Imperio Conkal · Residencial Privado",
+    tipo: "Desarrollo",
+    ciudad: "Conkal",
+    estado: "Yucatan",
+    descripcion: "Residencial privado en Conkal con casas de 222 a 224 m² de construcción sobre lotes desde 240 m². Casa club con alberca, gimnasio y lobby. Esquema de 15% de enganche, mensualidades y saldo contra entrega.",
+    precio: 3800000,
+    dimensiones_m2: 240,
+    hectareas: 0,
+    precio_m2: 0,
+    ubicacion_maps: "https://maps.app.goo.gl/NyWBRxtysDm8GLP48",
+    estado_propiedad: "disponible",
+    categorias: [],
+    fotos: [
+      "https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-itzar-dK7EpnNkEStZxdVh.jpg",
+      "https://assets.zyrosite.com/5MikVliRfr5rWuzU/modelo-akbal-148Mcmc4MjjK1mJe.jpg",
+      "https://assets.zyrosite.com/5MikVliRfr5rWuzU/alberca_-V2QEoDO2LOwg1gUH.jpg"
+    ],
+    _premium: true,
+    _desde: true,
+    _acciones: [
+      { txt: "Ver disponibilidad", url: "https://www.cpmempresarial.com/imperio-conkal-cotizador", estilo: "oro" },
+      { txt: "Ver más información", url: "https://www.cpmempresarial.com/imperio-conkal", estilo: "navy" }
+    ]
+  };
+
+  function fotosDe(o) {
+    var f = o.fotos || o.imagenes || o.images || o.photos || [];
+    if (typeof f === "string") f = f.split(/[,\n]/);
+    if (!Array.isArray(f)) f = [];
+    return f.filter(function (u) { return typeof u === "string" && /^https?:\/\//i.test(u.trim()); })
+            .map(function (u) { return u.trim(); });
+  }
+
+  /* ===================== ARRANQUE ===================== */
+  var mapaPedido = false;
+  Promise.resolve()
+    .then(function () { return cargar(CDN.app); })
+    .then(function () { return cargar(CDN.fs); })
+    .then(function () {
+      if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+      return firebase.firestore().collection(COL).get();
+    })
+    .then(function (snap) {
+      var docs = [];
+      snap.forEach(function (d) {
+        var o = d.data() || {};
+        if (!o.id) o.id = d.id;
+        docs.push(o);
+      });
+      /* El documento puente lleva SOLO las fotos de Imperio; se saca de la
+         lista para que el desarrollo no aparezca dos veces. */
+      var fotosImp = null;
+      docs = docs.filter(function (o) {
+        var idn = String(o.id || "").toUpperCase().replace(/[_\s-]+/g, " ").trim();
+        if (idn === "IMPERIO CONKAL") {
+          var f = fotosDe(o);
+          if (f.length) fotosImp = f;
+          return false;
+        }
+        return true;
+      });
+      if (fotosImp) IMPERIO.fotos = fotosImp;
+
+      docs.sort(function (a, b) { return String(a.id).localeCompare(String(b.id), "es", { numeric: true }); });
+      docs.unshift(IMPERIO);
+
+      /* Coordenadas. El contador de dispersion se comparte para que dos
+         propiedades de la misma localidad no caigan en el mismo punto. */
+      var usados = {};
+      DATOS = docs.map(function (o) {
+        o.fotos = fotosDe(o);
+        o.coord = resolver(o, usados);
+        return indexar(o);
+      });
+      armarVocab(DATOS);
+      montar();
+      pedirMapa();
+    })
+    .catch(function (e) {
+      try { if (window.console) console.warn("[CPM mapa]", e && (e.code || e.message)); } catch (_) {}
+      montar();
+      var p = $("cpmMpPanel");
+      if (p) {
+        p.innerHTML = '<div class="vacio"><div class="big">⚠️</div><b>No se pudo leer la cartera</b>' +
+          '<p>Revisa la conexión y recarga la página. Si el problema sigue, comprueba que la ' +
+          'colección <b>' + esc(COL) + '</b> tenga lectura pública en las reglas de Firestore.</p></div>';
+      }
+      var w = $("cpmMpWrap"); if (w) w.classList.add("caido");
+      ajustarAlto();
+    });
+
+  function pedirMapa() {
+    if (mapaPedido) return;
+    mapaPedido = true;
+    unaHoja(CDN.lcss, 0)
+      .then(function () { return cargar(CDN.lmap); })
+      .then(function () { leafletOk = true; iniciarMapa(); })
+      .catch(function () {
+        var w = $("cpmMpWrap"); if (w) w.classList.add("caido");
+        /* Si el mapa no carga, la lista pasa a ser la vista por omision:
+           dejar el bloque en "ver mapa" mostraria un rectangulo muerto. */
+        raiz.classList.remove("ver-mapa"); raiz.classList.add("ver-lista");
+        marcarVista();
+        ajustarAlto();
+      });
+  }
+
+  /* ===================== MONTAJE DE CONTROLES ===================== */
+  function montar() {
+    var lg = $("cpmMpLogo"); if (lg) lg.src = LOGO_W;
+    var at = $("cpmMpAtrib");
+    if (at) at.innerHTML = 'Mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+
+    /* Pastillas de tipo */
+    var cont = $("cpmMpTipos");
+    if (cont) {
+      cont.innerHTML = TIPOS.map(function (c) {
+        return '<button class="pill' + (c === tipoAct ? " on" : "") + '" type="button" data-t="' + esc(c) + '">' +
+               esc(c) + ' <span class="n" data-n="' + esc(c) + '"></span></button>';
+      }).join("");
+      cont.addEventListener("click", function (ev) {
+        var b = ev.target.closest ? ev.target.closest(".pill") : null;
+        if (!b) return;
+        tipoAct = b.getAttribute("data-t");
+        cont.querySelectorAll(".pill").forEach(function (x) { x.classList.toggle("on", x === b); });
+        limite = null;
+        aplicar();
+      });
+    }
+
+    /* Ciudades */
+    var sel = $("cpmMpCiudad");
+    if (sel) {
+      var ciudades = {};
+      DATOS.forEach(function (t) { if (t.ciudad) ciudades[String(t.ciudad).trim()] = 1; });
+      var lista = Object.keys(ciudades).sort(function (a, b) { return a.localeCompare(b, "es"); });
+      sel.innerHTML = '<option value="">Todas las ciudades</option>' +
+        lista.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + "</option>"; }).join("");
+      sel.addEventListener("change", function () { ciudadAct = sel.value; limite = null; aplicar(); });
+    }
+    var sp = $("cpmMpPrecio");
+    if (sp) sp.addEventListener("change", function () { precioAct = sp.value; limite = null; aplicar(); });
+    var ss = $("cpmMpSup");
+    if (ss) ss.addEventListener("change", function () { supAct = ss.value; limite = null; aplicar(); });
+
+    var bq = $("cpmMpBusca");
+    if (bq) bq.addEventListener("input", function () { q = bq.value; limite = null; aplicar(); });
+
+    var bl = $("cpmMpLimpiar");
+    if (bl) bl.addEventListener("click", function () {
+      q = ""; tipoAct = "Todos"; ciudadAct = ""; precioAct = ""; supAct = ""; limite = null;
+      if (bq) bq.value = "";
+      if (sel) sel.value = ""; if (sp) sp.value = ""; if (ss) ss.value = "";
+      if (cont) cont.querySelectorAll(".pill").forEach(function (x) {
+        x.classList.toggle("on", x.getAttribute("data-t") === "Todos");
+      });
+      aplicar();
+      verTodo();
+    });
+
+    /* Vista lista / mapa (movil) */
+    var vl = $("cpmMpVerLista"), vm = $("cpmMpVerMapa");
+    if (vl) vl.addEventListener("click", function () {
+      raiz.classList.add("ver-lista"); raiz.classList.remove("ver-mapa"); marcarVista();
+    });
+    if (vm) vm.addEventListener("click", function () {
+      raiz.classList.add("ver-mapa"); raiz.classList.remove("ver-lista"); marcarVista();
+      /* Leaflet mide el contenedor al crearse; si estaba oculto, midio 0. */
+      if (mapa) setTimeout(function () { safe(function () { mapa.invalidateSize(); }); }, 60);
+    });
+    marcarVista();
+
+    var ba = $("cpmMpAqui");
+    if (ba) ba.addEventListener("click", buscarAqui);
+    var bt = $("cpmMpTodo");
+    if (bt) bt.addEventListener("click", verTodo);
+    var be = $("cpmMpEditar");
+    if (be) be.addEventListener("click", abrirEdicion);
+
+    aplicar();
+  }
+  function marcarVista() {
+    var vl = $("cpmMpVerLista"), vm = $("cpmMpVerMapa");
+    var enMapa = raiz.classList.contains("ver-mapa");
+    if (vl) vl.classList.toggle("on", !enMapa);
+    if (vm) vm.classList.toggle("on", enMapa);
+  }
+
+  /* ===================== FILTROS ===================== */
+  function rango(txt) {
+    if (!txt) return null;
+    var p = txt.split("-");
+    return { min: Number(p[0]) || 0, max: Number(p[1]) || 0 };
+  }
+  function pasaTipo(t) {
+    if (tipoAct === "Todos") return true;
+    if (tipoAct === "Terrenos") return t.tipo === "Terreno Particular";
+    if (tipoAct === "Macrolotes") return t.tipo === "Macrolote";
+    return !!(t.categorias && t.categorias.indexOf(tipoAct) >= 0);
+  }
+  function cuenta(cat) {
+    var g = tipoAct; tipoAct = cat;
+    var n = DATOS.filter(pasaTipo).length;
+    tipoAct = g;
+    return n;
+  }
+  function baseFiltrada() {
+    var rp = rango(precioAct), rs = rango(supAct);
+    return DATOS.filter(function (t) {
+      if (!pasaTipo(t)) return false;
+      if (ciudadAct && String(t.ciudad || "").trim() !== ciudadAct) return false;
+      if (rp) {
+        var pr = precioDe(t);
+        if (pr <= 0) return false;                       /* "a tratar" no entra en un rango */
+        if (pr < rp.min) return false;
+        if (rp.max > 0 && pr > rp.max) return false;
+      }
+      if (rs) {
+        var sm = supM2(t);
+        if (sm <= 0) return false;
+        if (sm < rs.min) return false;
+        if (rs.max > 0 && sm > rs.max) return false;
+      }
+      if (limite && t.coord) {
+        if (t.coord.lat < limite.sur || t.coord.lat > limite.norte) return false;
+        if (t.coord.lng < limite.oeste || t.coord.lng > limite.este) return false;
+      } else if (limite && !t.coord) {
+        return false;                                    /* sin ubicacion no cabe en un recuadro */
+      }
+      return true;
+    });
+  }
+  function aplicar() {
+    var res = buscar(q, baseFiltrada());
+    VISTA = res.lista.slice().sort(function (a, b) { return (b._premium ? 1 : 0) - (a._premium ? 1 : 0); });
+    TIPOS.forEach(function (c) {
+      var el = raiz.querySelector('.n[data-n="' + (window.CSS && CSS.escape ? CSS.escape(c) : c) + '"]');
+      if (el) el.textContent = cuenta(c);
+    });
+    var c = $("cpmMpCuenta");
+    if (c) {
+      var conMapa = VISTA.filter(function (t) { return !!t.coord; }).length;
+      c.textContent = VISTA.length + (VISTA.length === 1 ? " propiedad" : " propiedades") +
+                      (conMapa !== VISTA.length ? " · " + conMapa + " en el mapa" : "");
+    }
+    pintarLista(res);
+    pintarPins();
+    pintarPrecision();
+    var bt = $("cpmMpTodo");
+    if (bt) bt.classList.toggle("oculto", !limite);
+  }
+  function pintarPrecision() {
+    var el = $("cpmMpPrecision");
+    if (!el) return;
+    var ap = VISTA.filter(function (t) { return t.coord && t.coord.precision === "aproximada"; }).length;
+    el.textContent = ap ? (ap === 1 ? "1 ubicación aproximada" : ap + " ubicaciones aproximadas") : "";
+  }
+
+  /* ===================== LISTA ===================== */
+  function tarjetaHTML(t) {
+    var pr = precioDe(t), fotos = t.fotos || [];
+    var chips = [];
+    if (t._premium) chips.push('<span class="chip oro">Desarrollo propio</span>');
+    chips.push('<span class="chip">' + esc(tipoCorto(t.tipo)) + "</span>");
+    if (t.coord && t.coord.precision === "aproximada") {
+      chips.push('<span class="chip aprox" title="Se ubica en el centro de la localidad, no en el predio">Ubicación aprox.</span>');
+    } else if (!t.coord) {
+      chips.push('<span class="chip aprox" title="Sin datos para situarla en el mapa">Sin ubicar</span>');
+    }
+    return '<article class="tar' + (t._premium ? " premium" : "") + (t.id === selId ? " sel" : "") +
+             '" data-id="' + esc(t.id) + '" tabindex="0" role="button">' +
+        '<div class="tar-foto">' +
+          (fotos.length
+            ? '<img src="' + esc(fotos[0]) + '" alt="" loading="lazy">' +
+              (fotos.length > 1 ? '<span class="nf">📷 ' + fotos.length + "</span>" : "")
+            : '<span class="sinfoto"><img src="' + LOGO_AZUL + '" alt="CPM"></span>') +
+        "</div>" +
+        '<div class="tar-cuerpo">' +
+          '<div class="tar-precio">' + (t._desde ? '<span class="desde">Desde</span>' : "") + fmt(pr) + "</div>" +
+          '<div class="tar-nom">' + esc(t.nombre || t.id) + "</div>" +
+          '<div class="tar-meta"><span>' + esc(fmtSup(t)) + (t._desde ? "+" : "") + "</span><i>·</i>" +
+            "<span>📍 " + esc(t.ciudad || t.estado || "—") + "</span></div>" +
+          '<div class="tar-pie">' + chips.join("") + "</div>" +
+        "</div></article>";
+  }
+  function pintarLista(res) {
+    var p = $("cpmMpPanel");
+    if (!p) return;
+    var partes = [];
+    var ap = VISTA.filter(function (t) { return t.coord && t.coord.precision === "aproximada"; }).length;
+    if (ap) {
+      partes.push('<div class="aviso"><b>' + ap + " de " + VISTA.length +
+        " ubicaciones son aproximadas.</b> Se sitúan en el centro de su localidad porque su " +
+        "enlace de Google Maps es un enlace corto y no contiene las coordenadas. " +
+        "Con <b>Modo edición</b> se fija la posición exacta de cada predio.</div>");
+    }
+    if (res && res.aprox) {
+      partes.push('<div class="aviso">Sin coincidencias exactas para <b>' + esc(String(q).trim()) +
+        "</b>. Se muestra lo más parecido.</div>");
+    }
+    if (!VISTA.length) {
+      var sug = (res && res.sug && res.sug.length)
+        ? "<p>¿Quizá quisiste decir…?</p><div>" + res.sug.map(function (s) {
+            return '<button class="sug" type="button" data-sug="' + esc(s) + '">' + esc(s) + "</button>";
+          }).join("") + "</div>"
+        : "<p>Prueba con otro filtro, otra ciudad o mueve el mapa.</p>";
+      partes.push('<div class="vacio"><div class="big">🔍</div><b>Sin resultados</b>' + sug + "</div>");
+      p.innerHTML = partes.join("");
+      p.querySelectorAll(".sug").forEach(function (b) {
+        b.addEventListener("click", function () {
+          q = b.getAttribute("data-sug");
+          var bq = $("cpmMpBusca"); if (bq) bq.value = q;
+          limite = null;
+          aplicar();
+        });
+      });
+      return;
+    }
+    partes.push('<div class="tarjetas">' + VISTA.map(tarjetaHTML).join("") + "</div>");
+    p.innerHTML = partes.join("");
+
+    p.querySelectorAll(".tar").forEach(function (card) {
+      var id = card.getAttribute("data-id");
+      card.addEventListener("click", function () { abrirFicha(id); });
+      card.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); abrirFicha(id); }
+      });
+      card.addEventListener("mouseenter", function () { resaltarPin(id, true); });
+      card.addEventListener("mouseleave", function () { resaltarPin(id, false); });
+    });
+  }
+  function propPorId(id) {
+    for (var i = 0; i < DATOS.length; i++) { if (String(DATOS[i].id) === String(id)) return DATOS[i]; }
+    return null;
+  }
+
+  /* ===================== MAPA ===================== */
+  function iniciarMapa() {
+    var lienzo = $("cpmMpLienzo");
+    if (!lienzo || !window.L) return;
+    mapa = L.map(lienzo, {
+      center: CENTRO, zoom: ZOOM_INI, zoomControl: true,
+      scrollWheelZoom: true, attributionControl: false
+    });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, minZoom: 5,
+      attribution: '© OpenStreetMap'
+    }).addTo(mapa);
+    capaPins = L.layerGroup().addTo(mapa);
+
+    mapa.on("moveend zoomend", function () {
+      pintarPins();
+      var ba = $("cpmMpAqui");
+      if (ba) ba.classList.remove("oculto");
+    });
+    mapa.on("click", function (ev) {
+      if (edicion && selId) fijarCoord(selId, ev.latlng.lat, ev.latlng.lng);
+    });
+    pintarPins();
+    encuadrar();
+    ajustarAlto();
+  }
+  function proyecta(lat, lng) {
+    return mapa.project([lat, lng], mapa.getZoom());
+  }
+  function pintarPins() {
+    if (!mapa || !capaPins) return;
+    capaPins.clearLayers();
+    pinPorId = {};
+    var conCoord = VISTA.filter(function (t) { return !!t.coord; });
+    var grupos = agrupar(conCoord.map(function (t) { return { t: t, coord: t.coord }; }), proyecta, 64);
+    grupos.forEach(function (g) {
+      if (g.grupo) {
+        var mg = L.marker([g.lat, g.lng], {
+          icon: L.divIcon({ className: "", html: '<div class="cpm-mp-grupo">' + g.n + "</div>", iconSize: null })
+        });
+        mg.on("click", function () {
+          safe(function () {
+            var b = L.latLngBounds(g.items.map(function (x) { return [x.coord.lat, x.coord.lng]; }));
+            mapa.fitBounds(b.pad(0.35), { maxZoom: 16 });
+          });
+        });
+        mg.addTo(capaPins);
+        return;
+      }
+      var t = g.items[0].t;
+      var cls = "cpm-mp-pin" + (t.coord.precision === "aproximada" ? " aprox" : "") +
+                (t._premium ? " premium" : "") + (t.id === selId ? " sel" : "");
+      var m = L.marker([g.lat, g.lng], {
+        icon: L.divIcon({
+          className: "",
+          html: '<div class="' + cls + '" data-pin="' + esc(t.id) + '">' + esc(fmtCorto(precioDe(t))) + "</div>",
+          iconSize: null
+        })
+      });
+      m.on("click", function () { seleccionar(t.id, false); });
+      m.addTo(capaPins);
+      pinPorId[t.id] = m;
+    });
+  }
+  function resaltarPin(id, on) {
+    var m = pinPorId[id];
+    if (!m) return;
+    safe(function () {
+      var el = m.getElement && m.getElement();
+      var d = el && el.querySelector(".cpm-mp-pin");
+      if (d) d.classList.toggle("sel", on || id === selId);
+    });
+  }
+  function seleccionar(id, centrar) {
+    selId = id;
+    pintarPins();
+    /* La tarjeta se resalta y se trae a la vista dentro del panel */
+    var p = $("cpmMpPanel");
+    if (p) {
+      p.querySelectorAll(".tar").forEach(function (c) {
+        var esta = c.getAttribute("data-id") === String(id);
+        c.classList.toggle("sel", esta);
+        if (esta) safe(function () { c.scrollIntoView({ block: "nearest", behavior: "smooth" }); });
+      });
+    }
+    var t = propPorId(id);
+    if (centrar && t && t.coord && mapa) {
+      safe(function () { mapa.setView([t.coord.lat, t.coord.lng], Math.max(mapa.getZoom(), 14)); });
+    }
+  }
+  function encuadrar() {
+    if (!mapa) return;
+    var pts = VISTA.filter(function (t) { return !!t.coord; })
+                   .map(function (t) { return [t.coord.lat, t.coord.lng]; });
+    if (!pts.length) { safe(function () { mapa.setView(CENTRO, ZOOM_INI); }); return; }
+    safe(function () { mapa.fitBounds(L.latLngBounds(pts).pad(0.18), { maxZoom: 15 }); });
+  }
+  function buscarAqui() {
+    if (!mapa) return;
+    safe(function () {
+      var b = mapa.getBounds();
+      limite = { sur: b.getSouth(), norte: b.getNorth(), oeste: b.getWest(), este: b.getEast() };
+      aplicar();
+    });
+  }
+  function verTodo() {
+    limite = null;
+    aplicar();
+    encuadrar();
+    var ba = $("cpmMpAqui"); if (ba) ba.classList.add("oculto");
+  }
+
+  /* ===================================================================
+     CAPAS ANCLADAS A LA PANTALLA
+     Dentro de un iframe, position:fixed se ancla al IFRAME -- que mide lo
+     que mide todo su contenido -- y no a la ventana: una ficha "fija"
+     aparecia al final del sitio. Se calcula la banda realmente visible del
+     marco y se le fija a la capa esa franja.
+     =================================================================== */
+  var MARCO = { el: null, win: null };
+  (function () {
+    var dentro = false;
+    try { dentro = (window.self !== window.top); } catch (e) { dentro = true; }
+    if (!dentro) return;
+    try {
+      var fe = window.frameElement;
+      if (fe && typeof window.parent.innerHeight === "number") { MARCO.el = fe; MARCO.win = window.parent; }
+    } catch (e) { MARCO.el = null; MARCO.win = null; }
+  })();
+  function banda() {
+    if (!MARCO.el) return null;
+    try {
+      var r = MARCO.el.getBoundingClientRect(), ph = MARCO.win.innerHeight;
+      var top = Math.max(0, -r.top);
+      var bot = Math.min(r.height, ph - r.top);
+      return { top: top, height: Math.max(240, bot - top) };
+    } catch (e) { return null; }
+  }
+  var anclados = [];
+  function anclar(el) {
+    var b = banda();
+    if (!b) { el.style.top = ""; el.style.bottom = ""; el.style.height = ""; return; }
+    el.style.top = b.top + "px"; el.style.bottom = "auto"; el.style.height = b.height + "px";
+  }
+  (function () {
+    function ping() { for (var i = 0; i < anclados.length; i++) anclar(anclados[i]); }
+    window.addEventListener("scroll", ping, { passive: true });
+    window.addEventListener("resize", ping, { passive: true });
+    if (MARCO.win) safe(function () {
+      MARCO.win.addEventListener("scroll", ping, { passive: true });
+      MARCO.win.addEventListener("resize", ping, { passive: true });
+    });
+    setInterval(function () { if (anclados.length) ping(); }, 250);
+  })();
+  function capa(z) {
+    var ov = document.createElement("div");
+    ov.className = "cpm-mp-ov cpm-mp-viva";
+    ov.style.zIndex = z || 2147483000;
+    document.body.appendChild(ov);
+    anclados.push(ov);
+    anclar(ov);
+    return ov;
+  }
+  function cerrar(ov) {
+    var i = anclados.indexOf(ov);
+    if (i >= 0) anclados.splice(i, 1);
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+
+  /* ===================== FICHA ===================== */
+  function abrirFicha(id) {
+    var t = propPorId(id);
+    if (!t) return;
+    seleccionar(id, true);
+    var pr = precioDe(t), fotos = t.fotos || [];
+    var ov = capa(2147483000);
+
+    var datos = [["Superficie", fmtSup(t)], ["Ciudad", t.ciudad || "—"],
+                 ["Estado", t.estado || "—"], ["Tipo", t.tipo || "—"]];
+    if (Number(t.precio_m2) > 0) datos.push(["Precio por m²", fmt(t.precio_m2)]);
+    if (t.coord) datos.push(["Ubicación", t.coord.precision === "exacta" ? "Exacta" : "Aproximada"]);
+    var datosHTML = datos.map(function (p) {
+      return '<div class="dato-caja"><span>' + esc(p[0]) + "</span><b>" + esc(p[1]) + "</b></div>";
+    }).join("");
+
+    var accs = "";
+    if (t._premium && t._acciones) {
+      accs = t._acciones.map(function (a) {
+        return '<a class="cta cta-' + (a.estilo === "oro" ? "oro" : "navy") + '" href="' + esc(a.url) +
+               '" target="_blank" rel="noopener">' + esc(a.txt) + "</a>";
+      }).join("");
+    }
+    var msg = t._premium
+      ? "Hola, me interesa Imperio Conkal. Quiero información de disponibilidad y precios."
+      : "Hola, me interesa la propiedad " + (t.nombre || "") + " (" + t.id + ").";
+    accs += '<a class="cta cta-wa" href="https://wa.me/' + WA + "?text=" + encodeURIComponent(msg) +
+            '" target="_blank" rel="noopener">💬 Preguntar por WhatsApp</a>';
+    if (t.ubicacion_maps && /^https?:/i.test(t.ubicacion_maps)) {
+      accs += '<a class="cta cta-maps" href="' + esc(t.ubicacion_maps) +
+              '" target="_blank" rel="noopener">🗺 Abrir en Google Maps</a>';
+    }
+
+    ov.innerHTML =
+      '<div class="hoja" style="padding-bottom:26px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px;gap:10px">' +
+          '<span class="etq">' + esc(t.id) + "</span>" +
+          '<button class="cerrar" id="cpmMpFx" type="button" aria-label="Cerrar">✕</button>' +
+        "</div>" +
+        (fotos.length
+          ? '<div id="cpmMpFoto" style="margin:0 16px;border-radius:14px;overflow:hidden;height:210px;cursor:pointer;position:relative">' +
+            '<img src="' + esc(fotos[0]) + '" style="width:100%;height:100%;object-fit:cover" alt="">' +
+            (fotos.length > 1 ? '<span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px">+' + (fotos.length - 1) + " fotos</span>" : "") +
+            "</div>"
+          : '<div style="margin:0 16px;border-radius:14px;height:120px;background:linear-gradient(135deg,#e8f2fb,#c5ddf5);display:flex;align-items:center;justify-content:center"><img src="' + LOGO_AZUL + '" style="height:46px;opacity:.5" alt="CPM"></div>') +
+        '<div style="padding:16px 18px 0">' +
+          "<h3>" + esc(t.nombre || t.id) + "</h3>" +
+          '<div style="font-size:12.5px;color:#5a6a7a;margin:5px 0 14px">📍 ' + esc(t.ciudad || "") +
+            (t.estado ? ", " + esc(t.estado) : "") + "</div>" +
+          '<div style="background:linear-gradient(135deg,#1a2d42,#2d4a6e);border-radius:14px;padding:14px 18px;margin-bottom:14px">' +
+            '<div style="font-size:9px;color:#7a9ab8;letter-spacing:.16em;text-transform:uppercase;margin-bottom:3px">' +
+              (t._desde ? "Precio desde" : "Precio") + "</div>" +
+            '<div style="font-size:21px;font-weight:700;color:#5a95cc">' + fmt(pr) + "</div>" +
+          "</div>" +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">' + datosHTML + "</div>" +
+          (t.descripcion
+            ? '<div class="etq" style="margin-bottom:6px">Descripción</div>' +
+              '<p style="color:#3a4a5a;line-height:1.75;font-size:12.5px;margin-bottom:14px">' + esc(t.descripcion) + "</p>"
+            : "") +
+          accs +
+        "</div></div>";
+
+    ov.addEventListener("click", function (e) { if (e.target === ov) cerrar(ov); });
+    var bx = ov.querySelector("#cpmMpFx");
+    if (bx) bx.addEventListener("click", function () { cerrar(ov); });
+    var bf = ov.querySelector("#cpmMpFoto");
+    if (bf) bf.addEventListener("click", function () { abrirGaleria(fotos); });
+  }
+
+  /* ===================== GALERIA ===================== */
+  function abrirGaleria(fotos) {
+    if (!fotos || !fotos.length) return;
+    var i = 0;
+    var ov = capa(2147483200);
+    ov.style.background = "rgba(0,0,0,.94)";
+    ov.style.padding = "0";
+    function pinta() {
+      /* Sin unidades vh: dentro de un iframe 1vh es el 1% del marco entero
+         (miles de px), no de la pantalla. Se usa el 100% de la capa, que ya
+         viene con la altura de la banda visible. */
+      ov.innerHTML =
+        '<button id="cpmMpGx" class="cerrar" style="position:absolute;top:14px;right:14px;z-index:3;background:rgba(255,255,255,.2);color:#fff" type="button">✕</button>' +
+        '<div style="width:100%;max-width:700px;height:100%;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">' +
+          '<img src="' + esc(fotos[i]) + '" style="max-width:100%;max-height:100%;min-height:0;object-fit:contain;border-radius:10px" alt="">' +
+          (fotos.length > 1
+            ? '<div style="display:flex;gap:7px;flex:0 0 auto">' + fotos.map(function (f, k) {
+                return '<i data-k="' + k + '" style="width:9px;height:9px;border-radius:50%;background:' +
+                  (k === i ? "#3d7ab5" : "rgba(255,255,255,.4)") + ';cursor:pointer;display:inline-block"></i>';
+              }).join("") + "</div>"
+            : "") +
+        "</div>" +
+        (fotos.length > 1
+          ? '<button id="cpmMpGp" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:0;border-radius:50%;width:42px;height:42px;color:#fff;font-size:22px;cursor:pointer">‹</button>' +
+            '<button id="cpmMpGn" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);border:0;border-radius:50%;width:42px;height:42px;color:#fff;font-size:22px;cursor:pointer">›</button>'
+          : "");
+      ov.querySelector("#cpmMpGx").addEventListener("click", function () { cerrar(ov); });
+      if (fotos.length > 1) {
+        ov.querySelector("#cpmMpGp").addEventListener("click", function () { i = (i - 1 + fotos.length) % fotos.length; pinta(); });
+        ov.querySelector("#cpmMpGn").addEventListener("click", function () { i = (i + 1) % fotos.length; pinta(); });
+        ov.querySelectorAll("i[data-k]").forEach(function (d) {
+          d.addEventListener("click", function () { i = +d.getAttribute("data-k"); pinta(); });
+        });
+      }
+    }
+    pinta();
+    ov.addEventListener("click", function (e) { if (e.target === ov) cerrar(ov); });
+  }
+
+  /* ===================================================================
+     MODO EDICION
+     Sirve para pasar una ubicacion de APROXIMADA a EXACTA sin tocar el
+     portafolio de asesores: se elige la propiedad, se hace clic en el mapa
+     y se guardan lat/lng en el documento de 'catalogo_publico'.
+     Las reglas ya exigen sesion para escribir, asi que primero se entra.
+     =================================================================== */
+  function abrirEdicion() {
+    if (edicion) { salirEdicion(); return; }
+    var ov = capa(2147483300);
+    ov.innerHTML =
+      '<div class="hoja" style="max-width:400px;padding:24px 22px 26px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px">' +
+          "<h3>Modo edición</h3>" +
+          '<button class="cerrar" id="cpmMpEx" type="button">✕</button></div>' +
+        '<p style="font-size:12.5px;color:#5a6a7a;line-height:1.65;margin-bottom:16px">' +
+          "Sirve para fijar la ubicación exacta de cada propiedad. Entra con tu cuenta de CPM, " +
+          "elige una propiedad en la lista y haz clic en el mapa sobre el predio.</p>" +
+        '<label class="lbl">Correo</label>' +
+        '<input id="cpmMpMail" class="inp" type="email" autocomplete="username">' +
+        '<div style="height:12px"></div>' +
+        '<label class="lbl">Contraseña</label>' +
+        '<input id="cpmMpPass" class="inp" type="password" autocomplete="current-password">' +
+        '<div id="cpmMpEerr"></div>' +
+        '<button id="cpmMpEok" class="cta cta-maps" style="margin-top:16px" type="button">ENTRAR</button>' +
+      "</div>";
+    var bx = ov.querySelector("#cpmMpEx");
+    bx.addEventListener("click", function () { cerrar(ov); });
+    ov.addEventListener("click", function (e) { if (e.target === ov) cerrar(ov); });
+    function err(m) { ov.querySelector("#cpmMpEerr").innerHTML = '<div class="err">' + esc(m) + "</div>"; }
+    ov.querySelector("#cpmMpEok").addEventListener("click", function () {
+      var mail = ov.querySelector("#cpmMpMail").value.trim();
+      var pass = ov.querySelector("#cpmMpPass").value;
+      if (!mail || !pass) return err("Escribe correo y contraseña.");
+      var b = ov.querySelector("#cpmMpEok");
+      b.textContent = "Entrando…";
+      cargar(CDN.auth)
+        .then(function () { return firebase.auth().signInWithEmailAndPassword(mail, pass); })
+        .then(function (cred) {
+          usuarioEd = cred.user;
+          edicion = true;
+          cerrar(ov);
+          entrarEdicion();
+        })
+        .catch(function (e) {
+          b.textContent = "ENTRAR";
+          err(e && e.code === "auth/wrong-password" ? "Contraseña incorrecta." :
+              (e && e.code === "auth/user-not-found" ? "Ese correo no tiene cuenta." :
+               "No se pudo entrar: " + ((e && (e.code || e.message)) || "error")));
+        });
+    });
+  }
+  function entrarEdicion() {
+    var be = $("cpmMpEditar");
+    if (be) be.textContent = "Salir de edición";
+    var el = document.createElement("div");
+    el.id = "cpmMpEdBanner";
+    el.style.cssText = "position:absolute;bottom:12px;left:12px;right:12px;z-index:600;background:#1a2d42;" +
+      "color:#fff;border-radius:11px;padding:10px 13px;font-size:12px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.3)";
+    el.innerHTML = '<b>Modo edición activo.</b> Elige una propiedad y haz clic en el mapa sobre su predio. ' +
+                   '<span id="cpmMpEdSel" style="color:#8fb8dd"></span>';
+    var w = $("cpmMpWrap");
+    if (w) w.appendChild(el);
+    /* En edicion, pulsar una tarjeta selecciona en vez de abrir la ficha */
+    aplicar();
+    refrescarBannerEd();
+  }
+  function salirEdicion() {
+    edicion = false;
+    usuarioEd = null;
+    safe(function () { firebase.auth().signOut(); });
+    var be = $("cpmMpEditar");
+    if (be) be.textContent = "Modo edición";
+    var b = $("cpmMpEdBanner");
+    if (b && b.parentNode) b.parentNode.removeChild(b);
+    aplicar();
+  }
+  function refrescarBannerEd() {
+    var s = $("cpmMpEdSel");
+    if (!s) return;
+    var t = selId ? propPorId(selId) : null;
+    s.textContent = t ? "Seleccionada: " + (t.nombre || t.id) : "Ninguna seleccionada.";
+  }
+  function fijarCoord(id, lat, lng) {
+    var t = propPorId(id);
+    if (!t) return;
+    if (String(id).toUpperCase().indexOf("IMPERIO") === 0) {
+      avisoEd("Imperio Conkal no vive en la base de datos: su ubicación se cambia en el código.");
+      return;
+    }
+    firebase.firestore().collection(COL).doc(String(id))
+      .set({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) }, { merge: true })
+      .then(function () {
+        t.lat = Number(lat.toFixed(6)); t.lng = Number(lng.toFixed(6));
+        t.coord = { lat: t.lat, lng: t.lng, precision: "exacta", fuente: "campo" };
+        aplicar();
+        avisoEd("Ubicación guardada para " + (t.nombre || t.id) + ".");
+      })
+      .catch(function (e) {
+        avisoEd("No se pudo guardar: " + ((e && (e.code || e.message)) || "error"));
+      });
+  }
+  function avisoEd(msg) {
+    var b = $("cpmMpEdBanner");
+    if (!b) { safe(function () { window.alert(msg); }); return; }
+    b.innerHTML = "<b>" + esc(msg) + "</b>";
+    setTimeout(function () {
+      if (!edicion) return;
+      b.innerHTML = '<b>Modo edición activo.</b> Elige una propiedad y haz clic en el mapa sobre su predio. ' +
+                    '<span id="cpmMpEdSel" style="color:#8fb8dd"></span>';
+      refrescarBannerEd();
+    }, 2600);
+  }
+
+  /* ===================================================================
+     CONTENEDOR DE HOSTINGER
+     El bloque tiene altura fija, asi que aqui solo hay que quitar los
+     recortes de los contenedores padre y decirle al marco cuanto mide.
+     No hay altura reservada que colapsar: siempre mide lo mismo.
+     =================================================================== */
+  function liberar() {
+    /* Se parte de frameElement, NO de raiz.parentElement: raiz vive DENTRO
+       del iframe y sus padres son el <body> del propio marco, no los
+       contenedores del sitio. Partiendo de raiz no se toca nada y el marco
+       acaba desbordando su hueco -- medido: iframe 1016px dentro de una
+       fila de 700px. */
+    if (!MARCO.el) return;
+    var el = MARCO.el.parentElement, n = 0;
+    while (el && el.tagName !== "BODY" && n < 8) {
+      var s = el.style, cl = " " + (el.className || "") + " ";
+      s.setProperty("height", "auto", "important");
+      s.setProperty("min-height", "0", "important");
+      s.setProperty("max-height", "none", "important");
+      s.overflow = "visible";
+      var rejilla = false;
+      safe(function () { rejilla = getComputedStyle(el).display.indexOf("grid") >= 0; });
+      if (rejilla || cl.indexOf(" block-layout ") >= 0) s.setProperty("grid-template-rows", "auto", "important");
+      el = el.parentElement; n++;
+    }
+  }
+  /* --alto se MIDE, no se adivina. La barra, los filtros y el pie cambian de
+     altura segun el ancho -- en movil los filtros se reparten en tres filas
+     en vez de dos --, y con un descuento fijo el bloque salia 100px mas alto
+     que la pantalla del telefono. Aqui se restan las tres piezas medidas. */
+  function ventanaReal() {
+    var h = 0;
+    safe(function () { h = (MARCO.win && MARCO.win.innerHeight) || window.innerHeight; });
+    return h || window.innerHeight || 800;
+  }
+  function medirAlto() {
+    var vh = ventanaReal(), usado = 0;
+    [".barra", ".filtros", ".pie"].forEach(function (sel) {
+      var e = raiz.querySelector(sel);
+      if (e) usado += e.getBoundingClientRect().height;
+    });
+    var alto = Math.round(vh - usado - 26);
+    var min = vh < 700 ? 300 : 400;
+    if (alto < min) alto = min;
+    if (alto > 720) alto = 720;
+    raiz.style.setProperty("--alto", alto + "px");
+  }
+
+  var ultimoAlto = 0;
+  function ajustarAlto() {
+    liberar();
+    medirAlto();
+    if (!MARCO.el) return;
+    var alto = Math.ceil(raiz.getBoundingClientRect().height);
+    if (!alto || Math.abs(alto - ultimoAlto) < 6) return;
+    ultimoAlto = alto;
+    safe(function () { MARCO.el.style.setProperty("height", alto + "px", "important"); });
+    safe(function () { window.parent.postMessage({ type: "cpm-mapa:height", height: alto }, "*"); });
+  }
+
+  raiz.setAttribute("data-init", "listo");
+  ajustarAlto();
+  window.addEventListener("load", ajustarAlto);
+  window.addEventListener("resize", function () {
+    ajustarAlto();
+    if (mapa) safe(function () { mapa.invalidateSize(); });
+  }, { passive: true });
+  /* La ventana del padre es la que manda cuando estamos dentro del marco */
+  if (MARCO.win) safe(function () {
+    MARCO.win.addEventListener("resize", function () {
+      ajustarAlto();
+      if (mapa) safe(function () { mapa.invalidateSize(); });
+    }, { passive: true });
+  });
+  [300, 900, 1800, 3000].forEach(function (ms) { setTimeout(ajustarAlto, ms); });
+
+  /* Ventana de pruebas: las funciones puras se comprueban desde fuera sin
+     necesidad de red ni de mapa. */
+  window.__cpmMapa = {
+    coordsDeCampos: coordsDeCampos, coordsDeUrl: coordsDeUrl,
+    coordsDeLocalidad: coordsDeLocalidad, dispersa: dispersa, resolver: resolver,
+    norm: norm, buscar: buscar, agrupar: agrupar, fmtCorto: fmtCorto,
+    supM2: supM2, precioDe: precioDe, valida: valida,
+    estado: function () { return { datos: DATOS.length, vista: VISTA.length, sel: selId, limite: limite, leaflet: leafletOk }; }
+  };
+})();
+</script>
