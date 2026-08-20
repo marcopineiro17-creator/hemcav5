@@ -190,6 +190,21 @@
 }
 #cpm-mapa .mbtn:hover { border-color:var(--azul);color:var(--azul-osc) }
 #cpm-mapa .mbtn.oculto { display:none }
+/* Boton de capa. Arriba a la derecha: el control de zoom de Leaflet vive
+   arriba a la izquierda y los botones de area van arriba en el centro. En
+   movil se queda solo el icono para no chocar con ellos. */
+#cpm-mapa .cbtn {
+  position:absolute;top:12px;right:12px;z-index:500;
+  background:#fff;border:1px solid var(--linea-2);border-radius:22px;padding:8px 14px;
+  font-size:12px;font-weight:700;color:var(--navy);box-shadow:0 2px 10px rgba(26,45,66,.22);
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+#cpm-mapa .cbtn:hover { border-color:var(--azul);color:var(--azul-osc) }
+#cpm-mapa .aviso-mapa {
+  display:none;position:absolute;left:12px;right:12px;bottom:12px;z-index:600;
+  background:#1a2d42;color:#fff;border-radius:11px;padding:10px 13px;
+  font-size:12px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.3);
+}
 #cpm-mapa .mapa-caido {
   position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   padding:26px;text-align:center;background:#eef2f7;
@@ -215,6 +230,13 @@
 .cpm-mp-pin.sel { background:#3d7ab5;color:#fff;border-color:#1a2d42;z-index:900 }
 .cpm-mp-pin.sel::after { border-top-color:#1a2d42 }
 .cpm-mp-pin.premium { border-color:#c8a84b;background:linear-gradient(135deg,#fffdf6,#fff) }
+/* Sobre la imagen de satelite el alfiler pierde contraste: el fondo deja
+   de ser un mapa claro y pasa a ser vegetacion oscura. Se le pone sombra
+   mas marcada y un borde blanco por fuera para que se despegue. */
+#cpm-mapa .mapa-wrap.sat .cpm-mp-pin,
+.cpm-mp-pin.sobre-sat {
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 3px 10px rgba(0,0,0,.5);
+}
 .cpm-mp-grupo {
   background:#3d7ab5;color:#fff;border:3px solid rgba(255,255,255,.9);border-radius:50%;
   width:42px;height:42px;display:flex;align-items:center;justify-content:center;
@@ -274,6 +296,8 @@
   }
   #cpm-mapa #cpmMpTipos::-webkit-scrollbar { display:none }
   #cpm-mapa #cpmMpTipos .pill { flex:0 0 auto;padding:6px 12px;font-size:11.5px }
+  #cpm-mapa .cbtn { padding:8px 11px }
+  #cpm-mapa .cbtn .txt { display:none }
 }
 @media (max-width:520px) {
   #cpm-mapa .barra-tit small { display:none }

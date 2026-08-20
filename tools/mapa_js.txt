@@ -28,6 +28,53 @@
   var CENTRO = [20.97, -89.35];   /* Yucatan, con Merida e Izamal en cuadro */
   var ZOOM_INI = 9;
 
+  /* ===================================================================
+     CAPAS DEL MAPA
+     Dos vistas. La de satelite es la que se pidio: se ve la vegetacion,
+     los techos y las bardas, como en Google Earth. Son teselas de Esri
+     -- las mismas que usa medio mundo con Leaflet --, sin clave de API;
+     encima va una capa de transporte, transparente, que devuelve las
+     calles y sus nombres, que es lo que se pierde al quitar el mapa de
+     calles. La otra vista es OpenStreetMap, la de siempre.
+
+     No se puede usar la imagen de Google: sus teselas exigen la API de
+     Google Maps, que es de pago y ademas prohibe sacarlas de su visor.
+
+     maxNativeZoom 18 es a proposito. Al pedir mas cerca de lo que hay
+     fotografiado, un servidor de imagenes no devuelve un error: devuelve
+     una tesela gris que dice que no hay datos. Con esto, Leaflet AMPLIA
+     la ultima foto buena en vez de pedir una que no existe: se ve algo
+     mas suave, pero nunca se ve un hueco gris. Si la imagen de tus zonas
+     aguanta el 19, subir este numero es una linea.
+     =================================================================== */
+  var CAPAS = {
+    satelite: {
+      nombre: "Satélite", icono: "\ud83d\udef0", fondo: "#20301f",
+      accion: "Ver la imagen de satélite",
+      base: {
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        opts: { minZoom: 5, maxZoom: 19, maxNativeZoom: 18 }
+      },
+      encima: {
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+        opts: { minZoom: 5, maxZoom: 19, maxNativeZoom: 18 }
+      },
+      atrib: 'Imágenes © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics'
+    },
+    calles: {
+      nombre: "Mapa", icono: "\ud83d\uddfa", fondo: "#e8eef4",
+      accion: "Ver el mapa de calles",
+      base: {
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        opts: { minZoom: 5, maxZoom: 19 }
+      },
+      encima: null,
+      atrib: 'Mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+    }
+  };
+  var CAPA_POR_OMISION = "satelite";
+  var LLAVE_CAPA = "cpm_mapa_capa";
+
   var FBV = "9.23.0";
   var CDN = {
     app:  ["https://www.gstatic.com/firebasejs/" + FBV + "/firebase-app-compat.js",
@@ -534,6 +581,8 @@
   var limite = null;         /* recuadro del mapa cuando se busca "en esta area" */
   var selId = null;
   var mapa = null, capaPins = null, pinPorId = {}, leafletOk = false;
+  /* Capa activa y las dos capas de teselas que la componen. */
+  var capaAct = CAPA_POR_OMISION, tejaBase = null, tejaEncima = null;
   var edicion = false, usuarioEd = null;
 
   /* Ficha destacada. No vive en Firestore, igual que en el catalogo: se
@@ -651,8 +700,8 @@
   /* ===================== MONTAJE DE CONTROLES ===================== */
   function montar() {
     var lg = $("cpmMpLogo"); if (lg) lg.src = LOGO_W;
-    var at = $("cpmMpAtrib");
-    if (at) at.innerHTML = 'Mapa © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+    capaAct = capaGuardada();
+    pintarAtrib();
 
     /* Pastillas de tipo */
     var cont = $("cpmMpTipos");
@@ -719,6 +768,9 @@
     if (bt) bt.addEventListener("click", verTodo);
     var be = $("cpmMpEditar");
     if (be) be.addEventListener("click", abrirEdicion);
+    var bc = $("cpmMpCapa");
+    if (bc) bc.addEventListener("click", function () { ponerCapa(otraCapa()); });
+    pintarBotonCapa();
 
     aplicar();
   }
@@ -877,6 +929,77 @@
     return null;
   }
 
+  /* ===================================================================
+     CAMBIO DE CAPA
+     El boton dice a donde se va, no donde se esta -- como el recuadro de
+     Google Maps --, y la eleccion se recuerda en el navegador.
+     =================================================================== */
+  function capaGuardada() {
+    var v = null;
+    safe(function () { v = window.localStorage.getItem(LLAVE_CAPA); });
+    return (v && CAPAS[v]) ? v : CAPA_POR_OMISION;
+  }
+  function otraCapa() { return capaAct === "satelite" ? "calles" : "satelite"; }
+  function pintarAtrib() {
+    var at = $("cpmMpAtrib");
+    if (at) at.innerHTML = (CAPAS[capaAct] || CAPAS.calles).atrib;
+  }
+  function pintarBotonCapa() {
+    var b = $("cpmMpCapa");
+    if (!b) return;
+    var o = CAPAS[otraCapa()];
+    b.innerHTML = '<span aria-hidden="true">' + o.icono + '</span><span class="txt">' + esc(o.nombre) + "</span>";
+    b.setAttribute("title", o.accion);
+    b.setAttribute("aria-label", o.accion);
+  }
+  function ponerCapa(clave) {
+    if (!mapa || !CAPAS[clave]) return;
+    var c = CAPAS[clave];
+    capaAct = clave;
+    safe(function () { window.localStorage.setItem(LLAVE_CAPA, clave); });
+
+    if (tejaBase) safe(function () { mapa.removeLayer(tejaBase); });
+    if (tejaEncima) safe(function () { mapa.removeLayer(tejaEncima); });
+    tejaBase = tejaEncima = null;
+
+    tejaBase = L.tileLayer(c.base.url, c.base.opts).addTo(mapa);
+    /* Vigilancia de la capa de fondo: si las teselas no llegan -- red
+       cortada, o el servidor de imagenes caido -- se vuelve al mapa de
+       calles en vez de dejar un rectangulo vacio. Solo salta si NINGUNA
+       tesela llego: unas cuantas fallidas en el borde son normales. */
+    if (clave !== "calles") vigilar(tejaBase);
+    if (c.encima) tejaEncima = L.tileLayer(c.encima.url, c.encima.opts).addTo(mapa);
+
+    var w = $("cpmMpWrap");
+    if (w) {
+      w.classList.toggle("sat", clave === "satelite");
+      w.style.background = c.fondo;
+    }
+    pintarAtrib();
+    pintarBotonCapa();
+  }
+  function vigilar(capa) {
+    var fallos = 0, llego = false, avisado = false;
+    capa.on("load", function () { llego = true; });
+    capa.on("tileerror", function () {
+      fallos++;
+      if (llego || avisado || fallos < 10) return;
+      avisado = true;
+      /* Un ultimo compas antes de rendirse: con la red lenta puede haber
+         una tesela buena en camino, y cambiar de capa por diez fallos de
+         borde seria pasarse. */
+      setTimeout(function () {
+        if (llego || capaAct === "calles") return;
+        ponerCapa("calles");
+        var el = $("cpmMpAviso");
+        if (!el) return;
+        el.textContent = "Las imágenes de satélite no se pudieron cargar; se muestra el mapa de calles.";
+        el.style.display = "block";
+        setTimeout(function () { el.style.display = "none"; }, 7000);
+      }, 1500);
+    });
+  }
+
   /* ===================== MAPA ===================== */
   function iniciarMapa() {
     var lienzo = $("cpmMpLienzo");
@@ -885,10 +1008,7 @@
       center: CENTRO, zoom: ZOOM_INI, zoomControl: true,
       scrollWheelZoom: true, attributionControl: false
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, minZoom: 5,
-      attribution: '© OpenStreetMap'
-    }).addTo(mapa);
+    ponerCapa(capaAct);
     capaPins = L.layerGroup().addTo(mapa);
 
     mapa.on("moveend zoomend", function () {
@@ -1399,7 +1519,8 @@
     olcCodifica: olcCodifica, olcDecodifica: olcDecodifica, olcRecupera: olcRecupera,
     plusEnTexto: plusEnTexto,
     supM2: supM2, precioDe: precioDe, valida: valida,
-    estado: function () { return { datos: DATOS.length, vista: VISTA.length, sel: selId, limite: limite, leaflet: leafletOk }; }
+    ponerCapa: function (k) { ponerCapa(k); }, otraCapa: otraCapa, CAPAS: CAPAS,
+    estado: function () { return { datos: DATOS.length, vista: VISTA.length, sel: selId, limite: limite, leaflet: leafletOk, capa: capaAct }; }
   };
 })();
 </script>

@@ -189,10 +189,56 @@ lista a lo que se ve en el mapa. Se escribe en `tools/mapa_css.txt`,
 `mapa_html.txt` y `mapa_js.txt`, y `tools/mapa.py` las une y las revisa.
 
 Es el único bloque que **sí depende de recursos externos**: Firebase para
-leer la cartera y Leaflet con teselas de OpenStreetMap para el mapa. La
-revisión los permite por lista blanca, con su motivo cada uno, y sigue
-rechazando cualquier otro origen. Si Leaflet no carga, el bloque no se queda
-en blanco: pasa a lista y lo dice.
+leer la cartera y Leaflet con las teselas del mapa. La revisión los permite
+por lista blanca, con su motivo cada uno, y sigue rechazando cualquier otro
+origen. Si Leaflet no carga, el bloque no se queda en blanco: pasa a lista y
+lo dice.
+
+#### Las dos capas
+
+Arranca en **satélite**, que es lo que se pide para ver un terreno: la
+vegetación, los techos, las bardas. Un botón arriba a la derecha cambia a
+**mapa de calles** y vuelve; el botón dice a dónde vas, no dónde estás —como
+el recuadro de Google Maps— y la elección se recuerda en el navegador.
+
+| Capa | De dónde salen las teselas |
+| --- | --- |
+| Satélite | imágenes de Esri (Maxar, Earthstar) **más** su capa de transporte encima, transparente, que devuelve las calles y sus nombres |
+| Mapa | OpenStreetMap, la de siempre |
+
+Tres cosas que conviene tener claras:
+
+**No es la imagen de Google.** Sus teselas exigen la API de Google Maps, que
+es de pago y además prohíbe sacarlas de su visor. Las de Esri se usan sin
+clave y son de calidad equivalente en la península; lo que no se puede
+imitar con teselas planas es el 3D de Google Earth, esto es la foto vista
+desde arriba.
+
+**El acercamiento máximo se queda en 18 «de verdad».** Al pedir más cerca de
+lo que hay fotografiado, un servidor de imágenes no devuelve un error:
+devuelve un cuadro gris que dice que no hay datos. Con `maxNativeZoom: 18`,
+Leaflet **amplía** la última foto buena en vez de pedir una que no existe: se
+ve algo más suave al máximo acercamiento, pero nunca un hueco gris. Si la
+imagen de tus zonas aguanta el 19, subir ese número es una línea en
+`tools/mapa_js.txt`.
+
+**Si las imágenes no llegan, se vuelve solo al mapa de calles** y lo dice en
+un aviso. Hacen falta diez teselas fallidas y ninguna buena, con un segundo y
+medio de gracia: unas cuantas fallidas en el borde son normales y no deberían
+cambiar la vista.
+
+Igual que con OpenStreetMap, estas teselas son de uso razonable con
+atribución —que el pie ya muestra, y cambia según la capa activa—. Si algún
+día el tráfico crece, conviene pasar a un proveedor de pago; el cambio es el
+cuadro `CAPAS` al principio del guion.
+
+Comprobado con Leaflet imitado interceptando las peticiones: la forma de cada
+URL (las de Esri van `{z}/{y}/{x}`, la fila antes de la columna, que es lo
+fácil de equivocar), que las dos capas de satélite se piden y se pintan, que
+al cambiar se retira la anterior y no se acumulan, que la atribución y el
+botón cambian, que la elección se recuerda al volver, que la caída al mapa de
+calles ocurre y avisa, y que en un teléfono el botón se queda en el icono y
+no se monta encima de los otros controles.
 
 También es el único de **altura fija** en vez de documento alto: un mapa
 necesita altura real, y la lista tiene su propio scroll interno. Esa altura
