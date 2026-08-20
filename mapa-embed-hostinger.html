@@ -622,6 +622,87 @@
     return [lat, lng];
   }
 
+  /* ===================================================================
+     PLUS CODES (Open Location Code)
+     Es lo mas facil de copiar desde Google Maps en el telefono: aparece
+     debajo del nombre del sitio, con la forma "3F8W+V5 Conkal, Yucatan".
+     Decodificarlo es puro calculo -- no hace falta red ni ninguna API --,
+     y da unos 14 m de precision, de sobra para un lote.
+
+     Un codigo corto (el que empieza despues del "+" de la cuarta posicion)
+     no basta por si solo: le faltan los cuatro primeros caracteres, que se
+     recuperan de una localidad de referencia. Esa referencia la da el cuadro
+     LOCALIDADES a partir de la ciudad de la propiedad.
+     =================================================================== */
+  var OLC_A = "23456789CFGHJMPQRVWX";
+  function olcLimpio(c) {
+    return String(c == null ? "" : c).toUpperCase().replace(/[^0-9A-Z+]/g, "");
+  }
+  function olcCodifica(lat, lng) {
+    lat = Math.min(89.999999, Math.max(-90, lat));
+    lng = ((lng + 180) % 360 + 360) % 360 - 180;
+    var latV = lat + 90, lngV = lng + 180, res = 20, code = "";
+    for (var i = 0; i < 5; i++) {
+      var la = Math.floor(latV / res), ln = Math.floor(lngV / res);
+      if (la > 19) la = 19;
+      if (ln > 19) ln = 19;
+      code += OLC_A.charAt(la) + OLC_A.charAt(ln);
+      latV -= la * res; lngV -= ln * res;
+      res /= 20;
+    }
+    return code.substr(0, 8) + "+" + code.substr(8);
+  }
+  function olcDecodifica(code) {
+    var c = olcLimpio(code).replace(/\+/g, "").replace(/0+$/, "");
+    if (c.length < 2) return null;
+    var latBaja = -90, lngBaja = -180, res = 20, celda = 20;
+    for (var k = 0; k + 1 < c.length && k < 10; k += 2) {
+      var ia = OLC_A.indexOf(c.charAt(k)), ib = OLC_A.indexOf(c.charAt(k + 1));
+      if (ia < 0 || ib < 0) return null;
+      latBaja += ia * res; lngBaja += ib * res;
+      celda = res; res /= 20;
+    }
+    return { lat: latBaja + celda / 2, lng: lngBaja + celda / 2, celda: celda };
+  }
+  function olcRecupera(corto, refLat, refLng) {
+    var c = olcLimpio(corto);
+    var sep = c.indexOf("+");
+    /* Tolerancia: a veces se pega el codigo sin el "+". Solo se acepta si
+       todo el texto es del alfabeto y tiene la longitud de un codigo pleno. */
+    if (sep < 0) {
+      if (/^[23456789CFGHJMPQRVWX]{8,11}$/.test(c)) {
+        c = c.substr(0, 8) + "+" + c.substr(8);
+        sep = 8;
+      } else return null;
+    }
+    if (sep === 8) return olcDecodifica(c);
+    var faltan = 8 - sep;
+    if (faltan <= 0 || faltan % 2) return null;
+    if (refLat == null || refLng == null) return null;
+    var prefijo = olcCodifica(refLat, refLng).replace("+", "").substr(0, faltan);
+    var pleno = prefijo + c.replace("+", "");
+    pleno = pleno.substr(0, 8) + "+" + pleno.substr(8);
+    var a = olcDecodifica(pleno);
+    if (!a) return null;
+    /* Ajuste al area mas cercana a la referencia: sin esto, un codigo corto
+       junto a un limite de rejilla se resuelve una celda entera desplazado. */
+    var resolucion = Math.pow(20, 2 - (faltan / 2)), mitad = resolucion / 2;
+    if (refLat + mitad < a.lat && a.lat - resolucion >= -90) a.lat -= resolucion;
+    else if (refLat - mitad > a.lat && a.lat + resolucion <= 90) a.lat += resolucion;
+    if (refLng + mitad < a.lng && a.lng - resolucion >= -180) a.lng -= resolucion;
+    else if (refLng - mitad > a.lng && a.lng + resolucion <= 180) a.lng += resolucion;
+    return a;
+  }
+  /* Busca un plus code dentro de un texto cualquiera. */
+  var RE_PLUS = /\b([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})\b/i;
+  function plusEnTexto(txt, refLat, refLng) {
+    var m = String(txt || "").match(RE_PLUS);
+    if (!m) return null;
+    var a = olcRecupera(m[1], refLat, refLng);
+    if (!a) return null;
+    return valida(a.lat, a.lng);
+  }
+
   /* 1. Campos explicitos. Se aceptan varios nombres porque el dato lo
         pueden haber capturado de formas distintas. */
   function coordsDeCampos(o) {
@@ -704,9 +785,19 @@
   function resolver(t, usados) {
     var v = coordsDeCampos(t);
     if (v) return { lat: v[0], lng: v[1], precision: "exacta", fuente: "campo" };
+    var base = coordsDeLocalidad(t.ciudad, t.estado);
+    /* Plus code declarado en el documento. Si es corto, la localidad hace de
+       referencia; sin localidad conocida no se puede recuperar. */
+    var pc = t.plus_code || t.pluscode || t.codigo_plus || t.plus;
+    if (pc) {
+      var pv = plusEnTexto(pc, base ? base[0] : null, base ? base[1] : null);
+      if (pv) return { lat: pv[0], lng: pv[1], precision: "exacta", fuente: "plus code" };
+    }
     v = coordsDeUrl(t.ubicacion_maps);
     if (v) return { lat: v[0], lng: v[1], precision: "exacta", fuente: "enlace" };
-    var base = coordsDeLocalidad(t.ciudad, t.estado);
+    /* Algunos enlaces y descripciones traen el plus code escrito dentro. */
+    var pt = plusEnTexto(t.ubicacion_maps, base ? base[0] : null, base ? base[1] : null);
+    if (pt) return { lat: pt[0], lng: pt[1], precision: "exacta", fuente: "plus code" };
     if (base) {
       var clave = norm(t.ciudad) || norm(t.estado) || "?";
       var k = usados[clave] || 0;
@@ -1575,6 +1666,24 @@
         });
     });
   }
+  function entrarEdicionBanner(el) {
+    el.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
+        '<span style="flex:1 1 220px;min-width:0"><b>Modo edición.</b> ' +
+        'Haz clic en el mapa, o pega las coordenadas o el Plus Code. ' +
+        '<span id="cpmMpEdSel" style="color:#8fb8dd"></span></span>' +
+        '<input id="cpmMpEdTxt" placeholder="21.0672, -89.5046  ·  3F8W+V5" ' +
+          'style="flex:0 1 250px;min-width:0;padding:7px 10px;border:0;border-radius:8px;' +
+          'font:inherit;font-size:12px;color:#1e2d3d;background:#fff">' +
+        '<button id="cpmMpEdFijar" style="background:#3d7ab5;color:#fff;border:0;border-radius:8px;' +
+          'padding:8px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer">Fijar</button>' +
+      "</div>";
+    var caja = $("cpmMpEdTxt"), bot = $("cpmMpEdFijar");
+    if (bot) bot.addEventListener("click", function () { fijarDesdeTexto(); });
+    if (caja) caja.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); fijarDesdeTexto(); }
+    });
+  }
   function entrarEdicion() {
     var be = $("cpmMpEditar");
     if (be) be.textContent = "Salir de edición";
@@ -1582,11 +1691,9 @@
     el.id = "cpmMpEdBanner";
     el.style.cssText = "position:absolute;bottom:12px;left:12px;right:12px;z-index:600;background:#1a2d42;" +
       "color:#fff;border-radius:11px;padding:10px 13px;font-size:12px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.3)";
-    el.innerHTML = '<b>Modo edición activo.</b> Elige una propiedad y haz clic en el mapa sobre su predio. ' +
-                   '<span id="cpmMpEdSel" style="color:#8fb8dd"></span>';
     var w = $("cpmMpWrap");
     if (w) w.appendChild(el);
-    /* En edicion, pulsar una tarjeta selecciona en vez de abrir la ficha */
+    entrarEdicionBanner(el);
     aplicar();
     refrescarBannerEd();
   }
@@ -1606,7 +1713,37 @@
     var t = selId ? propPorId(selId) : null;
     s.textContent = t ? "Seleccionada: " + (t.nombre || t.id) : "Ninguna seleccionada.";
   }
-  function fijarCoord(id, lat, lng) {
+  /* Acepta las dos formas en que se puede copiar una ubicacion de Google
+     Maps: el par "lat, lng" (clic derecho en el ordenador) y el Plus Code
+     (lo que se ve en el telefono, debajo del nombre del sitio). */
+  function fijarDesdeTexto() {
+    var caja = $("cpmMpEdTxt");
+    if (!caja) return;
+    var txt = String(caja.value || "").trim();
+    if (!txt) { avisoEd("Pega las coordenadas o el Plus Code."); return; }
+    if (!selId) { avisoEd("Elige primero una propiedad en la lista."); return; }
+    var t = propPorId(selId);
+    var base = t ? coordsDeLocalidad(t.ciudad, t.estado) : null;
+
+    /* Primero el par de numeros: es lo mas explicito y no se confunde. */
+    var m = txt.match(/(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)/);
+    var v = m ? valida(m[1], m[2]) : null;
+    var comoQue = "coordenadas";
+    if (!v) {
+      var pv = plusEnTexto(txt, base ? base[0] : null, base ? base[1] : null);
+      if (pv) { v = pv; comoQue = "Plus Code"; }
+    }
+    if (!v) {
+      avisoEd(/\+/.test(txt) && !base
+        ? "Ese Plus Code es corto y la ciudad de la propiedad no está en el listado de localidades: pega el código completo o las coordenadas."
+        : "No se reconoce. Usa \"21.0672, -89.5046\" o un Plus Code como \"3F8W+V5\".");
+      return;
+    }
+    caja.value = "";
+    fijarCoord(selId, v[0], v[1], comoQue);
+  }
+
+  function fijarCoord(id, lat, lng, comoQue) {
     var t = propPorId(id);
     if (!t) return;
     if (String(id).toUpperCase().indexOf("IMPERIO") === 0) {
@@ -1619,7 +1756,8 @@
         t.lat = Number(lat.toFixed(6)); t.lng = Number(lng.toFixed(6));
         t.coord = { lat: t.lat, lng: t.lng, precision: "exacta", fuente: "campo" };
         aplicar();
-        avisoEd("Ubicación guardada para " + (t.nombre || t.id) + ".");
+        avisoEd("Ubicación guardada para " + (t.nombre || t.id) +
+                (comoQue ? " (por " + comoQue + ")." : "."));
       })
       .catch(function (e) {
         avisoEd("No se pudo guardar: " + ((e && (e.code || e.message)) || "error"));
@@ -1631,8 +1769,7 @@
     b.innerHTML = "<b>" + esc(msg) + "</b>";
     setTimeout(function () {
       if (!edicion) return;
-      b.innerHTML = '<b>Modo edición activo.</b> Elige una propiedad y haz clic en el mapa sobre su predio. ' +
-                    '<span id="cpmMpEdSel" style="color:#8fb8dd"></span>';
+      entrarEdicionBanner(b);
       refrescarBannerEd();
     }, 2600);
   }
@@ -1719,6 +1856,8 @@
     coordsDeCampos: coordsDeCampos, coordsDeUrl: coordsDeUrl,
     coordsDeLocalidad: coordsDeLocalidad, dispersa: dispersa, resolver: resolver,
     norm: norm, buscar: buscar, agrupar: agrupar, fmtCorto: fmtCorto,
+    olcCodifica: olcCodifica, olcDecodifica: olcDecodifica, olcRecupera: olcRecupera,
+    plusEnTexto: plusEnTexto,
     supM2: supM2, precioDe: precioDe, valida: valida,
     estado: function () { return { datos: DATOS.length, vista: VISTA.length, sel: selId, limite: limite, leaflet: leafletOk }; }
   };

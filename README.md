@@ -146,9 +146,26 @@ Se resuelve con una cadena de precedencia, de más fiable a menos:
 | Orden | De dónde salen | Precisión |
 | --- | --- | --- |
 | 1 | campos `lat`/`lng` del documento (o `latitud`/`longitud`, `geo`, GeoPoint) | exacta |
-| 2 | coordenadas dentro del enlace, si es un enlace **largo** (`@lat,lng`, `!3d!4d`, `q=`) | exacta |
-| 3 | centroide de la localidad, del cuadro `LOCALIDADES` | **aproximada** |
-| 4 | nada: la propiedad sale en la lista pero no en el mapa | sin ubicar |
+| 2 | campo `plus_code`, decodificado en el propio navegador | exacta (~14 m) |
+| 3 | coordenadas dentro del enlace, si es un enlace **largo** (`@lat,lng`, `!3d!4d`, `q=`) | exacta |
+| 4 | un Plus Code escrito dentro del enlace o del texto | exacta (~14 m) |
+| 5 | centroide de la localidad, del cuadro `LOCALIDADES` | **aproximada** |
+| 6 | nada: la propiedad sale en la lista pero no en el mapa | sin ubicar |
+
+#### Plus Codes
+
+Es lo más fácil de copiar desde Google Maps en el teléfono: aparece debajo
+del nombre del sitio, con la forma `3F8W+V5 Conkal, Yucatán`. Se decodifican
+**en el navegador, sin red ni API**: el algoritmo Open Location Code es puro
+cálculo. Un código corto (el que empieza tras el `+` de la cuarta posición)
+le falta los cuatro primeros caracteres, que se recuperan usando la localidad
+de la propiedad como referencia — de ahí que el cuadro `LOCALIDADES` sirva
+para dos cosas.
+
+Comprobado por ida y vuelta sobre seis localidades de la cartera: desvío
+máximo 7,7 m sobre celdas de 13,9 m, y un código corto recuperado da el mismo
+resultado que su código completo. `3F8W+V5 Conkal` resuelve a
+`21.067187, -89.504562`, que es exactamente lo mismo que `76HG3F8W+V5`.
 
 Lo aproximado se marca: alfiler de borde discontinuo dorado, etiqueta en la
 tarjeta y un aviso arriba de la lista con el recuento. Varias propiedades de
@@ -156,10 +173,12 @@ la misma localidad no se apilan: se reparten en espiral con el ángulo dorado,
 siempre igual para la misma propiedad.
 
 **Modo edición** es la vía para pasar de aproximada a exacta sin tocar el
-portafolio de asesores: se entra con una cuenta de CPM, se elige la
-propiedad y se hace clic en el mapa sobre el predio; eso guarda `lat`/`lng`
-en su documento de `catalogo_publico` y el alfiler pasa a exacto para
-siempre. Las reglas ya exigen sesión para escribir, así que el modo sólo
+portafolio de asesores: se entra con una cuenta de CPM, se elige la propiedad
+y se fija su ubicación de dos formas —haciendo clic en el mapa, o pegando en
+la caja **las coordenadas** (`21.0672, -89.5046`) **o el Plus Code**
+(`3F8W+V5`)—. Eso guarda `lat`/`lng` en su documento de `catalogo_publico` y
+el alfiler pasa a exacto para siempre. Pegar es más preciso que atinar con el
+clic, y el Plus Code es lo que se puede copiar desde el móvil. Las reglas ya exigen sesión para escribir, así que el modo sólo
 funciona con credenciales válidas.
 
 Si algún día crece el tráfico, las teselas de OpenStreetMap tienen política
