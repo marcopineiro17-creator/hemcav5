@@ -42,9 +42,10 @@ public_html/
 ## Bloques para el contenedor de código de Hostinger
 
 Además de la página suelta de HEMCA, hay siete bloques pensados para pegarse
-en un contenedor de código del constructor. No llevan etiquetas de documento,
-todo su CSS está acotado a su propio contenedor y no dependen de ningún CDN
-de scripts.
+en un contenedor de código del constructor. No llevan etiquetas de documento
+y todo su CSS está acotado a su propio contenedor. Seis no dependen de ningún
+recurso externo; el séptimo —el mapa— sí, y por eso lleva su propia lista
+blanca de orígenes (ver más abajo).
 
 | Archivo | Va en | Contenedor |
 | --- | --- | --- |
