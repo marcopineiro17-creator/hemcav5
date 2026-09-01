@@ -510,7 +510,8 @@
   var WA = "5219999490874";
   var LOGO_W = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65";
   var LOGO_AZUL = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FLOGOTIPO%20AZUL.png?alt=media&token=ef71529d-7e86-4f08-b286-2dad5335e08c";
-  var TIPOS = ["Todos", "Terrenos", "Macrolotes", "Playa", "Casas", "Departamentos", "Ranchos y Haciendas"];
+  var TIPOS = ["Todos", "Terrenos", "Macrolotes", "Playa", "Casas", "Departamentos",
+               "Ranchos y Haciendas", "Comerciales/Oficinas"];
   var CENTRO = [20.97, -89.35];   /* Yucatan, con Merida e Izamal en cuadro */
   var ZOOM_INI = 9;
 
@@ -728,14 +729,25 @@
   function olcDecodifica(code) {
     var c = olcLimpio(code).replace(/\+/g, "").replace(/0+$/, "");
     if (c.length < 2) return null;
-    var latBaja = -90, lngBaja = -180, res = 20, celda = 20;
+    var latBaja = -90, lngBaja = -180, res = 20, alto = 20, ancho = 20;
     for (var k = 0; k + 1 < c.length && k < 10; k += 2) {
       var ia = OLC_A.indexOf(c.charAt(k)), ib = OLC_A.indexOf(c.charAt(k + 1));
       if (ia < 0 || ib < 0) return null;
       latBaja += ia * res; lngBaja += ib * res;
-      celda = res; res /= 20;
+      alto = ancho = res; res /= 20;
     }
-    return { lat: latBaja + celda / 2, lng: lngBaja + celda / 2, celda: celda };
+    /* A partir del caracter 11 el codigo deja de ir por pares y afina con
+       una rejilla de 5 filas por 4 columnas. Sin esto, un codigo de 11
+       caracteres -- que los hay, y son los mas precisos que da Google --
+       se leia como uno de 10: celda de 13,9 m en vez de 2,8. */
+    for (var j = 10; j < c.length && j < 15; j++) {
+      var ig = OLC_A.indexOf(c.charAt(j));
+      if (ig < 0) break;
+      alto /= 5; ancho /= 4;
+      latBaja += Math.floor(ig / 4) * alto;
+      lngBaja += (ig % 4) * ancho;
+    }
+    return { lat: latBaja + alto / 2, lng: lngBaja + ancho / 2, celda: Math.max(alto, ancho) };
   }
   function olcRecupera(corto, refLat, refLng) {
     var c = olcLimpio(corto);
@@ -1086,6 +1098,11 @@
     hectareas: 0,
     precio_m2: 0,
     ubicacion_maps: "https://maps.app.goo.gl/NyWBRxtysDm8GLP48",
+    /* Del Plus Code 3F9W+27F Conkal, Yucatan. El desarrollo no vive en
+       Firestore, asi que sus coordenadas se escriben aqui: sin ellas el
+       alfiler caia en el centro de Conkal, a 1,8 km. */
+    lat: 21.067563,
+    lng: -89.504328,
     estado_propiedad: "disponible",
     categorias: [],
     fotos: [

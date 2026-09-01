@@ -353,8 +353,12 @@
   var ESTADOS_PUBLICABLES = ["disponible","visitado"];
   var LOGO_W = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FIMAGOTIPO%20BLANCO.png?alt=media&token=f1381c67-c9a7-4fa5-816e-98d68e60dc65";
   var LOGO_AZUL = "https://firebasestorage.googleapis.com/v0/b/propiedades-cpm.firebasestorage.app/o/fotos%2FLOGOS%2FLOGOTIPO%20AZUL.png?alt=media&token=ef71529d-7e86-4f08-b286-2dad5335e08c";
-  var CATS = ["Todos","Terrenos","Macrolotes","Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos"];
-  var CATEGORIAS_DISP = ["Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos (no publicar)"];
+  /* Categorias que se marcan a mano en cada propiedad. UNA sola lista:
+     de aqui salen las pastillas de arriba, las casillas del editor y el
+     filtro. Para anadir una categoria, se anade aqui y ya. */
+  var CATS_LIBRES = ["Playa","Casas","Departamentos","Ranchos y Haciendas","Comerciales/Oficinas"];
+  var CATS = ["Todos","Terrenos","Macrolotes"].concat(CATS_LIBRES).concat(["Exclusivos"]);
+  var CATEGORIAS_DISP = CATS_LIBRES.concat(["Exclusivos (no publicar)"]);
   var ESTADOS = [
     {value:"disponible",   label:"Disponible",    color:"#27ae60", bg:"rgba(39,174,96,.15)"},
     {value:"visitado",     label:"Visitado",      color:"#e67e22", bg:"rgba(230,126,34,.15)"},
@@ -383,6 +387,12 @@
     precio_m2:0,
     comision:0,
     ubicacion_maps:'https://maps.app.goo.gl/NyWBRxtysDm8GLP48',
+    /* Del Plus Code 3F9W+27F Conkal, Yucatan. Esta ficha no vive en
+       Firestore -- por eso no tiene boton de editar --, asi que su
+       ubicacion se escribe aqui. La misma pareja esta en el guion del
+       mapa (tools/mapa_js.txt): si se cambia una, cambiar la otra. */
+    lat:21.067563,
+    lng:-89.504328,
     estado_propiedad:'disponible',
     categorias:[],
     /* Respaldo. Al apretar "Sincronizar catálogo" se sustituyen por las
@@ -417,6 +427,12 @@
   };
 
   var FBV = "9.23.0";
+  /* Pagina del mapa de la cartera. Primero se busca en el menu real del
+     sitio por estos nombres; si no esta, se usa la ruta de respaldo. Esa
+     ruta es lo unico que hay que tocar si la pagina cambia de sitio. */
+  var CLAVES_MAPA = ["mapa de propiedades","mapa de la cartera","mapa de terrenos","ubicaciones","mapa"];
+  var RUTA_MAPA = "/mapa-de-propiedades";
+
   var CDN = {
     app:  ["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-app-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-app-compat.js"],
     auth: ["https://www.gstatic.com/firebasejs/"+FBV+"/firebase-auth-compat.js","https://cdn.jsdelivr.net/npm/firebase@"+FBV+"/firebase-auth-compat.js"],
@@ -701,14 +717,24 @@
   function olcDecodifica(code){
     var c = olcLimpio(code).replace(/\+/g,'').replace(/0+$/,'');
     if(c.length < 2) return null;
-    var latBaja = -90, lngBaja = -180, res = 20, celda = 20;
+    var latBaja = -90, lngBaja = -180, res = 20, alto = 20, ancho = 20;
     for(var k=0;k+1<c.length && k<10;k+=2){
       var ia = OLC_A.indexOf(c.charAt(k)), ib = OLC_A.indexOf(c.charAt(k+1));
       if(ia < 0 || ib < 0) return null;
       latBaja += ia*res; lngBaja += ib*res;
-      celda = res; res /= 20;
+      alto = ancho = res; res /= 20;
     }
-    return {lat:latBaja + celda/2, lng:lngBaja + celda/2, celda:celda};
+    /* A partir del caracter 11 el codigo deja de ir por pares y afina con
+       una rejilla de 5 filas por 4 columnas. Sin esto, un codigo de 11
+       caracteres se leia como uno de 10: celda de 13,9 m en vez de 2,8. */
+    for(var j=10;j<c.length && j<15;j++){
+      var ig = OLC_A.indexOf(c.charAt(j));
+      if(ig < 0) break;
+      alto /= 5; ancho /= 4;
+      latBaja += Math.floor(ig/4)*alto;
+      lngBaja += (ig%4)*ancho;
+    }
+    return {lat:latBaja + alto/2, lng:lngBaja + ancho/2, celda:Math.max(alto,ancho)};
   }
   function olcRecupera(corto, refLat, refLng){
     var c = olcLimpio(corto), sep = c.indexOf('+');
@@ -1127,7 +1153,7 @@
       if(filtro==='Exclusivos') return esExclusiva(t);
       if(filtro==='Terrenos' && t.tipo!=='Terreno Particular') return false;
       if(filtro==='Macrolotes' && t.tipo!=='Macrolote') return false;
-      if(['Playa','Casas','Departamentos','Ranchos y Haciendas'].indexOf(filtro)>=0){
+      if(CATS_LIBRES.indexOf(filtro)>=0){
         if(cats(t).indexOf(filtro)<0) return false;
       }
       return true;
@@ -1150,6 +1176,7 @@
         (admin?'<button class="cpm-mini" id="cpm-sync" title="Copia los campos públicos a la colección catalogo_publico">↻ Sincronizar catálogo</button>':'')+
         (admin?'<button class="cpm-mini" id="cpm-diag" title="Qué hay guardado en cada propiedad y por qué sale o no sale">\ud83d\udd0d Revisión</button>':'')+
         (admin?'<button class="cpm-mini" id="cpm-new">+ Nueva</button>':'')+
+        '<button class="cpm-mini" id="cpm-mapa" title="Ver la cartera sobre el mapa (se abre en otra pestaña)">🗺 Mapa</button>'+
         '<span class="cpm-user">'+esc((user.email||'').split('@')[0])+'</span>'+
         '<button class="cpm-mini" id="cpm-logout">Salir</button>'+
       '</div>'+
@@ -1160,6 +1187,7 @@
       '<div class="cpm-grid" id="cpm-grid"></div>';
 
     root.querySelector('#cpm-logout').addEventListener('click',function(){ firebase.auth().signOut(); });
+    root.querySelector('#cpm-mapa').addEventListener('click',function(){ abrirFuera(urlMapa()); });
     if(admin){
       root.querySelector('#cpm-new').addEventListener('click',function(){ openEditor(null); });
       root.querySelector('#cpm-sync').addEventListener('click',sincronizarPublico);
@@ -1254,6 +1282,58 @@
         if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); abrir(); }
       });
     });
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     A DONDE ENLAZA EL BOTON DEL MAPA
+     Se lee el menu del sitio y se enlaza donde enlaza la propia
+     navegacion. Escribir la ruta a mano envejece mal: en cuanto la
+     pagina cambia de direccion, el boton lleva a un 404.
+     ───────────────────────────────────────────────────────── */
+  function sinTildes(t){
+    t=(t||'').toLowerCase();
+    try{ t=t.normalize('NFD').replace(RE_DIACRITICOS,''); }catch(e){}
+    return t.replace(/\s+/g,' ').trim();
+  }
+  var menuSitio=null;
+  function leerMenu(){
+    if(menuSitio) return menuSitio;
+    menuSitio={};
+    try{
+      var doc=documentoSitio();
+      var origen=doc.location && doc.location.origin;
+      var anclas=doc.querySelectorAll('a[href]');
+      for(var i=0;i<anclas.length;i++){
+        var a=anclas[i], h=a.getAttribute('href')||'';
+        if(/^(#|mailto:|tel:|javascript:)/i.test(h)) continue;
+        var u; try{ u=new URL(h, doc.baseURI); }catch(e){ continue; }
+        if(origen && u.origin!==origen) continue;
+        if(!u.pathname.replace(/\/+$/,'')) continue;        /* la portada */
+        var t=sinTildes(a.textContent);
+        if(!t || t.length>40) continue;
+        /* "Mapa del sitio" no es el mapa de la cartera. */
+        if(/aviso|privacidad|terminos|cookies|politica|mapa del sitio/.test(t)) continue;
+        if(!menuSitio[t]) menuSitio[t]=u.href;
+      }
+    }catch(e){}
+    return menuSitio;
+  }
+  /* Coincidencia exacta primero, y luego por el principio del texto. Nada
+     de buscar la palabra en cualquier posicion: asi es como se acaba
+     enlazando a la pagina equivocada. */
+  function rutaDelSitio(claves){
+    var m=leerMenu(), i, t;
+    for(i=0;i<claves.length;i++){ if(m[sinTildes(claves[i])]) return m[sinTildes(claves[i])]; }
+    for(i=0;i<claves.length;i++){
+      var k=sinTildes(claves[i]);
+      for(t in m){ if(Object.prototype.hasOwnProperty.call(m,t) && t.indexOf(k)===0) return m[t]; }
+    }
+    return null;
+  }
+  function urlMapa(){
+    var base='';
+    try{ base=documentoSitio().location.origin||''; }catch(e){}
+    return rutaDelSitio(CLAVES_MAPA) || (base+RUTA_MAPA);
   }
 
   /* Abre una direccion fuera del bloque. Dentro de un iframe con

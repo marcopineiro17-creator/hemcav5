@@ -162,14 +162,24 @@ MODULO = """  /* ═════════════════════
   function olcDecodifica(code){
     var c = olcLimpio(code).replace(/\\+/g,'').replace(/0+$/,'');
     if(c.length < 2) return null;
-    var latBaja = -90, lngBaja = -180, res = 20, celda = 20;
+    var latBaja = -90, lngBaja = -180, res = 20, alto = 20, ancho = 20;
     for(var k=0;k+1<c.length && k<10;k+=2){
       var ia = OLC_A.indexOf(c.charAt(k)), ib = OLC_A.indexOf(c.charAt(k+1));
       if(ia < 0 || ib < 0) return null;
       latBaja += ia*res; lngBaja += ib*res;
-      celda = res; res /= 20;
+      alto = ancho = res; res /= 20;
     }
-    return {lat:latBaja + celda/2, lng:lngBaja + celda/2, celda:celda};
+    /* A partir del caracter 11 el codigo deja de ir por pares y afina con
+       una rejilla de 5 filas por 4 columnas. Sin esto, un codigo de 11
+       caracteres se leia como uno de 10: celda de 13,9 m en vez de 2,8. */
+    for(var j=10;j<c.length && j<15;j++){
+      var ig = OLC_A.indexOf(c.charAt(j));
+      if(ig < 0) break;
+      alto /= 5; ancho /= 4;
+      latBaja += Math.floor(ig/4)*alto;
+      lngBaja += (ig%4)*ancho;
+    }
+    return {lat:latBaja + alto/2, lng:lngBaja + ancho/2, celda:Math.max(alto,ancho)};
   }
   function olcRecupera(corto, refLat, refLng){
     var c = olcLimpio(corto), sep = c.indexOf('+');
@@ -1437,6 +1447,125 @@ cambia("""  function liberar(){
     var el=root.parentElement, n=0;""", 'liberar en pantalla completa')
 
 # ══════════════════════════════════════════════════════════════════════
+# 17. CATEGORIA NUEVA, IMPERIO CON UBICACION, Y BOTON AL MAPA
+# ══════════════════════════════════════════════════════════════════════
+# a) La lista de categorias libres estaba escrita TRES veces: en las
+#    pastillas, en las casillas del editor y -- literal -- dentro del
+#    filtro. Anadir una y olvidarse de la tercera deja una pastilla que
+#    no filtra nada. Ahora hay una sola lista y las tres salen de ella.
+cambia("""  var CATS = ["Todos","Terrenos","Macrolotes","Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos"];
+  var CATEGORIAS_DISP = ["Playa","Casas","Departamentos","Ranchos y Haciendas","Exclusivos (no publicar)"];""",
+"""  /* Categorias que se marcan a mano en cada propiedad. UNA sola lista:
+     de aqui salen las pastillas de arriba, las casillas del editor y el
+     filtro. Para anadir una categoria, se anade aqui y ya. */
+  var CATS_LIBRES = ["Playa","Casas","Departamentos","Ranchos y Haciendas","Comerciales/Oficinas"];
+  var CATS = ["Todos","Terrenos","Macrolotes"].concat(CATS_LIBRES).concat(["Exclusivos"]);
+  var CATEGORIAS_DISP = CATS_LIBRES.concat(["Exclusivos (no publicar)"]);""",
+       'lista unica de categorias')
+
+cambia("""      if(['Playa','Casas','Departamentos','Ranchos y Haciendas'].indexOf(filtro)>=0){
+        if(cats(t).indexOf(filtro)<0) return false;
+      }""",
+"""      if(CATS_LIBRES.indexOf(filtro)>=0){
+        if(cats(t).indexOf(filtro)<0) return false;
+      }""", 'filtro por la lista unica')
+
+# b) Imperio Conkal no es un documento de Firestore, asi que no se puede
+#    editar desde la pantalla: sus datos viven en el codigo. Aqui van sus
+#    coordenadas.
+cambia("""    ubicacion_maps:'https://maps.app.goo.gl/NyWBRxtysDm8GLP48',
+    estado_propiedad:'disponible',""",
+"""    ubicacion_maps:'https://maps.app.goo.gl/NyWBRxtysDm8GLP48',
+    /* Del Plus Code 3F9W+27F Conkal, Yucatan. Esta ficha no vive en
+       Firestore -- por eso no tiene boton de editar --, asi que su
+       ubicacion se escribe aqui. La misma pareja esta en el guion del
+       mapa (tools/mapa_js.txt): si se cambia una, cambiar la otra. */
+    lat:21.067563,
+    lng:-89.504328,
+    estado_propiedad:'disponible',""", 'coordenadas de Imperio Conkal')
+
+# c) Boton al mapa de propiedades, en pestaña nueva.
+#    La direccion NO se escribe a mano: se busca en el menu real del
+#    sitio, igual que hacen los bloques de la portada y de divisiones,
+#    y solo si no aparece se usa la ruta de respaldo.
+cambia("""  var CDN = {
+    app:""",
+"""  /* Pagina del mapa de la cartera. Primero se busca en el menu real del
+     sitio por estos nombres; si no esta, se usa la ruta de respaldo. Esa
+     ruta es lo unico que hay que tocar si la pagina cambia de sitio. */
+  var CLAVES_MAPA = ["mapa de propiedades","mapa de la cartera","mapa de terrenos","ubicaciones","mapa"];
+  var RUTA_MAPA = "/mapa-de-propiedades";
+
+  var CDN = {
+    app:""", 'configuracion del enlace al mapa')
+
+cambia("""  /* Abre una direccion fuera del bloque.""",
+"""  /* ─────────────────────────────────────────────────────────
+     A DONDE ENLAZA EL BOTON DEL MAPA
+     Se lee el menu del sitio y se enlaza donde enlaza la propia
+     navegacion. Escribir la ruta a mano envejece mal: en cuanto la
+     pagina cambia de direccion, el boton lleva a un 404.
+     ───────────────────────────────────────────────────────── */
+  function sinTildes(t){
+    t=(t||'').toLowerCase();
+    try{ t=t.normalize('NFD').replace(RE_DIACRITICOS,''); }catch(e){}
+    return t.replace(/\s+/g,' ').trim();
+  }
+  var menuSitio=null;
+  function leerMenu(){
+    if(menuSitio) return menuSitio;
+    menuSitio={};
+    try{
+      var doc=documentoSitio();
+      var origen=doc.location && doc.location.origin;
+      var anclas=doc.querySelectorAll('a[href]');
+      for(var i=0;i<anclas.length;i++){
+        var a=anclas[i], h=a.getAttribute('href')||'';
+        if(/^(#|mailto:|tel:|javascript:)/i.test(h)) continue;
+        var u; try{ u=new URL(h, doc.baseURI); }catch(e){ continue; }
+        if(origen && u.origin!==origen) continue;
+        if(!u.pathname.replace(/\/+$/,'')) continue;        /* la portada */
+        var t=sinTildes(a.textContent);
+        if(!t || t.length>40) continue;
+        /* "Mapa del sitio" no es el mapa de la cartera. */
+        if(/aviso|privacidad|terminos|cookies|politica|mapa del sitio/.test(t)) continue;
+        if(!menuSitio[t]) menuSitio[t]=u.href;
+      }
+    }catch(e){}
+    return menuSitio;
+  }
+  /* Coincidencia exacta primero, y luego por el principio del texto. Nada
+     de buscar la palabra en cualquier posicion: asi es como se acaba
+     enlazando a la pagina equivocada. */
+  function rutaDelSitio(claves){
+    var m=leerMenu(), i, t;
+    for(i=0;i<claves.length;i++){ if(m[sinTildes(claves[i])]) return m[sinTildes(claves[i])]; }
+    for(i=0;i<claves.length;i++){
+      var k=sinTildes(claves[i]);
+      for(t in m){ if(Object.prototype.hasOwnProperty.call(m,t) && t.indexOf(k)===0) return m[t]; }
+    }
+    return null;
+  }
+  function urlMapa(){
+    var base='';
+    try{ base=documentoSitio().location.origin||''; }catch(e){}
+    return rutaDelSitio(CLAVES_MAPA) || (base+RUTA_MAPA);
+  }
+
+  /* Abre una direccion fuera del bloque.""", 'resolucion del enlace al mapa')
+
+cambia("""        (admin?'<button class="cpm-mini" id="cpm-new">+ Nueva</button>':'')+
+        '<span class="cpm-user">'""",
+"""        (admin?'<button class="cpm-mini" id="cpm-new">+ Nueva</button>':'')+
+        '<button class="cpm-mini" id="cpm-mapa" title="Ver la cartera sobre el mapa (se abre en otra pestaña)">🗺 Mapa</button>'+
+        '<span class="cpm-user">'""", 'boton del mapa en la barra')
+
+cambia("""    root.querySelector('#cpm-logout').addEventListener('click',function(){ firebase.auth().signOut(); });""",
+"""    root.querySelector('#cpm-logout').addEventListener('click',function(){ firebase.auth().signOut(); });
+    root.querySelector('#cpm-mapa').addEventListener('click',function(){ abrirFuera(urlMapa()); });""",
+       'enlace del boton del mapa')
+
+# ══════════════════════════════════════════════════════════════════════
 # 11. VERIFICACION
 # ══════════════════════════════════════════════════════════════════════
 problemas = []
@@ -1515,6 +1644,12 @@ esperado = [
     ('function aPantallaCompleta', 'marco a pantalla completa'),
     ('function salirPantallaCompleta', 'vuelta del marco a su sitio'),
     ('no se ancla a la ventana', 'comprobacion del anclaje'),
+    ('Comerciales/Oficinas', 'categoria nueva'),
+    ('var CATS_LIBRES', 'lista unica de categorias'),
+    ('lat:21.067563', 'ubicacion de Imperio Conkal'),
+    ('function urlMapa', 'enlace al mapa de propiedades'),
+    ('id="cpm-mapa"', 'boton del mapa'),
+    ('alto /= 5; ancho /= 4;', 'rejilla fina de los Plus Codes'),
     ("ev.key==='ArrowLeft'", 'flechas en la galeria'),
 ]
 # Lo que NO debe quedar.

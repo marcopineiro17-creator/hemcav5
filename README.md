@@ -171,6 +171,21 @@ También se corrigió que `isAdmin()` comparaba el correo distinguiendo
 mayúsculas contra una lista en minúsculas: una cuenta dada de alta como
 `Marco@…` se quedaba sin ser administradora.
 
+**Categorías.** La lista estaba escrita tres veces —las pastillas de arriba,
+las casillas del editor y, literal, dentro del filtro—, así que añadir una y
+olvidarse de la tercera dejaba una pastilla que no filtraba nada. Ahora hay
+una sola lista, `CATS_LIBRES`, y de ahí salen las tres. Para añadir una
+categoría se añade ahí y ya; el mapa tiene la suya en `TIPOS`.
+
+**Botón al mapa** en la barra, que abre la página del mapa en otra pestaña. La
+dirección no está escrita a mano: se busca en el menú real del sitio por
+«mapa de propiedades», «mapa de la cartera», «mapa de terrenos»,
+«ubicaciones» o «mapa» —descartando «mapa del sitio»— y solo si no aparece se
+usa la ruta de respaldo `/mapa-de-propiedades`, que es `RUTA_MAPA` al
+principio del guion. Es el mismo criterio que ya usan la portada y
+divisiones. Comprobado con las dos: con el enlace en el menú abre el del
+menú, sin él abre el de respaldo.
+
 ### Lo que se arregló después de probarlo en un teléfono
 
 **El botón de cerrar la ficha no se alcanzaba.** Es el mismo defecto que ya
@@ -354,6 +369,19 @@ Comprobado por ida y vuelta sobre seis localidades de la cartera: desvío
 máximo 7,7 m sobre celdas de 13,9 m, y un código corto recuperado da el mismo
 resultado que su código completo. `3F8W+V5 Conkal` resuelve a
 `21.067187, -89.504562`, que es exactamente lo mismo que `76HG3F8W+V5`.
+
+**Los códigos de once caracteres también.** A partir del carácter 11 el
+formato deja de ir por pares y afina con una rejilla de 5 filas por 4
+columnas; sin eso, un código como `3F9W+27F` se leía como si fuera de diez y
+la celda pasaba de 2,8 m a 13,9. El control de arriba sigue dando el mismo
+resultado, así que el cambio no movió nada de lo que ya funcionaba.
+
+**Imperio Conkal** no vive en Firestore —se inyecta desde el código, igual
+que en el catálogo y en el portafolio—, así que tampoco se puede editar desde
+la pantalla. Sus coordenadas (`21.067563, -89.504328`, del Plus Code
+`3F9W+27F`) están escritas en `tools/mapa_js.txt` y en
+`tools/portafolio_prep.py`: **si se cambia una, hay que cambiar la otra**.
+Antes su alfiler caía en el centro de Conkal, a 1,8 km del desarrollo.
 
 Lo aproximado se marca: alfiler de borde discontinuo dorado, etiqueta en la
 tarjeta y un aviso arriba de la lista con el recuento. Varias propiedades de
