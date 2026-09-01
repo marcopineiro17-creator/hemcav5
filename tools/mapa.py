@@ -141,6 +141,18 @@ def revisa(s):
     for m in re.finditer(r'href="(/[^/][^"]*)"', s):
         problemas.append("enlace relativo: " + m.group(1))
 
+    # 8. Que los arreglos esten de verdad.
+    for aguja, que in [
+        ("abrirFicha(t.id)", "el alfiler abre la ficha"),
+        ("function medirCabecera", "medida de la cabecera del sitio"),
+        ("function aPantallaCompleta", "marco a pantalla completa"),
+        ("no se ancla a la ventana", "comprobacion del anclaje"),
+        ("hoja-top", "cabecera pegada de la ficha"),
+        ("alto /= 5; ancho /= 4;", "rejilla fina de los Plus Codes"),
+    ]:
+        if aguja not in s:
+            problemas.append("falta: " + que)
+
     return problemas
 
 

@@ -388,6 +388,21 @@ tarjeta y un aviso arriba de la lista con el recuento. Varias propiedades de
 la misma localidad no se apilan: se reparten en espiral con el ángulo dorado,
 siempre igual para la misma propiedad.
 
+**En el teléfono, tocar un alfiler abre la ficha.** Antes solo la
+*seleccionaba*: resaltaba su tarjeta en la lista y la traía a la vista. En
+escritorio eso se ve, pero en móvil la lista está oculta —una vista a la vez,
+o el mapa se queda en 200 px— así que se tocaba un alfiler y no pasaba
+absolutamente nada. Ahora abre la ficha en los dos, y en escritorio además
+sigue marcando la tarjeta.
+
+Y la ficha usa **toda la pantalla**: mientras está abierta, el bloque pone su
+marco a pantalla completa en el sitio y al cerrar lo deja exacto como estaba
+—la misma técnica que el portafolio, con la misma comprobación de que
+`position:fixed` se ancló de verdad a la ventana—. Sin eso la ficha se quedaba
+dentro de la franja del bloque y su botón de cerrar caía debajo de la cabecera
+del sitio. El botón es de 44 px en móvil, su cabecera va pegada para que no se
+vaya con el desplazamiento, y **Escape** cierra.
+
 **Modo edición** es la otra vía para pasar de aproximada a exacta. La de
 todos los días es el campo de coordenadas del portafolio de asesores, que las
 guarda en el inmueble y no vuelve a pedir la contraseña; esta de aquí sigue

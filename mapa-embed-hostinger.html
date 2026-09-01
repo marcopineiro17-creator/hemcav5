@@ -359,6 +359,15 @@
 }
 .cpm-mp-ov .hoja::-webkit-scrollbar { width:10px }
 .cpm-mp-ov .hoja::-webkit-scrollbar-thumb { background:#cfd8e2;border-radius:8px }
+/* Cabecera de la ficha, PEGADA: si se va con el desplazamiento, el boton
+   de cerrar deja de estar donde el dedo lo busca. Fondo opaco, o la foto
+   se ve pasar por debajo. */
+.cpm-mp-ov .hoja-top {
+  position:sticky; top:0; z-index:5;
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; padding:12px 14px 8px; background:#fff;
+  border-radius:20px 20px 0 0;
+}
 .cpm-mp-ov .cerrar {
   background:#f0f4f8;border:0;border-radius:50%;width:34px;height:34px;color:#5a6a7a;
   font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 34px;
@@ -403,6 +412,9 @@
 @media (max-width:600px) {
   .cpm-mp-ov { align-items:flex-end;padding:0 }
   .cpm-mp-ov .hoja { max-width:100%;border-radius:18px 18px 0 0 }
+  .cpm-mp-ov .hoja-top { border-radius:18px 18px 0 0;padding:12px 14px }
+  /* 44px es el minimo con el que un dedo acierta sin mirar. */
+  .cpm-mp-ov .cerrar { width:44px;height:44px;flex:0 0 44px;font-size:19px }
 }
 </style>
 <div id="cpm-mapa" class="ver-mapa">
@@ -1559,7 +1571,10 @@
           iconSize: null
         })
       });
-      m.on("click", function () { seleccionar(t.id, false); });
+      /* Abre la ficha, no solo la selecciona. En el telefono la lista esta
+         OCULTA -- una vista a la vez --, asi que seleccionar la tarjeta no
+         se ve por ningun lado: se tocaba un alfiler y no pasaba nada. */
+      m.on("click", function () { abrirFicha(t.id); });
       m.addTo(capaPins);
       pinPorId[t.id] = m;
     });
@@ -1629,12 +1644,120 @@
       if (fe && typeof window.parent.innerHeight === "number") { MARCO.el = fe; MARCO.win = window.parent; }
     } catch (e) { MARCO.el = null; MARCO.win = null; }
   })();
+  function ventanaSitio() {
+    try { if (MARCO.win) return MARCO.win; } catch (e) {}
+    return window;
+  }
+  function documentoSitio() {
+    try { var w = ventanaSitio(); if (w && w.document) return w.document; } catch (e) {}
+    return document;
+  }
+  function alturaSitio() {
+    var h = 0;
+    safe(function () { h = ventanaSitio().innerHeight || window.innerHeight; });
+    return h || window.innerHeight || 600;
+  }
+  /* Alto de la cabecera FIJA del sitio. Se mide en el documento del sitio:
+     dentro del iframe no hay ninguna cabecera fija y siempre daria cero,
+     que es como la ficha acababa con su boton de cerrar debajo de ella. */
+  var CABECERA = 0;
+  function medirCabecera() {
+    var alto = 0;
+    try {
+      var w = ventanaSitio(), doc = documentoSitio();
+      var nodos = doc.body ? doc.body.children : [];
+      var ancho = w.innerWidth || window.innerWidth || 360;
+      for (var i = 0; i < nodos.length; i++) {
+        var e = nodos[i];
+        var cs = w.getComputedStyle ? w.getComputedStyle(e) : getComputedStyle(e);
+        if (cs.position !== "fixed" && cs.position !== "sticky") continue;
+        if (cs.display === "none" || cs.visibility === "hidden") continue;
+        var r = e.getBoundingClientRect();
+        if (r.top <= 2 && r.bottom > alto && r.bottom < 260 && r.width > ancho * 0.5) alto = r.bottom;
+      }
+    } catch (e) {}
+    CABECERA = Math.round(alto);
+    return CABECERA;
+  }
+
+  /* ===================================================================
+     MARCO A PANTALLA COMPLETA MIENTRAS HAY UNA CAPA ABIERTA
+     Una capa dentro de un iframe no puede pintar fuera del iframe. Este
+     bloque mide lo que mide la pantalla menos la barra, los filtros y el
+     pie, asi que la ficha se quedaba en esa franja y encima por debajo de
+     la cabecera del sitio. Se agranda el marco mientras dura la ficha y
+     se deja exacto como estaba al cerrarla.
+     =================================================================== */
+  var pantalla = null;
+  function aPantallaCompleta() {
+    if (pantalla) return true;
+    if (!MARCO.el) return false;
+    var el = MARCO.el, padre = el.parentElement, guarda = null;
+    try {
+      var r = el.getBoundingClientRect();
+      guarda = { css: el.style.cssText, padre: padre, padreAlto: padre ? padre.style.height : "" };
+      if (padre) padre.style.height = Math.round(r.height) + "px";
+      var st = el.style;
+      st.setProperty("position", "fixed", "important");
+      st.setProperty("top", "0", "important");
+      st.setProperty("bottom", "auto", "important");
+      /* Izquierda y ancho como estaban: el contenido de detras no se
+         recoloca y al cerrar no hay salto. */
+      st.setProperty("left", Math.round(r.left) + "px", "important");
+      st.setProperty("width", Math.round(r.width) + "px", "important");
+      st.setProperty("height", alturaSitio() + "px", "important");
+      st.setProperty("max-height", "none", "important");
+      st.setProperty("min-height", "0", "important");
+      st.setProperty("z-index", "2147483000", "important");
+      var r2 = el.getBoundingClientRect();
+      /* Si algun contenedor tiene transform o filter, 'fixed' se ancla a EL
+         y no a la ventana. Entonces esto no sirve y se deshace. */
+      if (Math.abs(r2.top) > 2 || Math.abs(r2.height - alturaSitio()) > 4) {
+        throw new Error("no se ancla a la ventana");
+      }
+      pantalla = guarda;
+      return true;
+    } catch (e) {
+      try { if (guarda) el.style.cssText = guarda.css; } catch (e2) {}
+      try { if (guarda && guarda.padre) guarda.padre.style.height = guarda.padreAlto || ""; } catch (e3) {}
+      pantalla = null;
+      return false;
+    }
+  }
+  function salirPantallaCompleta() {
+    if (!pantalla) return;
+    var g = pantalla; pantalla = null;
+    try { MARCO.el.style.cssText = g.css; } catch (e) {}
+    try { if (g.padre) g.padre.style.height = g.padreAlto || ""; } catch (e) {}
+    ultimoAlto = 0;                 /* que ajustarAlto vuelva a escribirlo */
+    safe(function () { ajustarAlto(); });
+    safe(function () { if (mapa) mapa.invalidateSize(); });
+  }
+  /* Con una capa abierta el sitio seguia desplazandose por detras. */
+  var scrollGuardado = null;
+  function trabarSitio() {
+    if (scrollGuardado !== null) return;
+    try {
+      var e = documentoSitio().documentElement;
+      scrollGuardado = { el: e, valor: e.style.overflow };
+      e.style.overflow = "hidden";
+    } catch (e2) { scrollGuardado = null; }
+  }
+  function destrabarSitio() {
+    if (!scrollGuardado) { scrollGuardado = null; return; }
+    try { scrollGuardado.el.style.overflow = scrollGuardado.valor || ""; } catch (e) {}
+    scrollGuardado = null;
+  }
+
   function banda() {
     if (!MARCO.el) return null;
     try {
+      /* Con el marco a pantalla completa, la ventana entera es la banda. */
+      if (pantalla) return { top: 0, height: alturaSitio() };
       var r = MARCO.el.getBoundingClientRect(), ph = MARCO.win.innerHeight;
-      var top = Math.max(0, -r.top);
+      var top = Math.max(0, CABECERA - r.top);
       var bot = Math.min(r.height, ph - r.top);
+      if (bot - top < 300) top = Math.max(0, -r.top);
       return { top: top, height: Math.max(240, bot - top) };
     } catch (e) { return null; }
   }
@@ -1645,7 +1768,17 @@
     el.style.top = b.top + "px"; el.style.bottom = "auto"; el.style.height = b.height + "px";
   }
   (function () {
-    function ping() { for (var i = 0; i < anclados.length; i++) anclar(anclados[i]); }
+    function ping() {
+      for (var i = 0; i < anclados.length; i++) anclar(anclados[i]);
+      /* Red de seguridad: ni el sitio se queda sin desplazarse ni el marco
+         se queda fijo tapandolo todo si algo fallara al cerrar. */
+      if (!anclados.length) {
+        if (scrollGuardado) destrabarSitio();
+        if (pantalla) salirPantallaCompleta();
+      } else if (pantalla) {
+        safe(function () { MARCO.el.style.setProperty("height", alturaSitio() + "px", "important"); });
+      }
+    }
     window.addEventListener("scroll", ping, { passive: true });
     window.addEventListener("resize", ping, { passive: true });
     if (MARCO.win) safe(function () {
@@ -1660,14 +1793,31 @@
     ov.style.zIndex = z || 2147483000;
     document.body.appendChild(ov);
     anclados.push(ov);
+    medirCabecera();
+    aPantallaCompleta();
     anclar(ov);
+    trabarSitio();
     return ov;
   }
   function cerrar(ov) {
     var i = anclados.indexOf(ov);
     if (i >= 0) anclados.splice(i, 1);
     if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+    if (!document.querySelector(".cpm-mp-viva")) {
+      destrabarSitio();
+      salirPantallaCompleta();
+    }
   }
+  /* Escape cierra la capa de encima. */
+  (function () {
+    function alTeclado(ev) {
+      if (ev.key !== "Escape" && ev.key !== "Esc") return;
+      var todas = document.querySelectorAll(".cpm-mp-viva");
+      if (todas.length) cerrar(todas[todas.length - 1]);
+    }
+    document.addEventListener("keydown", alTeclado);
+    safe(function () { MARCO.win.document.addEventListener("keydown", alTeclado); });
+  })();
 
   /* ===================== FICHA ===================== */
   function abrirFicha(id) {
@@ -1704,7 +1854,7 @@
 
     ov.innerHTML =
       '<div class="hoja" style="padding-bottom:26px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px;gap:10px">' +
+        '<div class="hoja-top">' +
           '<span class="etq">' + esc(t.id) + "</span>" +
           '<button class="cerrar" id="cpmMpFx" type="button" aria-label="Cerrar">✕</button>' +
         "</div>" +
@@ -1987,6 +2137,9 @@
 
   var ultimoAlto = 0;
   function ajustarAlto() {
+    /* Con el marco a pantalla completa no se toca su alto: al cerrar se
+       restaura el estilo guardado y esto se vuelve a llamar. */
+    if (pantalla) return;
     liberar();
     medirAlto();
     if (!MARCO.el) return;
