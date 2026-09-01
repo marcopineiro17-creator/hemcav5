@@ -171,13 +171,66 @@ También se corrigió que `isAdmin()` comparaba el correo distinguiendo
 mayúsculas contra una lista en minúsculas: una cuenta dada de alta como
 `Marco@…` se quedaba sin ser administradora.
 
+### Lo que se arregló después de probarlo en un teléfono
+
+**El botón de cerrar la ficha no se alcanzaba.** Es el mismo defecto que ya
+tenía el catálogo: la ficha se ancla a la banda visible del marco, pero esa
+banda se medía desde el borde de la ventana, **sin descontar la cabecera fija
+del sitio** —64 px en móvil—, así que la cabecera de la ficha, que es donde
+vive el botón, quedaba justo debajo de ella. Dos cambios: la banda empieza
+debajo de la cabecera (medida en el documento del **sitio**, no en el del
+bloque, donde siempre daría cero), y la cabecera de la hoja es **pegada**, así
+que el botón sigue ahí aunque se desplace el contenido. Ahora mide 44×44 —el
+mínimo con el que un dedo acierta— y además **Escape** cierra.
+
+**El PDF.** Tres cosas distintas, todas medidas:
+
+1. *Salía sin fotos.* La receta habitual —abrir una ventana en blanco y
+   escribirle el documento— produce un documento que **no llega a pedir las
+   imágenes**: cero peticiones, comprobado. Ahora el documento se sirve en una
+   dirección `blob:`, que sí carga; con ventana en blanco no cargaba ninguna y
+   con `blob:` cargan todas.
+2. *Tardaba ocho segundos.* Se esperaba a las fotos mirando `complete` en un
+   bucle con tope de 8 s, y una petición colgada nunca pone `complete` a
+   `true`: había que agotar el tope entero. Ahora se escuchan `load` y `error`
+   de cada foto, con tope de 3,5 s. Medido: de 8 s a 0,2 s.
+3. *Si el navegador bloqueaba la ventana, no pasaba nada de nada.* El código
+   hacía `if(!w) return;`. Dentro de un iframe con `sandbox` eso pasa siempre.
+   Ahora hay tres caminos: ventana nueva → marco oculto → la hoja en pantalla
+   con su botón de imprimir. Los tres comprobados, incluido el caso en que
+   además `print()` está prohibido.
+
+Y el botón avisa mientras prepara («⏳ Preparando la ficha…»): sin eso, la
+espera se lee como que no pasó nada y se vuelve a pulsar.
+
+**El botón de ubicación del PDF.** Era un enlace sin `target`: al pulsarlo, la
+ventana de la ficha se iba a Google Maps y se perdía el documento. Y un PDF ya
+guardado pierde los enlaces en muchos visores. Ahora el enlace abre en pestaña
+nueva **y** debajo van la dirección y las coordenadas escritas, que se leen y
+se teclean aunque el enlace no funcione. El de la ficha en pantalla también:
+dentro de un iframe con `sandbox`, `target="_blank"` no abre nada, así que si
+el navegador lo impide se navega la ventana completa.
+
+**Interfaz.** El velo de las ventanas llevaba `backdrop-filter`, que cuesta
+fotogramas incluso cuando no se ve —ya medido en otros bloques de este
+sitio—: fuera, y el velo va más oscuro. La ficha repetía la superficie en dos
+cuadros contiguos («SUPERFICIE 256 m²» y «M² 256»): ahora el m² suelto solo
+sale cuando la superficie va en hectáreas, y en su lugar aparece si la
+propiedad tiene coordenadas. Con una ventana abierta el sitio ya no se
+desplaza por detrás (y se destraba solo si algo fallara). Las tarjetas se
+abren con el teclado y sus fotos cargan cuando hacen falta. Los botones de la
+barra pasan de 26 px a 40 en móvil, y el de quitar una foto de 20 a 28. La
+galería se mueve con las flechas. La lupa del buscador se centra respecto a su
+caja en vez de con un ajuste a mano que solo cuadraba con un relleno concreto.
+
 Comprobado con Firebase imitado —no hay salida a internet desde donde se
 construye— sobre una cartera con los casos que importan: una exclusiva con la
 etiqueta de hoy, otra con la etiqueta vieja ya colada en el catálogo público,
 una con `categorias` guardado como texto, una con coordenadas solo en el
 espejo, un huérfano en el catálogo y un documento ilegible. Con sesión de
 administrador y con sesión de asesor, en escritorio y en móvil, y dentro de
-una réplica del contenedor de Hostinger.
+una réplica del contenedor de Hostinger **con su cabecera fija**, que es lo
+que hacía falta para reproducir lo del botón de cerrar.
 
 ### Mapa de propiedades
 

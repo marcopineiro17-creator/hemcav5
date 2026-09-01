@@ -36,6 +36,15 @@ def cambia(viejo, nuevo, que, veces=1):
     src = src.replace(viejo, nuevo, veces)
 
 
+def sin_comentarios(t):
+    """Quita comentarios CSS, HTML y de linea de JS. Las revisiones de
+    'esto ya no debe estar' se hacen sobre esto: los comentarios explican
+    justamente lo que se quito y se delatarian a si mismos."""
+    t = re.sub(r'/\*.*?\*/', '', t, flags=re.S)
+    t = re.sub(r'<!--.*?-->', '', t, flags=re.S)
+    return t
+
+
 def tabla(nombre):
     """Saca una tabla de coordenadas del guion del mapa, tal cual.
 
@@ -679,6 +688,638 @@ cambia("""    '<div class="page"><div class="hdr"><img src="'+LOGO_W+'" class="l
        'sello en el PDF')
 
 # ══════════════════════════════════════════════════════════════════════
+# 12. EL BOTON DE CERRAR, DEBAJO DE LA CABECERA DEL SITIO
+#     Reportado: en el telefono el boton de cerrar la ficha queda casi
+#     invisible y hay que girar el aparato para poder tocar el fondo.
+#     Es el mismo defecto que ya se arreglo en el catalogo: la capa se
+#     ancla a la parte visible del marco, pero esa parte se medía desde el
+#     borde de la ventana (0), SIN descontar la cabecera fija del sitio,
+#     que en movil ocupa los primeros ~64px. La cabecera de la ficha --
+#     que es donde vive el boton -- quedaba justo debajo de ella.
+#
+#     Dos cosas, no una:
+#       · la banda visible empieza debajo de la cabecera del sitio;
+#       · la cabecera de la ficha es STICKY, asi que el boton sigue ahi
+#         aunque se desplace el contenido. Antes se iba con el scroll.
+# ══════════════════════════════════════════════════════════════════════
+cambia("""  function banda(){
+    if(!FRAME.el) return null;              /* fuera de iframe, fixed ya sirve */
+    try{
+      var r=FRAME.el.getBoundingClientRect(), ph=FRAME.win.innerHeight;
+      var top=Math.max(0,-r.top);
+      var bot=Math.min(r.height, ph-r.top);
+      return {top:top, height:Math.max(220,bot-top)};
+    }catch(e){ return null; }
+  }""",
+"""  var CABECERA=0;    /* alto de la cabecera fija del sitio, en px */
+  function ventanaSitio(){
+    try{ if(FRAME && FRAME.win) return FRAME.win; }catch(e){}
+    return window;
+  }
+  function documentoSitio(){
+    try{ var w=ventanaSitio(); if(w && w.document) return w.document; }catch(e){}
+    return document;
+  }
+  /* Mide la cabecera fija del sitio. Ojo: hay que mirar el documento del
+     SITIO, no el del bloque -- dentro del iframe no hay ninguna cabecera
+     fija y siempre mediria 0, que es justo lo que pasaba. */
+  function medirCabecera(){
+    var alto=0;
+    try{
+      var w=ventanaSitio(), doc=documentoSitio();
+      var nodos=doc.body ? doc.body.children : [];
+      var anchoVentana=w.innerWidth||window.innerWidth||360;
+      for(var i=0;i<nodos.length;i++){
+        var e=nodos[i];
+        var cs=w.getComputedStyle ? w.getComputedStyle(e) : getComputedStyle(e);
+        if(cs.position!=='fixed' && cs.position!=='sticky') continue;
+        if(cs.display==='none' || cs.visibility==='hidden') continue;
+        var r=e.getBoundingClientRect();
+        /* Pegada arriba, ancha y de alto razonable: eso es una cabecera.
+           Lo que no cumpla las tres cosas puede ser un boton flotante. */
+        if(r.top<=2 && r.bottom>alto && r.bottom<260 && r.width>anchoVentana*0.5) alto=r.bottom;
+      }
+    }catch(e){}
+    CABECERA=Math.round(alto);
+    return CABECERA;
+  }
+  function banda(){
+    if(!FRAME.el) return null;              /* fuera de iframe, fixed ya sirve */
+    try{
+      var r=FRAME.el.getBoundingClientRect(), ph=FRAME.win.innerHeight;
+      /* La banda empieza DEBAJO de la cabecera del sitio: si empezara en el
+         borde de la ventana, la cabecera de la ficha -- y con ella el boton
+         de cerrar -- quedaria tapada. */
+      var top=Math.max(0, CABECERA-r.top);
+      var bot=Math.min(r.height, ph-r.top);
+      /* Si descontarla deja una banda demasiado corta, se prefiere mostrar
+         la ficha entera aunque roce la cabecera. */
+      if(bot-top<300) top=Math.max(0,-r.top);
+      return {top:top, height:Math.max(220,bot-top)};
+    }catch(e){ return null; }
+  }""", 'banda con cabecera')
+
+# La cabecera se mide al abrir cada capa: el sitio puede haberla cambiado
+# de alto al desplazarse (muchas se encogen).
+cambia("""  function mkOverlay(z){
+    var ov=document.createElement('div');
+    ov.className='cpm-ov cpm-ov-live';
+    ov.style.zIndex=(z||2147483000);
+    document.body.appendChild(ov);
+    anclados.push(ov);
+    anclar(ov);                       /* centrado en la PANTALLA, no en el iframe */
+    document.body.style.overflow='hidden';
+    return ov;
+  }
+  function closeOverlay(ov){
+    var i=anclados.indexOf(ov); if(i>=0) anclados.splice(i,1);
+    if(ov&&ov.parentNode) ov.parentNode.removeChild(ov);
+    if(!document.querySelector('.cpm-ov-live')) document.body.style.overflow='';
+  }""",
+"""  /* ─────────────────────────────────────────────────────────
+     Con una capa abierta, el SITIO seguia desplazandose por detras: se
+     movia el fondo mientras la ficha se reanclaba, y se perdia el sitio
+     donde se estaba. Se bloquea el desplazamiento del documento del
+     sitio, no el del bloque -- el del bloque no se desplaza nunca.
+     El valor anterior se guarda y se restaura al cerrar; y por si algo
+     fallara, el latido de anclar() lo devuelve en cuanto no queda
+     ninguna capa. Dejar un sitio sin poder desplazarse seria peor que
+     el problema que esto resuelve.
+     ───────────────────────────────────────────────────────── */
+  var scrollGuardado=null;
+  function trabarSitio(){
+    if(scrollGuardado!==null) return;
+    try{
+      var d=documentoSitio(), e=d.documentElement;
+      scrollGuardado={el:e, valor:e.style.overflow};
+      e.style.overflow='hidden';
+    }catch(e2){ scrollGuardado=null; }
+  }
+  function destrabarSitio(){
+    if(!scrollGuardado) { scrollGuardado=null; return; }
+    try{ scrollGuardado.el.style.overflow=scrollGuardado.valor||''; }catch(e){}
+    scrollGuardado=null;
+  }
+  function mkOverlay(z){
+    var ov=document.createElement('div');
+    ov.className='cpm-ov cpm-ov-live';
+    ov.style.zIndex=(z||2147483000);
+    document.body.appendChild(ov);
+    anclados.push(ov);
+    medirCabecera();                  /* antes de anclar, no despues */
+    anclar(ov);                       /* centrado en la PANTALLA, no en el iframe */
+    document.body.style.overflow='hidden';
+    trabarSitio();
+    return ov;
+  }
+  function closeOverlay(ov){
+    var i=anclados.indexOf(ov); if(i>=0) anclados.splice(i,1);
+    if(ov&&ov.parentNode) ov.parentNode.removeChild(ov);
+    if(!document.querySelector('.cpm-ov-live')){
+      document.body.style.overflow='';
+      destrabarSitio();
+    }
+  }
+  /* Escape cierra la capa de encima. No estaba, y en el ordenador es lo
+     primero que se intenta. */
+  function capaDeEncima(){
+    var todas=document.querySelectorAll('.cpm-ov-live');
+    return todas.length ? todas[todas.length-1] : null;
+  }
+  (function(){
+    function alTeclado(ev){
+      if(ev.key!=='Escape' && ev.key!=='Esc') return;
+      var ov=capaDeEncima();
+      if(ov) closeOverlay(ov);
+    }
+    document.addEventListener('keydown',alTeclado);
+    try{ if(FRAME.win) FRAME.win.document.addEventListener('keydown',alTeclado); }catch(e){}
+  })();""", 'mkOverlay y closeOverlay')
+
+# Red de seguridad: si no queda ninguna capa, el sitio vuelve a moverse.
+cambia("""    function ping(){ for(var i=0;i<anclados.length;i++) anclar(anclados[i]); }""",
+       """    function ping(){
+      for(var i=0;i<anclados.length;i++) anclar(anclados[i]);
+      if(!anclados.length && scrollGuardado) destrabarSitio();
+    }""", 'red de seguridad del desplazamiento')
+
+# ── La cabecera de la ficha, pegada arriba y con un boton que se ve ──
+cambia("""        '<div style="display:flex;justify-content:center;padding:12px 16px 4px;position:relative"><div style="width:40px;height:4px;background:#d0d8e0;border-radius:2px"></div>'+
+          '<button id="cpm-f-x" style="position:absolute;top:12px;right:14px;background:#f0f4f8;border:none;border-radius:50%;width:34px;height:34px;color:#5a6a7a;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12)">✕</button></div>'+""",
+       """        '<div class="cpm-sheet-top"><div class="asa"></div>'+
+          '<button id="cpm-f-x" class="cpm-x" type="button" aria-label="Cerrar">✕</button></div>'+""",
+       'cabecera de la ficha')
+
+cambia("""/* En movil vuelve a ser hoja inferior, que ahi si es lo correcto */
+@media(max-width:600px){
+  .cpm-ov{ align-items:flex-end; padding:0; }
+  .cpm-ov .cpm-sheet{ max-width:100%; border-radius:22px 22px 0 0; }
+}""",
+"""/* En movil vuelve a ser hoja inferior, que ahi si es lo correcto */
+@media(max-width:600px){
+  .cpm-ov{ align-items:flex-end; padding:0; }
+  .cpm-ov .cpm-sheet{ max-width:100%; border-radius:22px 22px 0 0; }
+}
+/* ── Cabecera de la hoja ──────────────────────────────────────────
+   PEGADA (sticky) a proposito: antes el boton de cerrar se iba con el
+   desplazamiento y, si la banda visible no descontaba la cabecera del
+   sitio, no habia forma de alcanzarlo -- el defecto reportado. Ahora se
+   queda siempre a la vista, encima del contenido.
+   El fondo es opaco: sin el, las fotos se veian pasar por debajo. */
+.cpm-ov .cpm-sheet-top{
+  position:sticky; top:0; z-index:5;
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 14px; background:#fff;
+  border-radius:22px 22px 0 0;
+  box-shadow:0 1px 0 rgba(26,45,66,.08);
+}
+.cpm-ov .cpm-sheet-top .asa{
+  width:44px; height:4px; background:#d0d8e0; border-radius:2px;
+}
+.cpm-ov .cpm-x{
+  position:absolute; top:8px; right:10px;
+  width:40px; height:40px; border-radius:50%;
+  background:#eef2f7; border:1px solid #dde4ec; color:#3a4a5a;
+  font-size:19px; line-height:1; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:0 2px 8px rgba(26,45,66,.18);
+  font-family:'Montserrat',sans-serif;
+}
+.cpm-ov .cpm-x:hover{ background:#e2e8f0; color:#1a2d42 }
+.cpm-ov .cpm-x:active{ transform:scale(.94) }
+@media(max-width:600px){
+  /* 44px es el minimo con el que un dedo acierta sin mirar. */
+  .cpm-ov .cpm-x{ width:44px; height:44px; top:7px; right:10px; font-size:20px }
+  .cpm-ov .cpm-sheet-top{ padding:12px 14px }
+}""", 'CSS de la cabecera de la hoja')
+
+# ══════════════════════════════════════════════════════════════════════
+# 13. EL PDF
+#     Reportado: no se descarga bien, y el boton de ubicacion no abre.
+#
+#     Que estaba mal, por partes:
+#     a) window.open('') devuelve null si el navegador bloquea la ventana
+#        -- y dentro de un iframe con sandbox pasa siempre --. El codigo
+#        hacia `if(!w) return;`: no pasaba nada y nadie se enteraba.
+#     b) Se imprimia en window.onload, que espera a TODAS las fotos. Una
+#        foto que no llega deja la ventana abierta sin imprimir nunca.
+#     c) La ubicacion era un enlace SIN target: al pulsarlo, la ventana
+#        de la ficha se iba a Google Maps y se perdia el documento. Y en
+#        un PDF ya guardado, muchos visores no respetan los enlaces.
+#        Ahora, ademas del enlace, van la direccion y las coordenadas
+#        ESCRITAS: eso se lee, se copia y se teclea aunque el enlace no
+#        funcione.
+#     d) Las direcciones de las fotos se metian sin escapar.
+# ══════════════════════════════════════════════════════════════════════
+cambia("""  function generarPDF(t, asesorNombre, asesorTel){
+    var w=window.open('','_blank'); if(!w) return;
+    var precio=t.precio_total||t.precio;""",
+"""  /* Manda el documento a la impresora. Tres caminos, del mejor al que
+     siempre funciona; el primero que arranca gana.
+       1. Ventana nueva con el documento en una direccion blob:.
+       2. Marco oculto en esta misma pagina, por si las ventanas nuevas
+          estan bloqueadas -- dentro de un iframe con sandbox lo estan
+          siempre, y antes eso dejaba el boton sin hacer NADA.
+       3. La hoja en pantalla con su boton, si el navegador tampoco deja
+          imprimir por guion.
+
+     Por que blob: y no la receta habitual de abrir una ventana en blanco
+     y escribirle el documento: MEDIDO, en esa ventana las fotos no se
+     llegan a pedir siquiera -- ni una peticion --, asi que la ficha salia
+     impresa sin ninguna imagen. Con una direccion blob: el documento se
+     carga de verdad y las fotos entran. */
+  function haceBlob(html){
+    try{
+      var B = window.Blob, U = window.URL || window.webkitURL;
+      if(!B || !U || !U.createObjectURL) return null;
+      return U.createObjectURL(new B([html], {type:'text/html;charset=utf-8'}));
+    }catch(e){ return null; }
+  }
+  function sueltaBlob(url){
+    if(!url) return;
+    /* Tarde: revocarla mientras el navegador todavia imprime deja la
+       ventana en blanco. */
+    setTimeout(function(){
+      try{ (window.URL||window.webkitURL).revokeObjectURL(url); }catch(e){}
+    }, 300000);
+  }
+  /* Espera a que el documento de la ventana termine de cargar. Con tope,
+     porque una ventana que no responde no puede colgar el boton. */
+  function cuandoCargue(ven, cb){
+    var t0=Date.now(), hecho=false;
+    function ya(){ if(hecho) return; hecho=true; cb(); }
+    (function ver(){
+      if(hecho) return;
+      var rs='';
+      try{ rs = ven.document && ven.document.readyState; }
+      catch(e){ ya(); return; }        /* no se puede mirar: a imprimir */
+      if(rs==='complete' || Date.now()-t0>4000){ ya(); return; }
+      setTimeout(ver,120);
+    })();
+  }
+  function imprimir(html, titulo, alSalir){
+    function fin(){ if(alSalir){ var f=alSalir; alSalir=null; try{ f(); }catch(e){} } }
+    var url = haceBlob(html);
+
+    /* 1. Ventana nueva. */
+    if(url){
+      var w=null;
+      try{ w=window.open(url,'_blank'); }catch(e){ w=null; }
+      if(w){
+        cuandoCargue(w, function(){
+          try{ w.document.title=titulo; }catch(e2){}
+          alImprimir(w, function(){
+            try{ w.focus(); w.print(); }catch(e3){}
+            fin();
+          });
+        });
+        sueltaBlob(url);
+        return;
+      }
+    }
+
+    /* 2. Marco oculto. */
+    try{
+      var m=document.createElement('iframe');
+      m.setAttribute('aria-hidden','true');
+      m.style.cssText='position:absolute;width:1px;height:1px;left:-9999px;top:0;border:0';
+      document.body.appendChild(m);
+      function alListo(){
+        try{ m.contentWindow.document.title=titulo; }catch(e){}
+        alImprimir(m.contentWindow, function(){
+          var ok=false;
+          try{ m.contentWindow.focus(); m.contentWindow.print(); ok=true; }catch(e6){}
+          fin();
+          /* El marco se retira tarde a proposito: quitarlo con el dialogo
+             de impresion abierto lo cancela en algunos navegadores. */
+          setTimeout(function(){ try{ m.parentNode.removeChild(m); }catch(e7){} }, 300000);
+          if(!ok) verEnPantalla(html);
+        });
+      }
+      if(url){
+        m.onload=alListo;
+        m.src=url;
+        sueltaBlob(url);
+      } else {
+        var d=m.contentWindow.document;
+        d.open(); d.write(html); d.close();
+        setTimeout(alListo,60);
+      }
+      return;
+    }catch(e8){}
+
+    /* 3. A la vista, y que la imprima quien pueda. */
+    sueltaBlob(url);
+    fin();
+    verEnPantalla(html);
+  }
+  /* Espera a que carguen las fotos y entonces imprime.
+     Se escuchan load y error de cada foto en vez de mirar `complete` en
+     un bucle: una peticion que se queda colgada nunca pone complete a
+     true, y con el bucle habia que agotar el tope entero. Medido: con una
+     foto que no llegaba, el dialogo de impresion tardaba OCHO SEGUNDOS en
+     aparecer -- que desde fuera es exactamente "el PDF no se descarga".
+     El tope se queda en 3,5 s: una foto que no ha llegado para entonces
+     no va a mejorar la ficha, y es mejor imprimirla sin ella. */
+  function alImprimir(ven, hacer){
+    var listo=false, tope=null;
+    function ya(){
+      if(listo) return;
+      listo=true;
+      if(tope) clearTimeout(tope);
+      hacer();
+    }
+    var imgs;
+    try{ imgs=Array.prototype.slice.call(ven.document.images||[]); }
+    catch(e){ ya(); return; }
+    var faltan=0;
+    imgs.forEach(function(im){
+      if(im.complete) return;
+      faltan++;
+      function fin2(){
+        im.removeEventListener('load',fin2);
+        im.removeEventListener('error',fin2);
+        if(--faltan<=0) setTimeout(ya,80);
+      }
+      im.addEventListener('load',fin2);
+      im.addEventListener('error',fin2);
+    });
+    if(!faltan){ setTimeout(ya,80); return; }
+    tope=setTimeout(ya,3500);
+  }
+  /* Ultimo recurso visible: la ficha dentro de una capa, con su boton. */
+  function verEnPantalla(html){
+    var ov=mkOverlay(2147483600);
+    ov.innerHTML=
+      '<div class="cpm-sheet" style="max-width:820px;display:flex;flex-direction:column">'+
+        '<div class="cpm-sheet-top" style="justify-content:space-between;padding:12px 16px">'+
+          '<b style="font-size:13px;color:#1a2d42">Ficha lista para imprimir</b>'+
+          '<button id="cpm-pr-x" class="cpm-x" type="button" aria-label="Cerrar">\u2715</button>'+
+        '</div>'+
+        '<div style="padding:0 14px 12px;font-size:12px;color:#5a6a7a;line-height:1.6">'+
+          'Tu navegador no dej\u00f3 abrir la ventana de impresi\u00f3n. Usa el bot\u00f3n de abajo, '+
+          'o el men\u00fa <b>Compartir \u2192 Imprimir</b> del navegador, y elige '+
+          '<b>Guardar como PDF</b>.'+
+        '</div>'+
+        '<iframe id="cpm-pr-m" style="width:100%;flex:1;min-height:340px;border:1px solid #e8ecf0;border-radius:12px;background:#fff"></iframe>'+
+        '<button id="cpm-pr-go" class="cpm-btn-main" style="margin:12px 0 4px">\u2399 Imprimir o guardar como PDF</button>'+
+      '</div>';
+    var m=ov.querySelector('#cpm-pr-m');
+    try{ var d=m.contentWindow.document; d.open(); d.write(html); d.close(); }catch(e){}
+    ov.querySelector('#cpm-pr-x').addEventListener('click',function(){ closeOverlay(ov); });
+    ov.querySelector('#cpm-pr-go').addEventListener('click',function(){
+      try{ m.contentWindow.focus(); m.contentWindow.print(); }
+      catch(e){ try{ window.print(); }catch(e2){} }
+    });
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeOverlay(ov); });
+  }
+
+  function generarPDF(t, asesorNombre, asesorTel, alSalir){
+    var precio=t.precio_total||t.precio;""",
+       'imprimir con respaldos')
+
+cambia("""    var fotosHTML=(t.fotos&&t.fotos.length>0)?'<div class="sec" style="margin-bottom:10px">Fotografías</div><div class="foto-grid">'+t.fotos.slice(0,6).map(function(f){return '<img src="'+f+'" alt="foto">'}).join('')+'</div>':'';""",
+       """    var fotosHTML=(t.fotos&&t.fotos.length>0)?'<div class="sec" style="margin-bottom:10px">Fotografías</div><div class="foto-grid">'+t.fotos.slice(0,6).map(function(f){return '<img src="'+esc(f)+'" alt="foto">'}).join('')+'</div>':'';
+    /* La ubicacion, escrita ademas de enlazada: un PDF guardado y
+       reenviado pierde los enlaces en muchos visores, y entonces el
+       cliente se queda sin saber donde esta el predio. */
+    var cGeo=coordsDe(t);
+    var urlMaps=(t.ubicacion_maps&&/^https?:/i.test(t.ubicacion_maps))?t.ubicacion_maps:'';
+    var urlGeo=cGeo?('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(cGeo[0]+','+cGeo[1])):'';
+    var urlIr=urlGeo||urlMaps;
+    var ubicacionHTML='';
+    if(urlIr){
+      ubicacionHTML='<div class="sec">Ubicación</div>'+
+        '<a href="'+esc(urlIr)+'" class="cta-ubicacion" target="_blank" rel="noopener">🗺 Abrir la ubicación en Google Maps</a>'+
+        '<div class="ubi-txt">'+
+          (cGeo?'<div><b>Coordenadas:</b> '+esc(txtCoords(cGeo[0],cGeo[1]))+'</div>':'')+
+          '<div><b>Enlace:</b> '+esc(urlIr)+'</div>'+
+        '</div>';
+    }""",
+       'ubicacion del PDF')
+
+cambia("""    '.cta-ubicacion{display:inline-block;background:#3d7ab5;color:#fff;padding:9px 20px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:1px;margin-bottom:14px}'+""",
+       """    '.cta-ubicacion{display:inline-block;background:#3d7ab5;color:#fff;padding:9px 20px;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:1px;margin-bottom:8px}'+
+    '.ubi-txt{font-size:10px;color:#5a6a7a;line-height:1.7;margin-bottom:14px;word-break:break-all}'+
+    '.ubi-txt b{color:#1a2d42}'+"""
+       , 'CSS de la ubicacion escrita')
+
+cambia("""    ((t.ubicacion_maps&&/^http/.test(t.ubicacion_maps))?'<div class="sec">Ubicación</div><a href="'+esc(t.ubicacion_maps)+'" class="cta-ubicacion">🗺 Ver Ubicación en Google Maps</a>':'')+
+    '</div><div class="foot">""",
+       """    ubicacionHTML+
+    '</div><div class="foot">""", 'sitio de la ubicacion en el PDF')
+
+cambia("""    '<scr'+'ipt>document.title='+JSON.stringify(nombreArchivo)+';window.onload=function(){window.print()};</scr'+'ipt></body></html>';
+    w.document.write(html); w.document.close();
+  }""",
+       """    '<scr'+'ipt>document.title='+JSON.stringify(nombreArchivo)+';</scr'+'ipt></body></html>';
+    /* La impresion NO se dispara desde dentro del documento: se hace desde
+       aqui, cuando las fotos ya estan o cuando se agota el tiempo. Antes
+       iba en window.onload, que espera a todas las fotos sin limite. */
+    imprimir(html, nombreArchivo, alSalir);
+  }""", 'disparo de la impresion')
+
+# El nombre del archivo es el titulo del documento: los caracteres que no
+# valen en un nombre de archivo se cambian aqui, no en el navegador.
+cambia("""    var nombreArchivo=[t.nombre,t.id,asesorNombre].filter(Boolean).join(' - ');""",
+       """    var nombreArchivo=[t.nombre,t.id,asesorNombre].filter(Boolean).join(' - ')
+      .replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim();""",
+       'nombre del archivo')
+
+# ══════════════════════════════════════════════════════════════════════
+# 14. EL ENLACE DE UBICACION DE LA FICHA
+#     Un target="_blank" dentro de un iframe con sandbox no abre nada. Se
+#     intenta abrir, y si el navegador lo impide se navega la ventana
+#     completa -- que es lo que el usuario esperaba de todas formas.
+# ══════════════════════════════════════════════════════════════════════
+cambia("""    var maps=(t.ubicacion_maps&&/^http/.test(t.ubicacion_maps))?'<a href="'+esc(t.ubicacion_maps)+'" target="_blank" rel="noreferrer" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);border-radius:12px;padding:14px 18px;text-decoration:none;color:#fff;margin-bottom:16px;font-size:14px;font-weight:700"><span style="font-size:22px">🗺</span><span>Ver Ubicación</span><span style="margin-left:auto;font-size:18px">→</span></a>':'';""",
+       """    var cFicha=coordsDe(t);
+    var urlFicha=(t.ubicacion_maps&&/^http/.test(t.ubicacion_maps)) ? t.ubicacion_maps
+      : (cFicha?('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(cFicha[0]+','+cFicha[1])):'');
+    var maps=urlFicha?'<a id="cpm-f-maps" href="'+esc(urlFicha)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#3d7ab5,#2d5f8f);border-radius:12px;padding:14px 18px;text-decoration:none;color:#fff;margin-bottom:16px;font-size:14px;font-weight:700"><span style="font-size:22px">🗺</span><span>Ver Ubicación</span><span style="margin-left:auto;font-size:18px">→</span></a>':'';""",
+       'enlace de maps de la ficha')
+
+cambia("""    var bWa=ov.querySelector('#cpm-f-wa');
+    if(bWa) bWa.addEventListener('click',function(){ window.open(waHref,'_blank'); });""",
+       """    var bWa=ov.querySelector('#cpm-f-wa');
+    if(bWa) bWa.addEventListener('click',function(){ abrirFuera(waHref); });
+    var bMaps=ov.querySelector('#cpm-f-maps');
+    if(bMaps) bMaps.addEventListener('click',function(ev){
+      /* Si el navegador deja abrir pestaña, que la abra el enlace solo.
+         Si no -- iframe con sandbox --, se navega la ventana completa. */
+      if(abrirFuera(urlFicha,true)) return;
+      ev.preventDefault();
+      try{ window.top.location.href=urlFicha; }catch(e){ location.href=urlFicha; }
+    });""", 'apertura del enlace de maps')
+
+cambia("""  /* ===================== OVERLAY util ===================== */""",
+       """  /* Abre una direccion fuera del bloque. Dentro de un iframe con
+     sandbox, window.open devuelve null y target="_blank" no hace nada:
+     entonces se navega la ventana completa. Devuelve si lo consiguio. */
+  function abrirFuera(url, soloProbar){
+    var w=null;
+    try{ w=window.open(url,'_blank','noopener'); }catch(e){ w=null; }
+    if(w) return true;
+    if(soloProbar) return false;
+    try{ window.top.location.href=url; return true; }catch(e2){}
+    try{ location.href=url; return true; }catch(e3){}
+    return false;
+  }
+
+  /* ===================== OVERLAY util ===================== */""",
+       'abrirFuera')
+
+# ══════════════════════════════════════════════════════════════════════
+# 15. INTERFAZ
+# ══════════════════════════════════════════════════════════════════════
+# a) El velo llevaba backdrop-filter, que cuesta fotogramas incluso fuera
+#    de pantalla (ya medido en otros bloques de este mismo sitio). Se
+#    quita y se oscurece el velo, que se ve igual de bien y no cuesta.
+cambia("""  background:rgba(26,45,66,.7); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);""",
+       """  /* Sin backdrop-filter: cuesta fotogramas hasta cuando la capa no se ve.
+     Un velo mas oscuro separa igual de bien y es gratis. */
+  background:rgba(15,26,40,.82);""", 'velo sin desenfoque')
+
+# b) La ficha repetia la superficie: "SUPERFICIE 256 m²" y "M² 256" dicen
+#    lo mismo. Solo se muestra el m² suelto si aporta algo (cuando la
+#    superficie se expresa en hectareas).
+cambia("""    if(t.dimensiones_m2>0) specs.push(['m²',(t.dimensiones_m2).toLocaleString('es-MX')]);""",
+       """    /* El m² suelto solo cuando la superficie va en hectareas: si no,
+       repetia la misma cifra dos veces en dos cuadros contiguos. */
+    if(t.dimensiones_m2>0 && t.hectareas>=1) specs.push(['m² exactos',(t.dimensiones_m2).toLocaleString('es-MX')]);
+    if(coordsDe(t)) specs.push(['Coordenadas','Registradas']);""",
+       'superficie repetida')
+
+# c) Tarjetas alcanzables con el teclado y fotos que no se cargan todas de
+#    golpe en el movil.
+cambia("""      return '<div class="cpm-card'+(t._premium?' premium':'')+'" data-id="'+esc(t.id)+'">'+
+        '<div class="ph">'+
+          (hasFotos?'<img class="cover" src="'+esc(t.fotos[0])+'" alt="">':'<img class="logo" src="'+LOGO_AZUL+'" alt="CPM">')+""",
+       """      return '<div class="cpm-card'+(t._premium?' premium':'')+'" data-id="'+esc(t.id)+
+             '" tabindex="0" role="button" aria-label="'+esc((t.nombre||t.id)+' · '+(t.ciudad||''))+'">'+
+        '<div class="ph">'+
+          (hasFotos?'<img class="cover" loading="lazy" src="'+esc(t.fotos[0])+'" alt="">':'<img class="logo" src="'+LOGO_AZUL+'" alt="CPM">')+""",
+       'tarjeta accesible')
+
+cambia("""    grid.querySelectorAll('.cpm-card').forEach(function(card){
+      card.addEventListener('click',function(){
+        var t=terrenos.find(function(x){return x.id===card.getAttribute('data-id')});
+        if(t) openFicha(t);
+      });
+    });""",
+       """    grid.querySelectorAll('.cpm-card').forEach(function(card){
+      function abrir(){
+        var t=terrenos.find(function(x){return x.id===card.getAttribute('data-id')});
+        if(t) openFicha(t);
+      }
+      card.addEventListener('click',abrir);
+      card.addEventListener('keydown',function(ev){
+        if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); abrir(); }
+      });
+    });""", 'tarjeta con teclado')
+
+# d) Blancos de toque. Los botones de la barra median 26px de alto: en un
+#    telefono eso se falla. 44px es el minimo con el que un dedo acierta.
+cambia("""@media(max-width:600px){
+  #cpm-portafolio .cpm-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:14px}""",
+       """@media(max-width:600px){
+  #cpm-portafolio .cpm-mini{padding:10px 14px;font-size:12px;min-height:40px;display:inline-flex;align-items:center}
+  #cpm-portafolio .cpm-bar{gap:8px 10px;row-gap:8px}
+  #cpm-portafolio .cpm-pill{padding:9px 14px;min-height:38px;display:inline-flex;align-items:center}
+  #cpm-portafolio .cpm-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:14px}""",
+       'blancos de toque en movil')
+
+cambia("""<button data-rm="'+i+'" style="position:absolute;top:2px;right:2px;background:rgba(231,76,60,.9);border:none;border-radius:50%;width:20px;height:20px;color:#fff;font-size:10px">✕</button>""",
+       """<button data-rm="'+i+'" aria-label="Quitar foto" style="position:absolute;top:3px;right:3px;background:rgba(231,76,60,.95);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:13px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.3)">✕</button>""",
+       'boton de quitar foto')
+
+# e) El icono de la lupa se centraba con un ajuste a mano (50% + 8px) que
+#    solo cuadra con un relleno concreto: en movil el relleno cambia y el
+#    icono se descuadra. Se centra respecto al campo, no al contenedor.
+cambia("""#cpm-portafolio .cpm-search-wrap{padding:16px 24px 0;position:relative}
+#cpm-portafolio .cpm-search-wrap .ico{position:absolute;left:38px;top:calc(50% + 8px);transform:translateY(-50%);color:#a0b0c0}""",
+       """#cpm-portafolio .cpm-search-wrap{padding:16px 24px 0}
+/* La caja es la referencia del icono, no el contenedor con relleno: asi
+   no hay que compensar a mano cada vez que cambia el relleno. */
+#cpm-portafolio .cpm-search-caja{position:relative}
+#cpm-portafolio .cpm-search-wrap .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#a0b0c0;pointer-events:none;line-height:1}""",
+       'CSS de la lupa')
+
+cambia("""      '<div class="cpm-search-wrap"><span class="ico">🔍</span>'+
+        '<input id="cpm-q" class="cpm-search" placeholder="Buscar por ciudad, ID, descripción..." value="'+esc(q)+'"></div>'+""",
+       """      '<div class="cpm-search-wrap"><div class="cpm-search-caja"><span class="ico" aria-hidden="true">🔍</span>'+
+        '<input id="cpm-q" class="cpm-search" type="search" aria-label="Buscar propiedades" placeholder="Buscar por ciudad, ID, descripción..." value="'+esc(q)+'"></div></div>'+""",
+       'maquetacion de la lupa')
+
+cambia("""  #cpm-portafolio .cpm-search-wrap{padding:14px 14px 0}
+  #cpm-portafolio .cpm-search-wrap .ico{left:28px}""",
+       """  #cpm-portafolio .cpm-search-wrap{padding:14px 14px 0}""",
+       'lupa en movil')
+
+# f) La galeria: flechas del teclado, Escape y botones mas grandes en el
+#    telefono. Y se dice en que foto se va.
+cambia("""      ov.querySelector('#cpm-g-x').addEventListener('click',function(){ closeOverlay(ov); });
+      if(fotos.length>1){
+        ov.querySelector('#cpm-g-prev').addEventListener('click',function(){ idx=(idx-1+fotos.length)%fotos.length; draw(); });
+        ov.querySelector('#cpm-g-next').addEventListener('click',function(){ idx=(idx+1)%fotos.length; draw(); });
+        ov.querySelectorAll('i[data-i]').forEach(function(d){ d.addEventListener('click',function(){ idx=+d.getAttribute('data-i'); draw(); }); });
+      }
+    }
+    draw();""",
+       """      ov.querySelector('#cpm-g-x').addEventListener('click',function(){ closeOverlay(ov); });
+      if(fotos.length>1){
+        ov.querySelector('#cpm-g-prev').addEventListener('click',function(){ mover(-1); });
+        ov.querySelector('#cpm-g-next').addEventListener('click',function(){ mover(1); });
+        ov.querySelectorAll('i[data-i]').forEach(function(d){ d.addEventListener('click',function(){ idx=+d.getAttribute('data-i'); draw(); }); });
+      }
+    }
+    function mover(p){ idx=(idx+p+fotos.length)%fotos.length; draw(); }
+    /* Flechas del teclado: en el ordenador es lo natural, y no estaba.
+       El listener se quita al cerrar la capa. */
+    function alTeclado(ev){
+      if(!ov.parentNode){ quitar(); return; }
+      if(ev.key==='ArrowLeft'){ ev.preventDefault(); mover(-1); }
+      else if(ev.key==='ArrowRight'){ ev.preventDefault(); mover(1); }
+    }
+    function quitar(){
+      document.removeEventListener('keydown',alTeclado);
+      try{ if(FRAME.win) FRAME.win.document.removeEventListener('keydown',alTeclado); }catch(e){}
+    }
+    document.addEventListener('keydown',alTeclado);
+    try{ if(FRAME.win) FRAME.win.document.addEventListener('keydown',alTeclado); }catch(e){}
+    draw();""", 'galeria con teclado')
+
+# ── El aviso en el boton mientras se prepara la ficha ────────────────
+#    Preparar el documento y esperar a las fotos lleva un momento. Sin
+#    decir nada, ese momento se lee como "no pasó nada" y se vuelve a
+#    pulsar. El boton lo dice y se desactiva mientras tanto.
+cambia("""  function descargarFicha(t){
+    var d=datosAsesor();
+    if(d){ generarPDF(t, d.nombre, d.telefono); return; }
+    pedirDatosAsesor(function(n,tel){ generarPDF(t, n, tel); });
+  }""",
+"""  function descargarFicha(t, alSalir){
+    var d=datosAsesor();
+    if(d){ generarPDF(t, d.nombre, d.telefono, alSalir); return; }
+    pedirDatosAsesor(function(n,tel){ generarPDF(t, n, tel, alSalir); });
+  }""", 'descargarFicha con aviso')
+
+cambia("""    var bPdf=ov.querySelector('#cpm-f-pdf');
+    if(bPdf) bPdf.addEventListener('click',function(){ descargarFicha(t); });""",
+"""    var bPdf=ov.querySelector('#cpm-f-pdf');
+    if(bPdf) bPdf.addEventListener('click',function(){
+      var antes=bPdf.innerHTML;
+      bPdf.disabled=true; bPdf.style.opacity='.72'; bPdf.innerHTML='\u23f3 Preparando la ficha\u2026';
+      function soltar(){
+        if(!bPdf) return;
+        bPdf.disabled=false; bPdf.style.opacity=''; bPdf.innerHTML=antes;
+      }
+      /* Se suelta al despachar la impresion, y en todo caso a los 6 s:
+         el boton no se puede quedar bloqueado pase lo que pase. */
+      var red=setTimeout(soltar,6000);
+      descargarFicha(t, function(){ clearTimeout(red); soltar(); });
+    });""", 'boton de PDF con aviso')
+
+# ══════════════════════════════════════════════════════════════════════
 # 11. VERIFICACION
 # ══════════════════════════════════════════════════════════════════════
 problemas = []
@@ -699,7 +1340,7 @@ if src.count('<script') != src.count('</script>'):
 # y los selectores sin acotar son correctos. Se saca del texto antes de
 # revisar, o cada revision la denunciaria.
 ini_pdf = src.index('  function generarPDF(')
-fin_pdf = src.index('w.document.write(html); w.document.close();', ini_pdf)
+fin_pdf = src.index('imprimir(html, nombreArchivo, alSalir);', ini_pdf)
 sin_pdf = src[:ini_pdf] + src[fin_pdf:]
 if 'DOCTYPE' in sin_pdf:
     problemas.append('quedo un documento completo fuera de generarPDF')
@@ -743,7 +1384,27 @@ esperado = [
     ('docsMalos.push', 'documentos ilegibles'),
     ('adoptadas++', 'adopcion de coordenadas del espejo'),
     ('class="excl"', 'sello de exclusiva en la tarjeta'),
+    ('function medirCabecera', 'medida de la cabecera del sitio'),
+    ('CABECERA-r.top', 'la banda descuenta la cabecera'),
+    ('cpm-sheet-top', 'cabecera pegada de la hoja'),
+    ('position:sticky', 'la cabecera de la hoja es pegada'),
+    ('function imprimir', 'impresion con respaldos'),
+    ('function verEnPantalla', 'ultimo recurso visible del PDF'),
+    ('function alImprimir', 'espera a las fotos con tope'),
+    ('function abrirFuera', 'apertura de enlaces fuera del marco'),
+    ('ubi-txt', 'ubicacion escrita en el PDF'),
+    ('function trabarSitio', 'traba del desplazamiento del sitio'),
+    ("ev.key!=='Escape'", 'Escape cierra'),
+    ("ev.key==='ArrowLeft'", 'flechas en la galeria'),
 ]
+# Lo que NO debe quedar.
+for aguja, que in [
+    ('backdrop-filter', 'el desenfoque del velo, que cuesta fotogramas'),
+    ('window.onload=function(){window.print()}', 'la impresion atada a onload'),
+    ("top:calc(50% + 8px)", 'el centrado a mano de la lupa'),
+]:
+    if aguja in sin_comentarios(src):
+        problemas.append('sigue presente: ' + que)
 for aguja, que in esperado:
     if aguja not in src:
         problemas.append('falta: ' + que)
