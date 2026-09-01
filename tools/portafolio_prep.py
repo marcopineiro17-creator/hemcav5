@@ -1320,6 +1320,123 @@ cambia("""    var bPdf=ov.querySelector('#cpm-f-pdf');
     });""", 'boton de PDF con aviso')
 
 # ══════════════════════════════════════════════════════════════════════
+# 16. LA FICHA SE RECORTABA AL FILTRAR (escritorio)
+#     Una capa dentro de un iframe NO puede pintar fuera del iframe: es
+#     un limite del navegador, no del CSS. Y el alto del marco lo fija el
+#     constructor segun lo que mide el bloque, asi que al filtrar y
+#     quedar dos tarjetas el marco encoge -- medido: de 749px a 520 -- y
+#     la ficha se recorta a esos 520 aunque la pantalla tenga 860.
+#
+#     La unica salida es agrandar el marco. Mientras haya una ventana
+#     abierta, el propio bloque pone su marco a pantalla completa EN EL
+#     SITIO (position:fixed, alto de la ventana) y al cerrar lo deja
+#     exactamente como estaba. Se conservan izquierda y ancho para que el
+#     contenido de detras no se recoloque, y el hueco que deja el marco
+#     se sujeta con la altura del contenedor para que la pagina no pegue
+#     un salto.
+#
+#     Si algun contenedor del sitio tiene transform o filter, 'fixed' se
+#     ancla a EL y no a la ventana. Por eso, despues de aplicarlo, se
+#     comprueba que el marco quedo de verdad donde se pedia; si no, se
+#     deshace y se sigue con el comportamiento de antes.
+# ══════════════════════════════════════════════════════════════════════
+cambia("""  var anclados=[];""",
+"""  /* Marco a pantalla completa mientras hay una ventana abierta. */
+  var pantalla=null;
+  function alturaSitio(){
+    var h=0;
+    try{ h=(FRAME.win&&FRAME.win.innerHeight)||window.innerHeight; }catch(e){ h=window.innerHeight; }
+    return h||600;
+  }
+  function aPantallaCompleta(){
+    if(pantalla) return true;
+    if(!FRAME.el) return false;
+    var el=FRAME.el, padre=el.parentElement;
+    var r, guarda;
+    try{
+      r=el.getBoundingClientRect();
+      guarda={css:el.style.cssText, padre:padre, padreAlto:padre?padre.style.height:''};
+      /* El hueco se sujeta antes de sacar el marco del flujo. */
+      if(padre) padre.style.height=Math.round(r.height)+'px';
+      var s=el.style;
+      s.setProperty('position','fixed','important');
+      s.setProperty('top','0','important');
+      s.setProperty('bottom','auto','important');
+      /* Izquierda y ancho como estaban: asi el contenido de detras no se
+         recoloca y al cerrar no hay salto. */
+      s.setProperty('left',Math.round(r.left)+'px','important');
+      s.setProperty('width',Math.round(r.width)+'px','important');
+      s.setProperty('height',alturaSitio()+'px','important');
+      s.setProperty('max-height','none','important');
+      s.setProperty('min-height','0','important');
+      s.setProperty('z-index','2147483000','important');
+      var r2=el.getBoundingClientRect();
+      if(Math.abs(r2.top)>2 || Math.abs(r2.height-alturaSitio())>4){
+        throw new Error('no se ancla a la ventana');
+      }
+      pantalla=guarda;
+      return true;
+    }catch(e){
+      try{ if(guarda){ el.style.cssText=guarda.css; } }catch(e2){}
+      try{ if(guarda&&guarda.padre){ guarda.padre.style.height=guarda.padreAlto||''; } }catch(e3){}
+      pantalla=null;
+      return false;
+    }
+  }
+  function salirPantallaCompleta(){
+    if(!pantalla) return;
+    var g=pantalla; pantalla=null;
+    try{ FRAME.el.style.cssText=g.css; }catch(e){}
+    try{ if(g.padre) g.padre.style.height=g.padreAlto||''; }catch(e){}
+    try{ liberar(); }catch(e){}
+  }
+
+  var anclados=[];""", 'pantalla completa del marco')
+
+cambia("""    if(bot-top<300) top=Math.max(0,-r.top);
+      return {top:top, height:Math.max(220,bot-top)};""",
+"""    if(bot-top<300) top=Math.max(0,-r.top);
+      /* Con el marco a pantalla completa, la ventana entera es la banda:
+         el marco esta por encima de la cabecera del sitio, asi que no hay
+         nada que descontar. */
+      if(pantalla) return {top:0, height:alturaSitio()};
+      return {top:top, height:Math.max(220,bot-top)};""", 'banda en pantalla completa')
+
+cambia("""    anclados.push(ov);
+    medirCabecera();                  /* antes de anclar, no despues */""",
+"""    anclados.push(ov);
+    medirCabecera();                  /* antes de anclar, no despues */
+    aPantallaCompleta();              /* si no, la ficha se recorta al marco */""",
+       'pantalla completa al abrir')
+
+cambia("""    if(!document.querySelector('.cpm-ov-live')){
+      document.body.style.overflow='';
+      destrabarSitio();
+    }""",
+"""    if(!document.querySelector('.cpm-ov-live')){
+      document.body.style.overflow='';
+      destrabarSitio();
+      salirPantallaCompleta();
+    }""", 'salir de pantalla completa al cerrar')
+
+cambia("""      if(!anclados.length && scrollGuardado) destrabarSitio();""",
+"""      if(!anclados.length && scrollGuardado) destrabarSitio();
+      /* Misma red: un marco que se quedara fijo taparia el sitio entero. */
+      if(!anclados.length && pantalla) salirPantallaCompleta();
+      else if(pantalla){
+        try{ FRAME.el.style.setProperty('height',alturaSitio()+'px','important'); }catch(e){}
+      }""", 'red de seguridad de la pantalla completa')
+
+# liberar() y bleed() no deben pelearse con el marco fijo.
+cambia("""  function liberar(){
+    var el=root.parentElement, n=0;""",
+"""  function liberar(){
+    /* Con el marco a pantalla completa no se toca nada: al cerrar se
+       restaura el estilo guardado y se vuelve a llamar a esto. */
+    if(pantalla) return;
+    var el=root.parentElement, n=0;""", 'liberar en pantalla completa')
+
+# ══════════════════════════════════════════════════════════════════════
 # 11. VERIFICACION
 # ══════════════════════════════════════════════════════════════════════
 problemas = []
@@ -1395,6 +1512,9 @@ esperado = [
     ('ubi-txt', 'ubicacion escrita en el PDF'),
     ('function trabarSitio', 'traba del desplazamiento del sitio'),
     ("ev.key!=='Escape'", 'Escape cierra'),
+    ('function aPantallaCompleta', 'marco a pantalla completa'),
+    ('function salirPantallaCompleta', 'vuelta del marco a su sitio'),
+    ('no se ancla a la ventana', 'comprobacion del anclaje'),
     ("ev.key==='ArrowLeft'", 'flechas en la galeria'),
 ]
 # Lo que NO debe quedar.

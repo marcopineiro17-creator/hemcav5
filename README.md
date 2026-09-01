@@ -211,6 +211,28 @@ se teclean aunque el enlace no funcione. El de la ficha en pantalla también:
 dentro de un iframe con `sandbox`, `target="_blank"` no abre nada, así que si
 el navegador lo impide se navega la ventana completa.
 
+**La ficha se recortaba al filtrar** (escritorio). Una ventana dentro de un
+iframe **no puede pintar fuera del iframe**: es un límite del navegador, no
+del CSS. Y el alto del marco lo fija el constructor según lo que mide el
+bloque, así que al filtrar y quedar dos tarjetas el marco encoge —medido: de
+749 px a 520— y la ficha se recortaba a esos 520 aunque la pantalla tuviera
+860.
+
+La única salida es agrandar el marco. Mientras hay una ventana abierta, el
+bloque pone **su propio marco a pantalla completa en el sitio** y al cerrar lo
+deja exactamente como estaba. Se conservan izquierda y ancho —para que el
+contenido de detrás no se recoloque— y el hueco se sujeta con la altura del
+contenedor, así que la página no da ningún salto. Comprobado: la hoja pasa de
+488 px recortados a 808 completos, y al cerrar el marco vuelve al píxel
+(`position` otra vez vacío, misma altura, mismo scroll).
+
+Con una salvedad que también está probada: si algún contenedor del sitio
+tiene `transform` o `filter`, `position:fixed` se ancla **a él** y no a la
+ventana. Por eso, después de aplicarlo se comprueba que el marco quedó donde
+se pedía; si no, se deshace y se sigue con el comportamiento de antes. En esa
+situación la ficha sigue abriéndose y cerrándose bien, solo que limitada al
+marco.
+
 **Interfaz.** El velo de las ventanas llevaba `backdrop-filter`, que cuesta
 fotogramas incluso cuando no se ve —ya medido en otros bloques de este
 sitio—: fuera, y el velo va más oscuro. La ficha repetía la superficie en dos

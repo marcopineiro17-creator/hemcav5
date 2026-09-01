@@ -900,9 +900,63 @@
       /* Si descontarla deja una banda demasiado corta, se prefiere mostrar
          la ficha entera aunque roce la cabecera. */
       if(bot-top<300) top=Math.max(0,-r.top);
+      /* Con el marco a pantalla completa, la ventana entera es la banda:
+         el marco esta por encima de la cabecera del sitio, asi que no hay
+         nada que descontar. */
+      if(pantalla) return {top:0, height:alturaSitio()};
       return {top:top, height:Math.max(220,bot-top)};
     }catch(e){ return null; }
   }
+  /* Marco a pantalla completa mientras hay una ventana abierta. */
+  var pantalla=null;
+  function alturaSitio(){
+    var h=0;
+    try{ h=(FRAME.win&&FRAME.win.innerHeight)||window.innerHeight; }catch(e){ h=window.innerHeight; }
+    return h||600;
+  }
+  function aPantallaCompleta(){
+    if(pantalla) return true;
+    if(!FRAME.el) return false;
+    var el=FRAME.el, padre=el.parentElement;
+    var r, guarda;
+    try{
+      r=el.getBoundingClientRect();
+      guarda={css:el.style.cssText, padre:padre, padreAlto:padre?padre.style.height:''};
+      /* El hueco se sujeta antes de sacar el marco del flujo. */
+      if(padre) padre.style.height=Math.round(r.height)+'px';
+      var s=el.style;
+      s.setProperty('position','fixed','important');
+      s.setProperty('top','0','important');
+      s.setProperty('bottom','auto','important');
+      /* Izquierda y ancho como estaban: asi el contenido de detras no se
+         recoloca y al cerrar no hay salto. */
+      s.setProperty('left',Math.round(r.left)+'px','important');
+      s.setProperty('width',Math.round(r.width)+'px','important');
+      s.setProperty('height',alturaSitio()+'px','important');
+      s.setProperty('max-height','none','important');
+      s.setProperty('min-height','0','important');
+      s.setProperty('z-index','2147483000','important');
+      var r2=el.getBoundingClientRect();
+      if(Math.abs(r2.top)>2 || Math.abs(r2.height-alturaSitio())>4){
+        throw new Error('no se ancla a la ventana');
+      }
+      pantalla=guarda;
+      return true;
+    }catch(e){
+      try{ if(guarda){ el.style.cssText=guarda.css; } }catch(e2){}
+      try{ if(guarda&&guarda.padre){ guarda.padre.style.height=guarda.padreAlto||''; } }catch(e3){}
+      pantalla=null;
+      return false;
+    }
+  }
+  function salirPantallaCompleta(){
+    if(!pantalla) return;
+    var g=pantalla; pantalla=null;
+    try{ FRAME.el.style.cssText=g.css; }catch(e){}
+    try{ if(g.padre) g.padre.style.height=g.padreAlto||''; }catch(e){}
+    try{ liberar(); }catch(e){}
+  }
+
   var anclados=[];
   function anclar(el){
     var b=banda();
@@ -915,6 +969,11 @@
     function ping(){
       for(var i=0;i<anclados.length;i++) anclar(anclados[i]);
       if(!anclados.length && scrollGuardado) destrabarSitio();
+      /* Misma red: un marco que se quedara fijo taparia el sitio entero. */
+      if(!anclados.length && pantalla) salirPantallaCompleta();
+      else if(pantalla){
+        try{ FRAME.el.style.setProperty('height',alturaSitio()+'px','important'); }catch(e){}
+      }
     }
     window.addEventListener('scroll',ping,{passive:true});
     window.addEventListener('resize',ping,{passive:true});
@@ -1242,6 +1301,7 @@
     document.body.appendChild(ov);
     anclados.push(ov);
     medirCabecera();                  /* antes de anclar, no despues */
+    aPantallaCompleta();              /* si no, la ficha se recorta al marco */
     anclar(ov);                       /* centrado en la PANTALLA, no en el iframe */
     document.body.style.overflow='hidden';
     trabarSitio();
@@ -1253,6 +1313,7 @@
     if(!document.querySelector('.cpm-ov-live')){
       document.body.style.overflow='';
       destrabarSitio();
+      salirPantallaCompleta();
     }
   }
   /* Escape cierra la capa de encima. No estaba, y en el ordenador es lo
@@ -2196,6 +2257,9 @@
   /* ===================== CONTENEDOR HOSTINGER ===================== */
   var FULL_BLEED = true;   /* false = respeta el ancho de la columna del sitio */
   function liberar(){
+    /* Con el marco a pantalla completa no se toca nada: al cerrar se
+       restaura el estilo guardado y se vuelve a llamar a esto. */
+    if(pantalla) return;
     var el=root.parentElement, n=0;
     while(el && el!==document.body && n<8){
       var s=el.style;
